@@ -25,7 +25,7 @@ public static class PuckScale
     }
     
     [HarmonyPatch(typeof(PuckManager), nameof(PuckManager.AddPuck))]
-    public static class PuckManager_AddPuckPatch
+    public static class PuckManagerAddPuckPatch
     {
         [HarmonyPostfix]
         public static void Prefix(PuckManager __instance, Puck puck)
@@ -34,6 +34,24 @@ public static class PuckScale
             
             puck.gameObject.transform.localScale = new Vector3(currentPuckScale, currentPuckScale, currentPuckScale);
             MeshRenderer puckMeshRenderer = puck.GetComponent<MeshRenderer>();
+            if (puckMeshRenderer != null)
+            {
+                puckMeshRenderer.transform.localScale = new Vector3(currentPuckScale, currentPuckScale, currentPuckScale);
+            }
+        }
+    }
+
+    // Added this in addition to above to try to handle cases where it wasn't changing the scale for certain people
+    [HarmonyPatch(typeof(Puck), "OnNetworkPostSpawn")]
+    public static class PuckOnNetworkPostSpawnPatch
+    {
+        [HarmonyPostfix]
+        public static void Postfix(Puck __instance)
+        {
+            if (!MessagingHandler.connectedToToastersRink) return;
+            
+            __instance.gameObject.transform.localScale = new Vector3(currentPuckScale, currentPuckScale, currentPuckScale);
+            MeshRenderer puckMeshRenderer = __instance.GetComponent<MeshRenderer>();
             if (puckMeshRenderer != null)
             {
                 puckMeshRenderer.transform.localScale = new Vector3(currentPuckScale, currentPuckScale, currentPuckScale);

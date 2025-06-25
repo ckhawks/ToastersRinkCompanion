@@ -12,7 +12,8 @@ namespace ToastersRinkCompanion;
 public class Plugin : IPuckMod
 {
     public static string MOD_NAME = "ToastersRinkCompanion";
-    public static string MOD_VERSION = "1.0.0";
+    public static string MOD_VERSION = "1.2.0";
+    public static string TRS_VERSION = "Build 1003";
     public static string MOD_GUID = "pw.stellaric.toaster.rinkcompanion";
 
     static readonly Harmony harmony = new Harmony(MOD_GUID);
@@ -29,12 +30,6 @@ public class Plugin : IPuckMod
             {
                 Plugin.Log("Environment: dedicated server.");
                 Plugin.Log($"This is only meant to be used on clients!");
-                // Plugin.Log("Patching methods...");
-                // harmony.PatchAll();
-                // Plugin.Log($"All patched! Patched methods:");
-                // LogAllPatchedMethods();
-                // MessagingHandler.Setup();
-                // Plugin.Log($"Fully setup!");
             }
             else
             {
@@ -67,8 +62,6 @@ public class Plugin : IPuckMod
         {
             Plugin.Log($"Disabling...");
             harmony.UnpatchSelf();
-            // modSettings.Save(); // Don't do this because we aren't modifying these values in runtime, it'll overwrite changes people make to the config file while the game is open
-
             Plugin.Log($"Disabled! Goodbye!");
             return true;
         }
@@ -112,5 +105,10 @@ public class Plugin : IPuckMod
     public static void LogError(string message)
     {
         Debug.LogError($"[{MOD_NAME}] {message}");
+    }
+    
+    public static void LogWarning(string message)
+    {
+        Debug.LogWarning($"[{MOD_NAME}] {message}");
     }
 }

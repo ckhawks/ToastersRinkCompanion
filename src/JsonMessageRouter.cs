@@ -90,6 +90,7 @@ public static class JsonMessageRouter
                     else
                     {
                         Plugin.LogError($"No JSON‐handler for type '{messageType}'");
+                        UIChat.Instance.AddChatMessage($"<size=14><color=red>There was no handler for a message received from the server; you might be on an outdated version of Toaster's Rink Companion! Type <b>/outdated</b> for help.</color></size>");
                     }
                 }
                 catch (Exception e)
