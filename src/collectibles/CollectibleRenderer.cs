@@ -169,7 +169,7 @@ public static class CollectibleRenderer
                 holographicMeshRenderer.material.SetFloat("_ExtrusionAmount", 0.00001f);
                 holographicMeshRenderer.material.SetFloat("_StartTime", Time.time);
                 holographicObject.transform.localScale = Vector3.one;
-                Plugin.Log($"Added holographic renderer");
+                // Plugin.Log($"Added holographic renderer");
             }
 
             if (Collectible.HasTrait(collectibleItem, "Glistening"))
@@ -180,7 +180,7 @@ public static class CollectibleRenderer
                 shapeModule.mesh = collectibleDisplay.GetComponent<MeshFilter>().mesh;
                 glisteningObject.transform.localScale = collectibleDisplay.transform.localScale;
                 glisteningObject.transform.localRotation = Quaternion.Euler(0, 0, 0);
-                Plugin.Log($"Added glistening particles");
+                // Plugin.Log($"Added glistening particles");
             }
             
             if (Collectible.HasTrait(collectibleItem, "Flaming"))
@@ -193,7 +193,7 @@ public static class CollectibleRenderer
                 emissionModule.enabled = true;
                 flamingObject.transform.localScale = collectibleDisplay.transform.localScale;
                 flamingObject.transform.localRotation = Quaternion.Euler(0, 0, 0);
-                Plugin.Log($"Added flaming particles");
+                // Plugin.Log($"Added flaming particles");
             }
             
             if (Collectible.HasTrait(collectibleItem, "Smoking"))
@@ -206,7 +206,7 @@ public static class CollectibleRenderer
                 emissionModule.enabled = true;
                 smokingObject.transform.localScale = collectibleDisplay.transform.localScale;
                 smokingObject.transform.localRotation = Quaternion.Euler(0, 0, 0);
-                Plugin.Log($"Added smoking particles");
+                // Plugin.Log($"Added smoking particles");
             }
             
             // Add particles
@@ -316,7 +316,7 @@ public static class CollectibleRenderer
                 secondaryTextComponent.alignment = TextAlignmentOptions.Center;
             }
 
-            Plugin.Log($"Item is upside down: {Collectible.HasTrait(collectibleItem, "Upside Down")}");
+            // Plugin.Log($"Item is upside down: {Collectible.HasTrait(collectibleItem, "Upside Down")}");
             activeItemShowDisplays.Add(new ItemShowCollectibleMetadata
             {
                 CollectibleItem = collectibleItem,

@@ -78,9 +78,9 @@ public static class Opening
             if (collectibleRenderer != null)                                                     
             {                                                                                    
                 // Use bounds.extents for half-lengths           
-                Plugin.Log($"collectibleRenderer is found!");
+                // Plugin.Log($"collectibleRenderer is found!");
                 originalHeight = collectibleRenderer.localBounds.size.z * 2 * payload.CollectibleItem.ScaleFactor;                    
-                Plugin.Log($"collectibleRenderer bounds: {collectibleRenderer.localBounds}!");
+                // Plugin.Log($"collectibleRenderer bounds: {collectibleRenderer.localBounds}!");
                 maxXZBoundsLength = Mathf.Max(collectibleRenderer.localBounds.extents.x,              
                     collectibleRenderer.localBounds.extents.z);                                       
             }
@@ -88,7 +88,7 @@ public static class Opening
             if (Collectible.HasTrait(payload.CollectibleItem, "Upside Down"))
             {
                 collectibleDisplay.transform.localRotation = Quaternion.Euler(180, 0, 0);
-                Plugin.Log($"Setting upside down and localY to {originalHeight}");
+                // Plugin.Log($"Setting upside down and localY to {originalHeight}");
                 collectibleDisplay.transform.localPosition = new Vector3(0, 0, originalHeight);
             }
 
@@ -155,7 +155,7 @@ public static class Opening
                 holographicMeshRenderer.material.SetFloat("_ExtrusionAmount", 0.00001f);
                 holographicMeshRenderer.material.SetFloat("_StartTime", Time.time);
                 holographicObject.transform.localScale = Vector3.one;
-                Plugin.Log($"Added holographic renderer");
+                // Plugin.Log($"Added holographic renderer");
             }
 
             if (Collectible.HasTrait(payload.CollectibleItem, "Glistening"))
@@ -167,7 +167,7 @@ public static class Opening
                 glisteningObject.transform.localScale = collectibleDisplay.transform.localScale / 3;
                 glisteningObject.transform.localRotation = Quaternion.Euler(0, 0, 0);
                 particleObjects.Add(glisteningObject);
-                Plugin.Log($"Added glistening particles");
+                // Plugin.Log($"Added glistening particles");
             }
             
             if (Collectible.HasTrait(payload.CollectibleItem, "Flaming"))
@@ -181,7 +181,7 @@ public static class Opening
                 flamingObject.transform.localScale = collectibleDisplay.transform.localScale / 3;
                 flamingObject.transform.localRotation = Quaternion.Euler(0, 0, 0);
                 particleObjects.Add(flamingObject);
-                Plugin.Log($"Added flaming particles");
+                // Plugin.Log($"Added flaming particles");
             }
             
             if (Collectible.HasTrait(payload.CollectibleItem, "Smoking"))
@@ -195,7 +195,7 @@ public static class Opening
                 smokingObject.transform.localScale = collectibleDisplay.transform.localScale / 3;
                 smokingObject.transform.localRotation = Quaternion.Euler(0, 0, 0);
                 particleObjects.Add(smokingObject);
-                Plugin.Log($"Added smoking particles");
+                // Plugin.Log($"Added smoking particles");
             }
             
             // Create audio shiz nizz
