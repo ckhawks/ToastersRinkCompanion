@@ -3,7 +3,7 @@ using UnityEngine;
 
 namespace ToastersRinkCompanion.collectibles;
 
-public class RarityHelper
+public static class OldRarityHelper
 {
     public enum Rarity
     {

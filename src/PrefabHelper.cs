@@ -84,4 +84,46 @@ public static class PrefabHelper
             return null;
         }
     }
+    
+    public static AudioClip LoadAudioClip(AssetBundle assetBundle, string assetPath)
+    {
+        try
+        {
+            AudioClip loadedObject = assetBundle.LoadAsset<AudioClip>(assetPath);
+            if (loadedObject == null)
+            {
+                Plugin.LogError($"[MeshReplacer] Custom AudioClip '{assetPath}' not found in AssetBundle.");
+                return null;
+            }
+
+            return loadedObject;
+        }
+
+        catch (Exception ex)
+        {
+            Plugin.LogError($"[MeshReplacer] Error loading AssetBundle: {ex.Message}");
+            return null;
+        }
+    }
+    
+    public static Material LoadMaterial(AssetBundle assetBundle, string assetPath)
+    {
+        try
+        {
+            Material loadedObject = assetBundle.LoadAsset<Material>(assetPath);
+            if (loadedObject == null)
+            {
+                Plugin.LogError($"[MeshReplacer] Custom Material '{assetPath}' not found in AssetBundle.");
+                return null;
+            }
+
+            return loadedObject;
+        }
+
+        catch (Exception ex)
+        {
+            Plugin.LogError($"[MeshReplacer] Error loading AssetBundle: {ex.Message}");
+            return null;
+        }
+    }
 }
