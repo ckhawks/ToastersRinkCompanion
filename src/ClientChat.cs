@@ -1,11 +1,15 @@
 ﻿using HarmonyLib;
 using ToastersRinkCompanion.collectibles;
+using UnityEngine;
 using UnityEngine.InputSystem;
 
 namespace ToastersRinkCompanion;
 
 public static class ClientChat
 {
+    public static SpectatorCamera SpectatorCamera;
+    public static PlayerCamera PlayerCamera;
+    
     [HarmonyPatch(typeof(UIChat), nameof(UIChat.Client_SendClientChatMessage))]
     public class UIChatPatch
     {
@@ -50,10 +54,60 @@ public static class ClientChat
             } else if (message.ToLower().StartsWith("/collectible"))
             {
                 Player player = PlayerManager.Instance.GetLocalPlayer();
-                CollectibleRenderer.ShowCollectible(player);
+                OldCollectibleRenderer.ShowCollectiblePrototype(player);
+                return false;
+            } 
+            // else if (message.ToLower().StartsWith($"/opencase"))
+            // {
+            //     Player player = PlayerManager.Instance.GetLocalPlayer();
+            //     Opening.PlayOpeningForAt(player.Stick.transform.position, player);
+            // }
+            else if (message.ToLower().StartsWith("/logcamera"))
+            {
+                if (PlayerCamera != null)
+                {
+                    
+                    Camera playerCamComponent = PlayerCamera.GetComponent<Camera>();
+                    Plugin.Log($"Playercamera {playerCamComponent.cullingMatrix}");
+                }
+                else
+                {
+                    Plugin.Log($"playerCamera is null");
+                }
+
+                if (SpectatorCamera != null)
+                {
+                    Camera specCamComponent = SpectatorCamera.GetComponent<Camera>();
+                    Plugin.Log($"Speccam {specCamComponent.cullingMatrix}");
+                }
+                else
+                {
+                    Plugin.Log("SpectatorCamera is null");
+                }
+                
             }
 
             return true;
+        }
+    }
+
+    [HarmonyPatch(typeof(SpectatorCamera), "OnNetworkPostSpawn")]
+    public class SpectatorCameraPatch
+    {
+        [HarmonyPostfix]
+        public static void Postfix(SpectatorCamera __instance)
+        {
+            SpectatorCamera = __instance;
+        }
+    }
+    
+    [HarmonyPatch(typeof(PlayerCamera), "OnNetworkPostSpawn")]
+    public class PlayerCameraPatch
+    {
+        [HarmonyPostfix]
+        public static void Postfix(PlayerCamera __instance)
+        {
+            PlayerCamera = __instance;
         }
     }
 }
