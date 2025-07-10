@@ -61,6 +61,7 @@ public static class MessagingHandler
             Ramps.ClearRamps();
             Sign.DestroySign();
             Plugin.Log("Local client disconnected, handlers will be re-registered on reconnect");
+            RockEventUI.Hide();
         }
     }
 
@@ -93,11 +94,11 @@ public static class MessagingHandler
                         return;
                     }
 
-                    if (greetingsPayload?.toastersRinkSuiteVersion != null)
+                    if (greetingsPayload?.companionTargetVersion != null)
                     {
                         connectedToToastersRink = true;
-                        UIChat.Instance.AddChatMessage($"<size=14><i>Toaster's Rink Companion for {Plugin.TRS_VERSION} connected.</i> {(greetingsPayload?.toastersRinkSuiteVersion == Plugin.TRS_VERSION ? "" : $" <br><color=red>Companion is out of date (server on {greetingsPayload?.toastersRinkSuiteVersion})! Type <b>/outdated</b> for info.</color>")}</size>");
-                        Plugin.Log($"Received `Greetings` message from Toaster's Rink {greetingsPayload?.toastersRinkSuiteVersion}, we're connected!");
+                        UIChat.Instance.AddChatMessage($"<size=14><i>Toaster's Rink Companion version {Plugin.MOD_VERSION} connected.</i> {(greetingsPayload?.companionTargetVersion == Plugin.MOD_VERSION ? "" : $" <br><color=red>Companion is out of date (server expecting {greetingsPayload?.companionTargetVersion}, client on {Plugin.MOD_VERSION})! Type <b>/outdated</b> for info.</color>")}</size>");
+                        Plugin.Log($"Received `Greetings` message from Toaster's Rink {greetingsPayload?.companionTargetVersion}, we're connected!");
                         Sign.SpawnSign();
                         CollectiblePrefabs.Setup();
                         // CollectibleBloomer.MakeBloomer();
@@ -108,6 +109,37 @@ public static class MessagingHandler
                 catch (Exception e)
                 {
                     Plugin.LogError($"Failed to parse greetings payload: {e}");
+                }
+            });
+            
+            JsonMessageRouter.RegisterHandler("showVersion", (sender, payloadJson) =>
+            {
+                // Plugin.Log($"Handling `greetings` message from sender {sender}");
+                // Plugin.Log($"Raw payload JSON: '{payloadJson}'");
+                
+                try
+                {
+                    if (string.IsNullOrEmpty(payloadJson))
+                    {
+                        Plugin.LogError("Payload JSON is null or empty");
+                        return;
+                    }
+
+                    var showVersionPayload = JsonUtility.FromJson<EnabledPayload>(payloadJson);
+                    
+                    if (showVersionPayload == null)
+                    {
+                        Plugin.LogError("Failed to deserialize EnabledPayload - result is null");
+                        return;
+                    }
+                    
+                    UIChat.Instance.AddChatMessage($"Toaster's Rink Companion {Plugin.MOD_VERSION} connected.");
+
+                    return;
+                }
+                catch (Exception e)
+                {
+                    Plugin.LogError($"Failed to parse showVersion payload: {e}");
                 }
             });
             
@@ -170,6 +202,93 @@ public static class MessagingHandler
                     }
                     
                     Application.OpenURL(openLinkPayload.link);
+                }
+                catch (Exception e)
+                {
+                    Plugin.LogError($"Failed to parse openLink payload: {e}");
+                }
+            });
+            
+            JsonMessageRouter.RegisterHandler("rock_event", (sender, payloadJson) =>
+            {
+                if (!connectedToToastersRink) return;
+                
+                try
+                {
+                    if (string.IsNullOrEmpty(payloadJson))
+                    {
+                        Plugin.LogError("Payload JSON is null or empty");
+                        return;
+                    }
+
+                    // var conesPayload = JsonUtility.FromJson<ConesPayload>(payloadJson);
+                    var rockEventPayload = JsonConvert.DeserializeObject<RockEventPayload>(payloadJson);
+                    
+                    if (rockEventPayload == null)
+                    {
+                        Plugin.LogError("Failed to deserialize rockEventPayload - result is null");
+                        return;
+                    }
+                    
+                    RockEvent.SpawnRockForPayload(rockEventPayload);
+                }
+                catch (Exception e)
+                {
+                    Plugin.LogError($"Failed to parse rockEvent payload: {e}");
+                }
+            });
+            
+            JsonMessageRouter.RegisterHandler("rock_hit", (sender, payloadJson) =>
+            {
+                if (!connectedToToastersRink) return;
+                
+                try
+                {
+                    if (string.IsNullOrEmpty(payloadJson))
+                    {
+                        Plugin.LogError("Payload JSON is null or empty");
+                        return;
+                    }
+
+                    // var conesPayload = JsonUtility.FromJson<ConesPayload>(payloadJson);
+                    var rockHitPayload = JsonConvert.DeserializeObject<RockHitPayload>(payloadJson);
+                    
+                    if (rockHitPayload == null)
+                    {
+                        Plugin.LogError("Failed to deserialize rockHitPayload - result is null");
+                        return;
+                    }
+                    
+                    RockEvent.PlayRockHitFromPayload(rockHitPayload);
+                }
+                catch (Exception e)
+                {
+                    Plugin.LogError($"Failed to parse rockHitPayload payload: {e}");
+                }
+            });
+            
+            JsonMessageRouter.RegisterHandler("rock_dieded", (sender, payloadJson) =>
+            {
+                if (!connectedToToastersRink) return;
+                
+                try
+                {
+                    if (string.IsNullOrEmpty(payloadJson))
+                    {
+                        Plugin.LogError("Payload JSON is null or empty");
+                        return;
+                    }
+
+                    // var conesPayload = JsonUtility.FromJson<ConesPayload>(payloadJson);
+                    var rockEventEndedPayload = JsonConvert.DeserializeObject<RockEventEndedPayload>(payloadJson);
+                    
+                    if (rockEventEndedPayload == null)
+                    {
+                        Plugin.LogError("Failed to deserialize rockEventEndedPayload - result is null");
+                        return;
+                    }
+                    
+                    RockEvent.DespawnRockFromPayload(rockEventEndedPayload);
                 }
                 catch (Exception e)
                 {
@@ -608,7 +727,7 @@ public static class MessagingHandler
     [Serializable]
     public class GreetingsPayload
     {
-        public string toastersRinkSuiteVersion;
+        public string companionTargetVersion;
     }
     
     [Serializable]

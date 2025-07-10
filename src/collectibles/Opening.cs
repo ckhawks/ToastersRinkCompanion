@@ -384,6 +384,7 @@ public static class Opening
             if (emptyParent == null || emptyParent.transform == null)
             {
                 Plugin.LogError($"emptyParent is null");
+                caseOpeningMetadatasToRemove.Add(caseOpeningMetadata);
                 return;
             }
 
@@ -456,6 +457,34 @@ public static class Opening
         public static void Postfix(SynchronizedObjectManager __instance)
         {
             Update();
+        }
+    }
+
+    // Remove displays when changing out of warmup
+    [HarmonyPatch(typeof(LevelManagerController), "Event_OnGamePhaseChanged")]
+    public static class LevelManagerControllerEventOnGamePhaseChanged
+    {
+        [HarmonyPostfix]
+        public static void Postfix(LevelManagerController __instance, Dictionary<string, object> message)
+        {
+            GamePhase oldGamePhase = (GamePhase)message["oldGamePhase"];
+            GamePhase newGamePhase = (GamePhase)message["newGamePhase"];
+            if (oldGamePhase == GamePhase.Warmup && newGamePhase != GamePhase.Warmup)
+            {
+                foreach (CaseOpeningMetadata caseOpeningMetadata in caseOpeningMetadatas)
+                {
+                    if (caseOpeningMetadata.displayRoot != null) Object.Destroy(caseOpeningMetadata.displayRoot);
+                    if (caseOpeningMetadata.TextBillboardRoot != null) Object.Destroy(caseOpeningMetadata.TextBillboardRoot);
+
+                    foreach (Material mat in caseOpeningMetadata.CopiedMaterials)
+                    {
+                        if (mat != null) Object.Destroy(mat);
+                    }
+
+                    caseOpeningMetadata.CopiedMaterials.Clear();
+                }
+                caseOpeningMetadatas.Clear();
+            }
         }
     }
 }

@@ -109,8 +109,8 @@ public static class CollectiblePrefabs
             Debug.LogError("Failed to load toaster.fbx prefab!");
         }
     }
-    
-    public static void LoadCollectibleAssetBundle()
+
+    private static void LoadCollectibleAssetBundle()
     {
         if (_loadedAssetBundle == null) _loadedAssetBundle = PrefabHelper.LoadAssetBundle("assetbundles/collectibles");
     }

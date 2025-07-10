@@ -5,7 +5,7 @@ namespace ToastersRinkCompanion;
 
 public class ModSettings
 {
-    public string spawnPuckKeybind { get; set; } = "<keyboard>/q";
+    public string spawnPuckKeybind { get; set; } = "<keyboard>/g";
     
     static string ConfigurationFileName = $"{Plugin.MOD_NAME}.json";
 

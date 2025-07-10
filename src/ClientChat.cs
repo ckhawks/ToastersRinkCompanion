@@ -51,12 +51,13 @@ public static class ClientChat
                 Plugin.spawnPuckAction.Enable();
                 
                 return false;
-            } else if (message.ToLower().StartsWith("/collectible"))
-            {
-                Player player = PlayerManager.Instance.GetLocalPlayer();
-                OldCollectibleRenderer.ShowCollectiblePrototype(player);
-                return false;
-            } 
+            }
+            // else if (message.ToLower().StartsWith("/collectible"))
+            // {
+            //     Player player = PlayerManager.Instance.GetLocalPlayer();
+            //     OldCollectibleRenderer.ShowCollectiblePrototype(player);
+            //     return false;
+            // } 
             // else if (message.ToLower().StartsWith($"/opencase"))
             // {
             //     Player player = PlayerManager.Instance.GetLocalPlayer();

@@ -760,4 +760,32 @@ public static class CollectibleRenderer
             activeCollectibles.Remove(info2);
         }
     }
+    
+    // Remove displays when changing out of warmup
+    [HarmonyPatch(typeof(LevelManagerController), "Event_OnGamePhaseChanged")]
+    public static class LevelManagerControllerEventOnGamePhaseChanged2
+    {
+        [HarmonyPostfix]
+        public static void Postfix(LevelManagerController __instance, Dictionary<string, object> message)
+        {
+            GamePhase oldGamePhase = (GamePhase) message["oldGamePhase"];
+            GamePhase newGamePhase = (GamePhase) message["newGamePhase"];
+            if (oldGamePhase == GamePhase.Warmup && newGamePhase != GamePhase.Warmup)
+            {
+                foreach (ItemShowCollectibleMetadata itemShowDisplay in activeItemShowDisplays)
+                {
+                    if (itemShowDisplay.displayRoot != null) Object.Destroy(itemShowDisplay.displayRoot);
+                    if (itemShowDisplay.TextBillboardRoot != null) Object.Destroy(itemShowDisplay.TextBillboardRoot);
+
+                    foreach (Material mat in itemShowDisplay.CopiedMaterials)
+                    {
+                        if (mat != null) Object.Destroy(mat);
+                    }
+
+                    itemShowDisplay.CopiedMaterials.Clear();
+                }
+                activeItemShowDisplays.Clear();
+            }
+        }
+    }
 }
