@@ -60,6 +60,7 @@ public static class MessagingHandler
             Portals.ClearPortals();
             Ramps.ClearRamps();
             Sign.DestroySign();
+            UpdatableChat.Clear();
             Plugin.Log("Local client disconnected, handlers will be re-registered on reconnect");
             RockEventUI.Hide();
         }
@@ -68,11 +69,14 @@ public static class MessagingHandler
     private static void SetupHandlers()
     {
         if (_handlersRegistered) return;
-        
+
         try
         {
             JsonMessageRouter.ForceReinitialize(); // Force re-init to handle reconnections
-            
+
+            // Register updatable chat handlers
+            UpdatableChat.RegisterHandlers();
+
             JsonMessageRouter.RegisterHandler("greetings", (sender, payloadJson) =>
             {
                 // Plugin.Log($"Handling `greetings` message from sender {sender}");
