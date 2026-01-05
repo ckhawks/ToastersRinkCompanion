@@ -54,10 +54,10 @@ public static class ClientChat
                 return false;
             }
             
-            else if (message.ToLower().StartsWith("/fuckgoals"))
-            {
-                FuckGoals.FuckGoalsNow();
-            }
+            // else if (message.ToLower().StartsWith("/fuckgoals"))
+            // {
+            //     FuckGoals.FuckGoalsNow();
+            // }
             // else if (message.ToLower().StartsWith("/collectible"))
             // {
             //     Player player = PlayerManager.Instance.GetLocalPlayer();

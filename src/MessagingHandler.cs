@@ -62,6 +62,7 @@ public static class MessagingHandler
             Ramps.ClearRamps();
             Sign.DestroySign();
             UpdatableChat.Clear();
+            FuckGoals.CleanupAllCustomFrames();
             Plugin.Log("Local client disconnected, handlers will be re-registered on reconnect");
             RockEventUI.Hide();
         }
@@ -685,7 +686,7 @@ public static class MessagingHandler
 
                 // Plugin.Log($"Handling `portals` message from sender {sender}");
                 // Plugin.Log($"Raw payload JSON: '{payloadJson}'");
-                
+
                 try
                 {
                     if (string.IsNullOrEmpty(payloadJson))
@@ -696,13 +697,13 @@ public static class MessagingHandler
 
                     // var conesPayload = JsonUtility.FromJson<ConesPayload>(payloadJson);
                     var portalsPayload = JsonConvert.DeserializeObject<PortalsPayload>(payloadJson);
-                    
+
                     if (portalsPayload == null)
                     {
                         Plugin.LogError("Failed to deserialize portalsPayload - result is null");
                         return;
                     }
-                    
+
                     Portals.UpdatePortalsToPayload(portalsPayload);
                 }
                 catch (Exception e)
@@ -710,7 +711,10 @@ public static class MessagingHandler
                     Plugin.LogError($"Failed to parse portals payload: {e}");
                 }
             });
-            
+
+            // Initialize FuckGoals handler for goal position updates
+            FuckGoals.Initialize();
+
             JsonMessageRouter.RegisterHandler("ImageNotice", (sender, payloadJson) =>
             {
                 if (!connectedToToastersRink) return;
