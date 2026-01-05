@@ -17,7 +17,7 @@ public static class PuckScale
         {
             puck.gameObject.transform.localScale = new Vector3(payload.puckscale, payload.puckscale, payload.puckscale);
             MeshRenderer puckMeshRenderer = puck.GetComponent<MeshRenderer>();
-            if (puckMeshRenderer != null)
+            if (puckMeshRenderer != null && !Balls.currentBallsEnabled)
             {
                 puckMeshRenderer.transform.localScale = new Vector3(payload.puckscale, payload.puckscale, payload.puckscale);;
             }
@@ -34,7 +34,7 @@ public static class PuckScale
             
             puck.gameObject.transform.localScale = new Vector3(currentPuckScale, currentPuckScale, currentPuckScale);
             MeshRenderer puckMeshRenderer = puck.GetComponent<MeshRenderer>();
-            if (puckMeshRenderer != null)
+            if (puckMeshRenderer != null && !Balls.currentBallsEnabled)
             {
                 puckMeshRenderer.transform.localScale = new Vector3(currentPuckScale, currentPuckScale, currentPuckScale);
             }
@@ -52,7 +52,7 @@ public static class PuckScale
             
             __instance.gameObject.transform.localScale = new Vector3(currentPuckScale, currentPuckScale, currentPuckScale);
             MeshRenderer puckMeshRenderer = __instance.GetComponent<MeshRenderer>();
-            if (puckMeshRenderer != null)
+            if (puckMeshRenderer != null && !Balls.currentBallsEnabled)
             {
                 puckMeshRenderer.transform.localScale = new Vector3(currentPuckScale, currentPuckScale, currentPuckScale);
             }

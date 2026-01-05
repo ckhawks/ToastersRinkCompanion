@@ -56,6 +56,7 @@ public static class MessagingHandler
             _handlersRegistered = false;
             connectedToToastersRink = false;
             PuckScale.currentPuckScale = 1;
+            Balls.currentBallsEnabled = false;
             Cones.ClearCones();
             Portals.ClearPortals();
             Ramps.ClearRamps();
@@ -649,7 +650,35 @@ public static class MessagingHandler
                     Plugin.LogError($"Failed to parse puckscale payload: {e}");
                 }
             });
-            
+
+            JsonMessageRouter.RegisterHandler("balls", (sender, payloadJson) =>
+            {
+                if (!connectedToToastersRink) return;
+
+                try
+                {
+                    if (string.IsNullOrEmpty(payloadJson))
+                    {
+                        Plugin.LogError("Payload JSON is null or empty");
+                        return;
+                    }
+
+                    var ballsPayload = JsonConvert.DeserializeObject<BallsPayload>(payloadJson);
+
+                    if (ballsPayload == null)
+                    {
+                        Plugin.LogError("Failed to deserialize ballsPayload - result is null");
+                        return;
+                    }
+
+                    Balls.UpdateBallsToPayload(ballsPayload);
+                }
+                catch (Exception e)
+                {
+                    Plugin.LogError($"Failed to parse balls payload: {e}");
+                }
+            });
+
             JsonMessageRouter.RegisterHandler("portals", (sender, payloadJson) =>
             {
                 if (!connectedToToastersRink) return;
