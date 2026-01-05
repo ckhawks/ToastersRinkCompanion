@@ -1,5 +1,6 @@
 ﻿using HarmonyLib;
 using ToastersRinkCompanion.collectibles;
+using ToastersRinkCompanion.handlers;
 using UnityEngine;
 using UnityEngine.InputSystem;
 
@@ -51,6 +52,11 @@ public static class ClientChat
                 Plugin.spawnPuckAction.Enable();
                 
                 return false;
+            }
+            
+            else if (message.ToLower().StartsWith("/fuckgoals"))
+            {
+                FuckGoals.FuckGoalsNow();
             }
             // else if (message.ToLower().StartsWith("/collectible"))
             // {
