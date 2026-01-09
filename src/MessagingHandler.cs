@@ -62,6 +62,7 @@ public static class MessagingHandler
             Ramps.ClearRamps();
             Sign.DestroySign();
             UpdatableChat.Clear();
+            JuggleRallyTimer.Clear();
             FuckGoals.CleanupAllCustomFrames();
             Plugin.Log("Local client disconnected, handlers will be re-registered on reconnect");
             RockEventUI.Hide();
@@ -78,6 +79,9 @@ public static class MessagingHandler
 
             // Register updatable chat handlers
             UpdatableChat.RegisterHandlers();
+
+            // Register juggle rally timer handlers
+            JuggleRallyTimer.RegisterHandlers();
 
             JsonMessageRouter.RegisterHandler("greetings", (sender, payloadJson) =>
             {
