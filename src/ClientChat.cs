@@ -14,33 +14,33 @@ public static class ClientChat
     public static SpectatorCamera SpectatorCamera;
     public static PlayerCamera PlayerCamera;
     
-    [HarmonyPatch(typeof(UIChat), nameof(UIChat.Client_SendClientChatMessage))]
+    [HarmonyPatch(typeof(ChatManager), nameof(ChatManager.Client_SendChatMessage))]
     public class UIChatPatch
     {
         [HarmonyPrefix]
-        public static bool Prefix(UIChat __instance, string message, bool useTeamChat)
+        public static bool Prefix(ChatManager __instance, string content, bool isQuickChat, bool isTeamChat)
         {
             // Plugin.Log($"UIChatPatch");
-            string[] args = message.Split(' ');
+            string[] args = content.Split(' ');
             // Plugin.Log($"setkeybindpre");
-            if (message.ToLower().StartsWith("/setkeybind"))
+            if (content.ToLower().StartsWith("/setkeybind"))
             {
                 if (args.Length < 3)
                 {
-                    __instance.AddChatMessage($"Please write what you would like to set a keybind for, and what the key is. /setkeybind spawnpuck q");
+                    Plugin.AddLocalChatMessage($"Please write what you would like to set a keybind for, and what the key is. /setkeybind spawnpuck q");
                     return false;
                 }
 
                 if (args[1].ToLower() != "spawnpuck")
                 {
-                    __instance.AddChatMessage($"At this moment, you can only customize the keybind of spawnpuck. /setkeybind spawnpuck q");
+                    Plugin.AddLocalChatMessage($"At this moment, you can only customize the keybind of spawnpuck. /setkeybind spawnpuck q");
                     return false;
                 }
                 
                 string newBindingPath = $"<keyboard>/{args[2].ToLower()}";
                 Plugin.modSettings.spawnPuckKeybind = newBindingPath;
                 Plugin.modSettings.Save();
-                __instance.AddChatMessage($"Your keybind for spawnpuck has been set to {Plugin.modSettings.spawnPuckKeybind}. If this is not a valid input action, it will not work.");
+                Plugin.AddLocalChatMessage($"Your keybind for spawnpuck has been set to {Plugin.modSettings.spawnPuckKeybind}. If this is not a valid input action, it will not work.");
                 Plugin.spawnPuckAction.Disable();
                 if (Plugin.spawnPuckAction.bindings.Count > 0)
                 {
@@ -59,14 +59,14 @@ public static class ClientChat
             }
 
             // Plugin.Log($"Message: {message}");
-            if (message.ToLower().StartsWith("/watchpucksof"))
+            if (content.ToLower().StartsWith("/watchpucksof"))
             {
                 Plugin.Log($"args length {args.Length}");
 
                 // if they already had a target, turn it off no matter what they entered.
                 if (WatchPucksOf.target != null)
                 {
-                    __instance.AddChatMessage($"<size=18><color=green><b>WATCH PUCKS OF</b></color>  Disabled.");
+                    Plugin.AddLocalChatMessage($"<size=18><color=green><b>WATCH PUCKS OF</b></color>  Disabled.");
                     WatchPucksOf.target = null;
                     return false;
                 }
@@ -74,7 +74,7 @@ public static class ClientChat
                 // if they entered short thing, and there is no target already, provide help info
                 if (args.Length <= 1 && WatchPucksOf.target == null)
                 {
-                    __instance.AddChatMessage($"<s>-></s> <size=16><color=red>Please write who you want to watch the pucks of. Usage: /watchpucksof <name/number></color></size>");
+                    Plugin.AddLocalChatMessage($"<s>-></s> <size=16><color=red>Please write who you want to watch the pucks of. Usage: /watchpucksof <name/number></color></size>");
                     return false;
                 }
                 
@@ -96,7 +96,7 @@ public static class ClientChat
                             {
                                 if (foundPlayer)
                                 {
-                                    __instance.AddChatMessage(
+                                    Plugin.AddLocalChatMessage(
                                         $"<s>-></s> <size=16><color=red>There were multiple users found with the <b>number {playerNumber}</b>.</color></size>");
                                     return false;
                                 }
@@ -117,32 +117,32 @@ public static class ClientChat
                 // if no player found
                 if (targetPlayer == null)
                 {
-                    __instance.AddChatMessage(
+                    Plugin.AddLocalChatMessage(
                         $"<s>-></s> <size=16><color=red>Could not find a user to watch pucks of for <b>{nameArg}</b>.</color></size>");
                     return false;
                 }
 
                 WatchPucksOf.target = targetPlayer;
-                __instance.AddChatMessage($"<size=18><color=green><b>WATCH PUCKS OF</b></color>  Watching pucks for <b>{targetPlayer.Username.Value.ToString()}</b>...");
+                Plugin.AddLocalChatMessage($"<size=18><color=green><b>WATCH PUCKS OF</b></color>  Watching pucks for <b>{targetPlayer.Username.Value.ToString()}</b>...");
                 return false;
             }
             
-            // else if (message.ToLower().StartsWith("/fuckgoals"))
+            // else if (content.ToLower().StartsWith("/fuckgoals"))
             // {
             //     FuckGoals.FuckGoalsNow();
             // }
-            // else if (message.ToLower().StartsWith("/collectible"))
+            // else if (content.ToLower().StartsWith("/collectible"))
             // {
             //     Player player = PlayerManager.Instance.GetLocalPlayer();
             //     OldCollectibleRenderer.ShowCollectiblePrototype(player);
             //     return false;
             // } 
-            // else if (message.ToLower().StartsWith($"/opencase"))
+            // else if (content.ToLower().StartsWith($"/opencase"))
             // {
             //     Player player = PlayerManager.Instance.GetLocalPlayer();
             //     Opening.PlayOpeningForAt(player.Stick.transform.position, player);
             // }
-            else if (message.ToLower().StartsWith("/logcamera"))
+            else if (content.ToLower().StartsWith("/logcamera"))
             {
                 if (PlayerCamera != null)
                 {

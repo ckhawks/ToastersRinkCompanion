@@ -108,7 +108,7 @@ public static class MessagingHandler
                     if (greetingsPayload?.companionTargetVersion != null)
                     {
                         connectedToToastersRink = true;
-                        UIChat.Instance.AddChatMessage($"<size=14><i>Toaster's Rink Companion version {Plugin.MOD_VERSION} connected.</i> {(greetingsPayload?.companionTargetVersion == Plugin.MOD_VERSION ? "" : $" <br><color=red>Companion is out of date (server expecting {greetingsPayload?.companionTargetVersion}, client on {Plugin.MOD_VERSION})! Type <b>/outdated</b> for info.</color>")}</size>");
+                        Plugin.AddLocalChatMessage($"<size=14><i>Toaster's Rink Companion version {Plugin.MOD_VERSION} connected.</i> {(greetingsPayload?.companionTargetVersion == Plugin.MOD_VERSION ? "" : $" <br><color=red>Companion is out of date (server expecting {greetingsPayload?.companionTargetVersion}, client on {Plugin.MOD_VERSION})! Type <b>/outdated</b> for info.</color>")}</size>");
                         Plugin.Log($"Received `Greetings` message from Toaster's Rink {greetingsPayload?.companionTargetVersion}, we're connected!");
                         Sign.SpawnSign();
                         CollectiblePrefabs.Setup();
@@ -144,7 +144,7 @@ public static class MessagingHandler
                         return;
                     }
                     
-                    UIChat.Instance.AddChatMessage($"Toaster's Rink Companion {Plugin.MOD_VERSION} connected.");
+                    Plugin.AddLocalChatMessage($"Toaster's Rink Companion {Plugin.MOD_VERSION} connected.");
 
                     return;
                 }
@@ -179,7 +179,7 @@ public static class MessagingHandler
                     
                     Plugin.Log($"[{(NetworkManager.Singleton.IsServer ? "SVR" : "CLT")}] " +
                                $"Got chat from {sender}: {chatPayload.text}");
-                    UIChat.Instance.AddChatMessage($"[{(NetworkManager.Singleton.IsServer ? "SVR" : "CLT")}] " +
+                    Plugin.AddLocalChatMessage($"[{(NetworkManager.Singleton.IsServer ? "SVR" : "CLT")}] " +
                                                    $"Got chat from {sender}: {chatPayload.text}");
                 }
                 catch (Exception e)
@@ -746,7 +746,7 @@ public static class MessagingHandler
 
                     Plugin.Log($"[{(NetworkManager.Singleton.IsServer ? "SVR" : "CLT")}] " +
                                $"Got imageNotice from {sender}: {imageNoticePayload.imageUrl} {imageNoticePayload.note}");
-                    // UIChat.Instance.AddChatMessage(
+                    // MonoBehaviourSingleton<UIManager>.Instance.Chat.AddChatMessage(
                     //     $"[{(NetworkManager.Singleton.IsServer ? "SVR" : "CLT")}] " +
                     //     $"Got imageNotice from {sender}: {imageNoticePayload.imageUrl} {imageNoticePayload.note}");
                     UIPopup.Show(imageNoticePayload.from, imageNoticePayload.imageUrl, imageNoticePayload.note);

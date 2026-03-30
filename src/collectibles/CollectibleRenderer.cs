@@ -530,7 +530,7 @@ public static class CollectibleRenderer
         float rotationSpeed = 30.0f;
 
         Player localPlayer = PlayerManager.Instance.GetLocalPlayer();
-        Camera playerCamera = localPlayer?.PlayerCamera?.CameraComponent;
+        Camera playerCamera = localPlayer?.PlayerCamera?.UnityCamera;
 
         if (playerCamera == null)
         {
@@ -628,12 +628,12 @@ public static class CollectibleRenderer
         List<ItemShowCollectibleMetadata> itemShowDisplaysToDespawn = new List<ItemShowCollectibleMetadata>();
         
         Player localPlayer = PlayerManager.Instance.GetLocalPlayer();
-        Camera currentCamera = localPlayer?.PlayerCamera?.CameraComponent;
-        
+        Camera currentCamera = localPlayer?.PlayerCamera?.UnityCamera;
+
 
         if (currentCamera == null)
         {
-            currentCamera = localPlayer?.SpectatorCamera.CameraComponent;
+            currentCamera = localPlayer?.SpectatorCamera.UnityCamera;
         }
 
         if (currentCamera == null)
@@ -762,14 +762,14 @@ public static class CollectibleRenderer
     }
     
     // Remove displays when changing out of warmup
-    [HarmonyPatch(typeof(LevelManagerController), "Event_OnGamePhaseChanged")]
-    public static class LevelManagerControllerEventOnGamePhaseChanged2
+    [HarmonyPatch(typeof(LevelController), "Event_Everyone_OnGameStateChanged")]
+    public static class LevelControllerEventOnGamePhaseChanged2
     {
         [HarmonyPostfix]
-        public static void Postfix(LevelManagerController __instance, Dictionary<string, object> message)
+        public static void Postfix(LevelController __instance, Dictionary<string, object> eventParams)
         {
-            GamePhase oldGamePhase = (GamePhase) message["oldGamePhase"];
-            GamePhase newGamePhase = (GamePhase) message["newGamePhase"];
+            GamePhase oldGamePhase = ((GameState) eventParams["oldGameState"]).Phase;
+            GamePhase newGamePhase = ((GameState) eventParams["newGameState"]).Phase;
             if (oldGamePhase == GamePhase.Warmup && newGamePhase != GamePhase.Warmup)
             {
                 foreach (ItemShowCollectibleMetadata itemShowDisplay in activeItemShowDisplays)

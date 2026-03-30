@@ -8,8 +8,8 @@ public static class SpawnPuckKeybind
 {
     private static float pressCooldown = 0.25f;
     
-    static readonly FieldInfo _isFocusedField = typeof(UIComponent<UIChat>)
-        .GetField("isFocused", 
+    static readonly FieldInfo _isFocusedField = typeof(UIView)
+        .GetField("isFocused",
             BindingFlags.Instance | BindingFlags.NonPublic);
     
     [HarmonyPatch(typeof(PlayerInput), "Update")]
@@ -28,14 +28,14 @@ public static class SpawnPuckKeybind
                 return;
             }
             
-            bool isFocusedChat = (bool)_isFocusedField.GetValue(UIChat.Instance);
+            bool isFocusedChat = (bool)_isFocusedField.GetValue(MonoBehaviourSingleton<UIManager>.Instance.Chat);
             if (isFocusedChat) return;
             
             if (Plugin.spawnPuckAction.WasPressedThisFrame())
             {
                 if (Time.time - lastPressTimeSpawnPuck > pressCooldown){
                     lastPressTimeSpawnPuck = Time.time;
-                    UIChat.Instance.Client_SendClientChatMessage("/s", false);
+                    NetworkBehaviourSingleton<ChatManager>.Instance.Client_SendChatMessage("/s", false, false);
                 }
             }
         }

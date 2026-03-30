@@ -24,22 +24,18 @@ public static class RockEventUI
     // For progress bar animation
     private static Coroutine _bossProgressBarAnimationCoroutine;
     
-    static readonly FieldInfo _uiHudField = typeof(UIHUDController)
-        .GetField("uiHud",
-            BindingFlags.Instance | BindingFlags.NonPublic);
-    
-    static readonly FieldInfo _uiHudContainerField = typeof(UIHUD)
-        .GetField("container",
-            BindingFlags.Instance | BindingFlags.NonPublic);
-
     private static FieldInfo _progressBarProgressField;
-    
+
     private static void Setup(UIHUD uiHud)
     {
-        VisualElement uiHudContainer = (VisualElement) _uiHudContainerField.GetValue(uiHud);
-            
+        VisualElement rootVisualElement = MonoBehaviourSingleton<UIManager>.Instance.RootVisualElement;
+        if (rootVisualElement == null)
+        {
+            Plugin.LogError("RockEventUI: RootVisualElement is null, cannot setup boss bar.");
+            return;
+        }
 
-        CreateRockEventBossBar(uiHud, uiHudContainer);
+        CreateRockEventBossBar(uiHud, rootVisualElement);
         // Try to get the internal progress element using reflection
         // This is done after the ProgressBar has been added to the hierarchy,
         // as its internal elements might be created then.
@@ -64,8 +60,7 @@ public static class RockEventUI
         }
 
 
-        EventManager em = EventManager.Instance;
-        em.AddEventListener(
+        EventManager.AddEventListener(
             "Event_OnClientDisconnected",
             new Action<Dictionary<string, object>>(
                 (evt) =>
@@ -74,7 +69,7 @@ public static class RockEventUI
                     if (_fadeCoroutine != null)
                     {
                         // Assuming Plugin.Instance is a MonoBehaviour
-                        if (UIChat.Instance != null && UIChat.Instance is MonoBehaviour monoBehaviourInstance)
+                        if (MonoBehaviourSingleton<UIManager>.Instance.Chat != null && MonoBehaviourSingleton<UIManager>.Instance.Chat is MonoBehaviour monoBehaviourInstance)
                         {
                             monoBehaviourInstance.StopCoroutine(_fadeCoroutine);
                         }
@@ -82,7 +77,7 @@ public static class RockEventUI
                     }
                     if (_bossProgressBarAnimationCoroutine != null)
                     {
-                        if (UIChat.Instance != null && UIChat.Instance is MonoBehaviour monoBehaviourInstance)
+                        if (MonoBehaviourSingleton<UIManager>.Instance.Chat != null && MonoBehaviourSingleton<UIManager>.Instance.Chat is MonoBehaviour monoBehaviourInstance)
                         {
                             monoBehaviourInstance.StopCoroutine(_bossProgressBarAnimationCoroutine);
                         }
@@ -91,6 +86,7 @@ public static class RockEventUI
 
                     _bossBarUIContainer.style.display = DisplayStyle.None;
                     _bossBarUIContainer.style.opacity = 0;
+                    _isFadingIn = false;
                 }
             )
         );
@@ -152,14 +148,13 @@ public static class RockEventUI
             Plugin.LogError("Root VisualElement not found!");
             return;
         }
-        
-        VisualElement root = rootVisualElement.parent;
+
         // Create a CONTAINER VisualElement for Flexbox layout
         _bossBarUIContainer = new VisualElement();
         _bossBarUIContainer.name = "RockEventBossBarUIContainer";
 
         // Flexbox styles for the CONTAINER
-        root.Add(_bossBarUIContainer);
+        rootVisualElement.Add(_bossBarUIContainer);
         _bossBarUIContainer.style.position = Position.Absolute;
         _bossBarUIContainer.style.display = DisplayStyle.None; // Start hidden
         _bossBarUIContainer.style.bottom = 100; // Anchor to the bottom
@@ -216,9 +211,9 @@ public static class RockEventUI
         float duration = 1f
     )
     {
-        if (UIChat.Instance == null || !(UIChat.Instance is MonoBehaviour monoBehaviour))
+        if (MonoBehaviourSingleton<UIManager>.Instance.Chat == null || !(MonoBehaviourSingleton<UIManager>.Instance.Chat is MonoBehaviour monoBehaviour))
         {
-            Plugin.LogError("Cannot start fade coroutine: No MonoBehaviour instance found via UIChat.Instance.");
+            Plugin.LogError("Cannot start fade coroutine: No MonoBehaviour instance found via MonoBehaviourSingleton<UIManager>.Instance.Chat.");
             return;
         }
 
@@ -260,6 +255,10 @@ public static class RockEventUI
         {
             _bossBarUIContainer.style.display = DisplayStyle.None;
         }
+        if (Mathf.Approximately(endOpacity, 1f))
+        {
+            _isFadingIn = false;
+        }
         _fadeCoroutine = null; // Mark coroutine as finished
     }
 
@@ -294,7 +293,7 @@ public static class RockEventUI
             _bossBarUIContainer.style.opacity == 0) return; // Already hidden
 
         // Stop any ongoing fade-in or update animation before fading out
-        if (UIChat.Instance != null && UIChat.Instance is MonoBehaviour monoBehaviourInstance)
+        if (MonoBehaviourSingleton<UIManager>.Instance.Chat != null && MonoBehaviourSingleton<UIManager>.Instance.Chat is MonoBehaviour monoBehaviourInstance)
         {
             if (_fadeCoroutine != null)
             {
@@ -308,21 +307,28 @@ public static class RockEventUI
             }
         }
         
+        _isFadingIn = false;
         // Start fade out: 2 seconds duration
         StartFadeCoroutine(_bossBarUIContainer.style.opacity.value, 0f, now ? 0f : 1f, now ? 0f : 1f);
     }
 
+    private static bool _isFadingIn = false;
+
     public static void ShowOrUpdateUI(int bossMaxHealth, int bossHealth, bool displayNow)
     {
         if (!isSetup) Setup(UIManager.Instance.Hud);
-        
-        // If currently hidden, initiate fade-in
-        if (_bossBarUIContainer.style.display == DisplayStyle.None ||
-            _bossBarUIContainer.style.opacity.value < 1f)
+
+        // If currently hidden, initiate fade-in (but don't restart if already fading in)
+        if (_bossBarUIContainer.style.display == DisplayStyle.None)
         {
             _bossBarUIContainer.style.display = DisplayStyle.Flex;
-            // Start fade-in: 4-second delay, then 2-second fade
+            _isFadingIn = true;
             StartFadeCoroutine(_bossBarUIContainer.style.opacity.value, 1f, displayNow ? 0f : 5f, 2f);
+        }
+        else if (!_isFadingIn && _bossBarUIContainer.style.opacity.value < 1f)
+        {
+            _isFadingIn = true;
+            StartFadeCoroutine(_bossBarUIContainer.style.opacity.value, 1f, displayNow ? 0f : 0f, 2f);
         }
 
         // Animate progress bar if value changes
@@ -334,7 +340,7 @@ public static class RockEventUI
         // Animate the progress bar value change
         if (!Mathf.Approximately(_bossProgressBar.value, bossHealth))
         {
-            if (UIChat.Instance != null && UIChat.Instance is MonoBehaviour monoBehaviour)
+            if (MonoBehaviourSingleton<UIManager>.Instance.Chat != null && MonoBehaviourSingleton<UIManager>.Instance.Chat is MonoBehaviour monoBehaviour)
             {
                 // Stop any previous progress bar animation to start a new one
                 if (_bossProgressBarAnimationCoroutine != null)

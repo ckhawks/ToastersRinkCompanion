@@ -89,18 +89,10 @@ public static class JuggleRallyTimer
 
     private static void StartRallyTimer(string id, string messageTemplate, float elapsedTime)
     {
-        var uiChat = UIChat.Instance;
+        var uiChat = MonoBehaviourSingleton<UIManager>.Instance.Chat;
         if (uiChat == null)
         {
-            Plugin.LogError("JuggleRallyTimer: UIChat.Instance is null");
-            return;
-        }
-
-        // Get the chatScrollView via reflection
-        var chatScrollView = AccessTools.Field(typeof(UIChat), "chatScrollView").GetValue(uiChat) as ScrollView;
-        if (chatScrollView == null)
-        {
-            Plugin.LogError("JuggleRallyTimer: Could not access chatScrollView");
+            Plugin.LogError("JuggleRallyTimer: MonoBehaviourSingleton<UIManager>.Instance.Chat is null");
             return;
         }
 
@@ -109,13 +101,18 @@ public static class JuggleRallyTimer
         string message = messageTemplate.Replace("{{TIMER}}", timerText);
 
         // Add the message
-        uiChat.AddChatMessage(message);
+        uiChat.AddChatMessage(new ChatMessage { Content = message, IsSystem = true }, Units.Metric, false);
 
-        // Grab the last added label
-        int childCount = chatScrollView.childCount;
-        if (childCount > 0)
+        // Play notification sound
+        MonoBehaviourSingleton<UIManager>.Instance.PlayNotificationSound();
+
+        // Grab the last added UIChatMessage's label via the uiChatMessages list
+        var uiChatMessages = AccessTools.Field(typeof(UIChat), "uiChatMessages")?.GetValue(uiChat) as System.Collections.IList;
+        if (uiChatMessages != null && uiChatMessages.Count > 0)
         {
-            var label = chatScrollView[childCount - 1] as Label;
+            var lastMessage = uiChatMessages[uiChatMessages.Count - 1];
+            var labelField = AccessTools.Field(lastMessage.GetType(), "label");
+            var label = labelField?.GetValue(lastMessage) as Label;
             if (label != null)
             {
                 _activeTimers[id] = new RallyTimerState
@@ -127,6 +124,14 @@ public static class JuggleRallyTimer
                 };
                 Plugin.Log($"JuggleRallyTimer: Started timer with id '{id}', initial elapsed: {elapsedTime:F3}s");
             }
+            else
+            {
+                Plugin.LogError("JuggleRallyTimer: Could not access label from UIChatMessage");
+            }
+        }
+        else
+        {
+            Plugin.LogError("JuggleRallyTimer: Could not access uiChatMessages list");
         }
     }
 
@@ -198,8 +203,8 @@ public static class JuggleRallyTimer
         Plugin.Log("JuggleRallyTimer: Cleared all active timers");
     }
 
-    // Patch UIChat.Update to drive our timer updates
-    [HarmonyPatch(typeof(UIChat), "Update")]
+    // Patch UIManager.Update to drive our timer updates (UIChat no longer has Update in b312)
+    [HarmonyPatch(typeof(UIManager), "Update")]
     public class UIChatUpdatePatch
     {
         [HarmonyPostfix]

@@ -37,13 +37,13 @@ public static class WatchPucksOf
             // If they're pressing track input (left click), and not pressing right click
             if (__instance.TrackInput.ClientValue && !__instance.LookInput.ClientValue)
             {
-                Puck puck = NetworkBehaviourSingleton<PuckManager>.Instance.GetPlayerPuck(target.OwnerClientId); // the secret sauce
+                Puck puck = MonoBehaviourSingleton<PuckManager>.Instance.GetPlayerPuck(target.OwnerClientId); // the secret sauce
                 if (!puck)
                 {
-                    puck = NetworkBehaviourSingleton<PuckManager>.Instance.GetPuck(false);
+                    puck = MonoBehaviourSingleton<PuckManager>.Instance.GetPuck(false);
                 }
                 PlayerCamera playerCamera = __instance.Player.PlayerCamera;
-                PlayerBodyV2 playerBody = __instance.Player.PlayerBody;
+                PlayerBody playerBody = __instance.Player.PlayerBody;
                 if (puck && playerCamera && playerBody)
                 {
                     Quaternion quaternion = Quaternion.LookRotation(puck.transform.position - playerCamera.transform.position);
@@ -58,8 +58,8 @@ public static class WatchPucksOf
             // if right click
             if (__instance.LookInput.ClientValue)
             {
-                Vector2 vector2 = MonoBehaviourSingleton<InputManager>.Instance.StickAction.ReadValue<Vector2>();
-                Vector2 vector3 = new Vector2(-vector2.y * (MonoBehaviourSingleton<SettingsManager>.Instance.LookSensitivity / 2f), vector2.x * (MonoBehaviourSingleton<SettingsManager>.Instance.LookSensitivity / 2f));
+                Vector2 vector2 = InputManager.StickAction.ReadValue<Vector2>();
+                Vector2 vector3 = new Vector2(-vector2.y * (SettingsManager.LookSensitivity / 2f), vector2.x * (SettingsManager.LookSensitivity / 2f));
                 __instance.LookAngleInput.ClientValue = Utils.Vector2Clamp(__instance.LookAngleInput.ClientValue + vector3, minimumLookAngle, maximumLookAngle);
                 return false;
             }
@@ -82,13 +82,13 @@ public static class WatchPucksOf
 //     // if left click and no right click
 //     if (this.TrackInput.ClientValue && !this.LookInput.ClientValue)
 //     {
-//         Puck puck = NetworkBehaviourSingleton<PuckManager>.Instance.GetPlayerPuck(base.OwnerClientId);
+//         Puck puck = MonoBehaviourSingleton<PuckManager>.Instance.GetPlayerPuck(base.OwnerClientId);
 //         if (!puck)
 //         {
-//             puck = NetworkBehaviourSingleton<PuckManager>.Instance.GetPuck(false);
+//             puck = MonoBehaviourSingleton<PuckManager>.Instance.GetPuck(false);
 //         }
 //         PlayerCamera playerCamera = this.Player.PlayerCamera;
-//         PlayerBodyV2 playerBody = this.Player.PlayerBody;
+//         PlayerBody playerBody = this.Player.PlayerBody;
 //         if (puck && playerCamera && playerBody)
 //         {
 //             Quaternion quaternion = Quaternion.LookRotation(puck.transform.position - playerCamera.transform.position);
@@ -100,8 +100,8 @@ public static class WatchPucksOf
 //     // if right click
 //     if (this.LookInput.ClientValue)
 //     {
-//         Vector2 vector2 = MonoBehaviourSingleton<InputManager>.Instance.StickAction.ReadValue<Vector2>();
-//         Vector2 vector3 = new Vector2(-vector2.y * (MonoBehaviourSingleton<SettingsManager>.Instance.LookSensitivity / 2f), vector2.x * (MonoBehaviourSingleton<SettingsManager>.Instance.LookSensitivity / 2f));
+//         Vector2 vector2 = InputManager.StickAction.ReadValue<Vector2>();
+//         Vector2 vector3 = new Vector2(-vector2.y * (SettingsManager.LookSensitivity / 2f), vector2.x * (SettingsManager.LookSensitivity / 2f));
 //         this.LookAngleInput.ClientValue = Utils.Vector2Clamp(this.LookAngleInput.ClientValue + vector3, this.minimumLookAngle, this.maximumLookAngle);
 //         return;
 //     }

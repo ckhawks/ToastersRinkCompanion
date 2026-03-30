@@ -113,18 +113,10 @@ public static class UpdatableChat
 
     private static void CreateUpdatableMessage(string id, string text)
     {
-        var uiChat = UIChat.Instance;
+        var uiChat = MonoBehaviourSingleton<UIManager>.Instance.Chat;
         if (uiChat == null)
         {
-            Plugin.LogError("UpdatableChat: UIChat.Instance is null");
-            return;
-        }
-
-        // Get the chatScrollView via reflection
-        var chatScrollView = AccessTools.Field(typeof(UIChat), "chatScrollView").GetValue(uiChat) as ScrollView;
-        if (chatScrollView == null)
-        {
-            Plugin.LogError("UpdatableChat: Could not access chatScrollView");
+            Plugin.LogError("UpdatableChat: MonoBehaviourSingleton<UIManager>.Instance.Chat is null");
             return;
         }
 
@@ -133,13 +125,18 @@ public static class UpdatableChat
         string displayText = isThinking ? text.Replace(THINKING_PLACEHOLDER, "<color=orange><i>Thinking</i></color>") : text;
 
         // Add the message
-        uiChat.AddChatMessage(displayText);
+        uiChat.AddChatMessage(new ChatMessage { Content = displayText, IsSystem = true }, Units.Metric, false);
 
-        // Grab the last added label
-        int childCount = chatScrollView.childCount;
-        if (childCount > 0)
+        // Play notification sound
+        MonoBehaviourSingleton<UIManager>.Instance.PlayNotificationSound();
+
+        // Grab the last added UIChatMessage's label via the uiChatMessages list
+        var uiChatMessages = AccessTools.Field(typeof(UIChat), "uiChatMessages")?.GetValue(uiChat) as System.Collections.IList;
+        if (uiChatMessages != null && uiChatMessages.Count > 0)
         {
-            var label = chatScrollView[childCount - 1] as Label;
+            var lastMessage = uiChatMessages[uiChatMessages.Count - 1];
+            var labelField = AccessTools.Field(lastMessage.GetType(), "label");
+            var label = labelField?.GetValue(lastMessage) as Label;
             if (label != null)
             {
                 _messageLabels[id] = label;
@@ -157,6 +154,14 @@ public static class UpdatableChat
                     Plugin.Log($"UpdatableChat: Started thinking animation for id '{id}'");
                 }
             }
+            else
+            {
+                Plugin.LogError("UpdatableChat: Could not access label from UIChatMessage");
+            }
+        }
+        else
+        {
+            Plugin.LogError("UpdatableChat: Could not access uiChatMessages list");
         }
     }
 
@@ -203,48 +208,45 @@ public static class UpdatableChat
 
     private static void ShowSingleChatMessage(Label label)
     {
-        var uiChat = UIChat.Instance;
+        var uiChat = MonoBehaviourSingleton<UIManager>.Instance.Chat;
         if (uiChat == null || label == null) return;
 
-        // Get the chatMessages dictionary via reflection
-        var chatMessagesField = AccessTools.Field(typeof(UIChat), "chatMessages");
-        if (chatMessagesField == null) return;
+        // Find the UIChatMessage that owns this label
+        var uiChatMessages = AccessTools.Field(typeof(UIChat), "uiChatMessages")?.GetValue(uiChat) as System.Collections.IList;
+        if (uiChatMessages == null) return;
 
-        var chatMessages = chatMessagesField.GetValue(uiChat) as System.Collections.IDictionary;
-        if (chatMessages == null) return;
+        object targetMessage = null;
+        var labelField = typeof(UIChatMessage).GetField("label",
+            System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic);
 
-        // Find the ChatMessage by matching its MessageLabel field
-        // (The dictionary keys are orphaned TemplateContainers, not in the visual tree)
-        object chatMessage = null;
-        foreach (var value in chatMessages.Values)
+        foreach (var msg in uiChatMessages)
         {
-            var messageLabelField = AccessTools.Field(value.GetType(), "MessageLabel");
-            if (messageLabelField != null)
+            var msgLabel = labelField?.GetValue(msg) as Label;
+            if (msgLabel == label)
             {
-                var messageLabel = messageLabelField.GetValue(value) as Label;
-                if (messageLabel == label)
-                {
-                    chatMessage = value;
-                    break;
-                }
+                targetMessage = msg;
+                break;
             }
         }
 
-        if (chatMessage == null) return;
+        if (targetMessage == null) return;
 
-        var chatMessageType = chatMessage.GetType();
+        // Update the ChatMessage timestamp so the expiry timer resets
+        var chatMsgField = AccessTools.Field(typeof(UIChatMessage), "ChatMessage");
+        if (chatMsgField != null)
+        {
+            var chatMsg = (ChatMessage)chatMsgField.GetValue(targetMessage);
+            chatMsg.Timestamp = Utils.GetTimestamp();
+            chatMsgField.SetValue(targetMessage, chatMsg);
+        }
 
-        // Reset CreateTime so RemainingFadeTime resets to 15 seconds
-        var createTimeField = AccessTools.Field(chatMessageType, "CreateTime");
-        createTimeField?.SetValue(chatMessage, Time.time);
+        // Call Focus() to make it visible again (removes "blurred" class)
+        var focusMethod = AccessTools.Method(typeof(UIChatMessage), "Focus");
+        focusMethod?.Invoke(targetMessage, null);
 
-        // Set IsVisible to false so Show() actually runs (it returns early if already visible)
-        var isVisibleField = AccessTools.Field(chatMessageType, "IsVisible");
-        isVisibleField?.SetValue(chatMessage, false);
-
-        // Call Show(0f, true) to make it visible and auto-hide after fade time
-        var showMethod = AccessTools.Method(chatMessageType, "Show");
-        showMethod?.Invoke(chatMessage, new object[] { 0f, true });
+        // Restart the expiry tween with the new timestamp
+        var startExpiryMethod = AccessTools.Method(typeof(UIChatMessage), "StartExpiryTween");
+        startExpiryMethod?.Invoke(targetMessage, null);
     }
 
     private static void RemoveMessage(string id)
@@ -330,8 +332,8 @@ public static class UpdatableChat
         Plugin.Log("UpdatableChat: Cleared all tracked messages");
     }
 
-    // Patch UIChat.Update to drive our animations
-    [HarmonyPatch(typeof(UIChat), "Update")]
+    // Patch UIManager.Update to drive our animations (UIChat no longer has Update in b312)
+    [HarmonyPatch(typeof(UIManager), "Update")]
     public class UIChatUpdatePatch
     {
         [HarmonyPostfix]

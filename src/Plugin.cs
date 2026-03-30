@@ -35,8 +35,28 @@ public class Plugin : IPuckMod
             {
                 Plugin.Log("Environment: client.");
                 Plugin.Log("Patching methods...");
-                harmony.PatchAll();
-                Plugin.Log($"All patched! Patched methods:");
+                int patchedCount = 0;
+                int failedCount = 0;
+                foreach (var type in typeof(Plugin).Assembly.GetTypes())
+                {
+                    if (type.GetCustomAttributes(typeof(HarmonyPatch), true).Length > 0 ||
+                        type.GetNestedTypes(System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.NonPublic)
+                            .Any(t => t.GetCustomAttributes(typeof(HarmonyPatch), true).Length > 0))
+                    {
+                        try
+                        {
+                            harmony.PatchAll(type);
+                            patchedCount++;
+                        }
+                        catch (Exception e)
+                        {
+                            failedCount++;
+                            LogError($"Failed to patch {type.FullName}: {e.Message}");
+                        }
+                    }
+                }
+                Plugin.Log($"Patching complete: {patchedCount} succeeded, {failedCount} failed.");
+                Plugin.Log($"Patched methods:");
                 LogAllPatchedMethods();
                 MessagingHandler.Setup();
                 modSettings = ModSettings.Load();
@@ -110,5 +130,15 @@ public class Plugin : IPuckMod
     public static void LogWarning(string message)
     {
         Debug.LogWarning($"[{MOD_NAME}] {message}");
+    }
+
+    public static void AddLocalChatMessage(string content)
+    {
+        NetworkBehaviourSingleton<ChatManager>.Instance.AddChatMessage(new ChatMessage
+        {
+            Content = content,
+            IsSystem = true,
+            Timestamp = Utils.GetTimestamp()
+        });
     }
 }

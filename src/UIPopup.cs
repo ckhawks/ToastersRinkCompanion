@@ -29,7 +29,7 @@ public static class UIPopup
 
         // We need a MonoBehaviour instance to start a coroutine.
         // UIGameState.Instance is a perfect candidate.
-        var monoBehaviourHook = UIGameState.Instance;
+        var monoBehaviourHook = MonoBehaviourSingleton<UIManager>.Instance?.GameState;
         if (monoBehaviourHook == null)
         {
             Plugin.LogError("Cannot show popup, UIGameState.Instance is null.");
@@ -171,7 +171,7 @@ public static class UIPopup
         }
 
         Label gameTimeLabel =
-            (Label)_gameTimeLabelField.GetValue(UIGameState.Instance);
+            (Label)_gameTimeLabelField.GetValue(MonoBehaviourSingleton<UIManager>.Instance?.GameState);
         if (gameTimeLabel == null)
         {
             Plugin.LogError($"gameTimeLabel is null");

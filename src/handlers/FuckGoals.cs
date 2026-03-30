@@ -15,7 +15,7 @@ public static class FuckGoals
 
     // public static void FuckGoalsNow()
     // {
-    //     UIChat.Instance.AddChatMessage($"fucking goals!");
+    //     Plugin.AddLocalChatMessage($"fucking goals!");
     //
     //     Goal[] goals = UnityEngine.Object.FindObjectsByType<Goal>(FindObjectsSortMode.None);
     //
@@ -35,7 +35,7 @@ public static class FuckGoals
     //
     //         goal.gameObject.transform.position = newPos;
     //         
-    //         UIChat.Instance.AddChatMessage($"Moved {goal.gameObject.name} to {goal.gameObject.transform.position}");
+    //         Plugin.AddLocalChatMessage($"Moved {goal.gameObject.name} to {goal.gameObject.transform.position}");
     //
     //         // TODO the colliders/triggers aren't moving to the new position
     //         // TODO need to recreate all of the MeshRenderers in the new position and store them
@@ -64,7 +64,7 @@ public static class FuckGoals
         LoadPrefabRed();
         LoadPrefabBlue();
         
-        UIChat.Instance.AddChatMessage("fucking goals!");
+        Plugin.AddLocalChatMessage("fucking goals!");
 
         Goal[] goals =
             Object.FindObjectsByType<Goal>(FindObjectsSortMode.None);

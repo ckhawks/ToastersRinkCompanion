@@ -144,14 +144,14 @@ public static class RockEvent
         RockEventUI.ShowOrUpdateUI(payload.RockMaxHealth, payload.RockCurrentHealth, false);
     }
 
-    [HarmonyPatch(typeof(LevelManagerController), "Event_OnGamePhaseChanged")]
-    public static class LevelManagerControllerEventOnGamePhaseChanged
+    [HarmonyPatch(typeof(LevelController), "Event_Everyone_OnGameStateChanged")]
+    public static class LevelControllerEventOnGamePhaseChanged
     {
         [HarmonyPostfix]
-        public static void Postfix(LevelManagerController __instance, Dictionary<string, object> message)
+        public static void Postfix(LevelController __instance, Dictionary<string, object> eventParams)
         {
-            GamePhase newGamePhase = (GamePhase) message["newGamePhase"];
-            GamePhase oldGamePhase = (GamePhase) message["oldGamePhase"];
+            GamePhase newGamePhase = ((GameState) eventParams["newGameState"]).Phase;
+            GamePhase oldGamePhase = ((GameState) eventParams["oldGameState"]).Phase;
             if (oldGamePhase == GamePhase.Warmup && newGamePhase != GamePhase.Warmup)
             {
                 DestroyRock(false);
