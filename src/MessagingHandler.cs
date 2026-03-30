@@ -60,6 +60,7 @@ public static class MessagingHandler
             Cones.ClearCones();
             Portals.ClearPortals();
             Ramps.ClearRamps();
+            Jail.ClearAllJails();
             Sign.DestroySign();
             UpdatableChat.Clear();
             JuggleRallyTimer.Clear();
@@ -725,7 +726,7 @@ public static class MessagingHandler
 
                 // Plugin.Log($"Handling `ImageNotice` message from sender {sender}");
                 // Plugin.Log($"Raw payload JSON: '{payloadJson}'"); // Debug log
-                
+
                 try
                 {
                     if (string.IsNullOrEmpty(payloadJson))
@@ -736,13 +737,13 @@ public static class MessagingHandler
 
                     // payloadJson is the raw JSON payload like {"from":123,"text":"hello!"}
                     var imageNoticePayload = JsonUtility.FromJson<ImageNoticePayload>(payloadJson);
-                    
+
                     if (imageNoticePayload == null)
                     {
                         Plugin.LogError("Failed to deserialize ImageNoticePayload - result is null");
                         return;
                     }
-                    
+
                     Plugin.Log($"[{(NetworkManager.Singleton.IsServer ? "SVR" : "CLT")}] " +
                                $"Got imageNotice from {sender}: {imageNoticePayload.imageUrl} {imageNoticePayload.note}");
                     // UIChat.Instance.AddChatMessage(
@@ -755,7 +756,63 @@ public static class MessagingHandler
                     Plugin.LogError($"Failed to parse ImageNotice payload: {e}");
                 }
             });
-            
+
+            JsonMessageRouter.RegisterHandler("jail_spawn", (sender, payloadJson) =>
+            {
+                if (!connectedToToastersRink) return;
+
+                try
+                {
+                    if (string.IsNullOrEmpty(payloadJson))
+                    {
+                        Plugin.LogError("Payload JSON is null or empty");
+                        return;
+                    }
+
+                    var jailSpawnPayload = JsonConvert.DeserializeObject<Jail.JailSpawnPayload>(payloadJson);
+
+                    if (jailSpawnPayload == null)
+                    {
+                        Plugin.LogError("Failed to deserialize JailSpawnPayload - result is null");
+                        return;
+                    }
+
+                    Jail.SpawnJail(jailSpawnPayload);
+                }
+                catch (Exception e)
+                {
+                    Plugin.LogError($"Failed to parse jail_spawn payload: {e}");
+                }
+            });
+
+            JsonMessageRouter.RegisterHandler("jail_despawn", (sender, payloadJson) =>
+            {
+                if (!connectedToToastersRink) return;
+
+                try
+                {
+                    if (string.IsNullOrEmpty(payloadJson))
+                    {
+                        Plugin.LogError("Payload JSON is null or empty");
+                        return;
+                    }
+
+                    var jailDespawnPayload = JsonConvert.DeserializeObject<Jail.JailDespawnPayload>(payloadJson);
+
+                    if (jailDespawnPayload == null)
+                    {
+                        Plugin.LogError("Failed to deserialize JailDespawnPayload - result is null");
+                        return;
+                    }
+
+                    Jail.DespawnJail(jailDespawnPayload.id);
+                }
+                catch (Exception e)
+                {
+                    Plugin.LogError($"Failed to parse jail_despawn payload: {e}");
+                }
+            });
+
             _handlersRegistered = true;
             Plugin.Log($"Setup is complete - handlers registered.");
         }
