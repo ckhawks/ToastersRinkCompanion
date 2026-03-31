@@ -13,7 +13,7 @@ namespace ToastersRinkCompanion;
 public class Plugin : IPuckMod
 {
     public static string MOD_NAME = "ToastersRinkCompanion";
-    public static string MOD_VERSION = "1.5.3";
+    public static string MOD_VERSION = "2.0.0";
     // public static string TRS_VERSION = "Build 1054";
     public static string MOD_GUID = "pw.stellaric.toaster.rinkcompanion";
 

@@ -50,7 +50,7 @@ public static class ModifierPanelUI
         {
             string sv = MessagingHandler.serverVersion;
             string cv = Plugin.MOD_VERSION;
-            _versionLabel.text = string.IsNullOrEmpty(sv) ? $"Companion {cv}" : $"Server {sv} | Companion {cv}";
+            _versionLabel.text = string.IsNullOrEmpty(sv) ? $"Companion {cv}" : $"Server {sv} \u2014 Companion {cv}";
         }
 
         // Rebuild active tab content
@@ -171,7 +171,12 @@ public static class ModifierPanelUI
         _panel.Add(_contentArea);
 
         // Register built-in tabs
+        RegisterTab("Home", HomeTab.BuildContent);
+        RegisterTab("Actions", TrainingTab.BuildContent);
         RegisterTab("Modifiers", ModifierListTab.BuildContent);
+        RegisterTab("Players", PlayersTab.BuildContent);
+        if (ModifierRegistry.IsAdmin)
+            RegisterTab("Admin", AdminTab.BuildContent);
         RegisterTab("Settings", SettingsTab.BuildContent);
 
         _isSetup = true;
@@ -209,6 +214,18 @@ public static class ModifierPanelUI
             TabButton = tabButton,
             BuildContent = buildContent
         });
+    }
+
+    public static void SwitchToTabByName(string name)
+    {
+        for (int i = 0; i < _tabs.Count; i++)
+        {
+            if (_tabs[i].Name == name)
+            {
+                SwitchToTab(i);
+                return;
+            }
+        }
     }
 
     private static void SwitchToTab(int index)

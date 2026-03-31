@@ -68,6 +68,7 @@ public static class MessagingHandler
             Plugin.Log("Local client disconnected, handlers will be re-registered on reconnect");
             RockEventUI.Hide();
             ToastersRinkCompanion.modifiers.ModifierRegistry.Clear();
+            ToastersRinkCompanion.modifiers.ServerState.Clear();
             ToastersRinkCompanion.modifiers.ActiveModifiersHUD.Clear();
             ToastersRinkCompanion.modifiers.VotePopupUI.Hide();
             ToastersRinkCompanion.modifiers.ModifierPanelUI.Hide();

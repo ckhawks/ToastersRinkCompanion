@@ -87,14 +87,14 @@ public static class ModifierListTab
         var colorBar = new VisualElement();
         colorBar.style.width = 4;
         colorBar.style.height = 18;
-        colorBar.style.backgroundColor = new StyleColor(new Color(0.3f, 0.8f, 0.4f));
+        colorBar.style.backgroundColor = new StyleColor(UIHelpers.TextSecondary);
         colorBar.style.borderTopLeftRadius = 2;
         colorBar.style.borderBottomLeftRadius = 2;
         colorBar.style.marginRight = 8;
         headerRow.Add(colorBar);
 
         var headerLabel = new Label("Active");
-        headerLabel.style.color = new StyleColor(new Color(0.3f, 0.8f, 0.4f));
+        headerLabel.style.color = UIHelpers.TextPrimary;
         headerLabel.style.fontSize = 16;
         headerLabel.style.unityFontStyleAndWeight = FontStyle.Bold;
         headerRow.Add(headerLabel);
@@ -115,10 +115,10 @@ public static class ModifierListTab
         // Reuse standard modifier rows
         var container = new VisualElement();
         container.style.borderLeftWidth = 3;
-        container.style.borderLeftColor = new StyleColor(new Color(0.3f, 0.8f, 0.4f));
+        container.style.borderLeftColor = new StyleColor(UIHelpers.TextSecondary);
         container.style.marginLeft = 6;
         container.style.paddingLeft = 8;
-        container.style.marginBottom = 8;
+        container.style.marginBottom = 4;
         parent.Add(container);
 
         foreach (var active in ModifierRegistry.ActiveModifiers)
@@ -126,6 +126,13 @@ public static class ModifierListTab
             if (!modifiers.TryGetValue(active.key, out var mod)) continue;
             BuildModifierRow(container, mod, true);
         }
+
+        // Divider below active section
+        var bottomSep = new VisualElement();
+        bottomSep.style.height = 1;
+        bottomSep.style.backgroundColor = new StyleColor(new Color(0.2f, 0.2f, 0.2f));
+        bottomSep.style.marginBottom = 8;
+        parent.Add(bottomSep);
     }
 
     private static void BuildCategorySection(VisualElement parent, string catKey,

@@ -127,6 +127,23 @@ public static class ModifierMessaging
                 Plugin.LogError($"Failed to parse vote_ended: {e}");
             }
         });
+
+        JsonMessageRouter.RegisterHandler("server_state", (sender, payloadJson) =>
+        {
+            try
+            {
+                var payload = JsonConvert.DeserializeObject<ServerState.ServerStatePayload>(payloadJson);
+                if (payload == null) return;
+
+                ServerState.Update(payload);
+                ModifierPanelUI.RefreshCurrentTab();
+                Plugin.Log($"Received server_state");
+            }
+            catch (Exception e)
+            {
+                Plugin.LogError($"Failed to parse server_state: {e}");
+            }
+        });
     }
 
     /// <summary>

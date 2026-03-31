@@ -260,7 +260,7 @@ public static class ModifierControlFactory
             if (displayValue == $"#{number} {username}")
             {
                 // Team 0 = home (typically blue-ish), Team 1 = away (typically red-ish)
-                Color teamColor = (int)player.Team == 0
+                Color teamColor = player.Team == PlayerTeam.Blue
                     ? new Color(0.3f, 0.5f, 1f)
                     : new Color(0.9f, 0.2f, 0.2f);
                 dot.style.backgroundColor = new StyleColor(teamColor);

@@ -45,6 +45,8 @@ public static class SpawnPuckKeybind
         [HarmonyPostfix]
         public static void Postfix(PlayerInput __instance)
         {
+            // Only process for local player — with multiple players, Update runs for each PlayerInput
+            if (__instance.OwnerClientId != Unity.Netcode.NetworkManager.Singleton.LocalClientId) return;
             if (!MessagingHandler.connectedToToastersRink) return;
 
             if (_isFocusedField == null)
@@ -54,7 +56,20 @@ public static class SpawnPuckKeybind
             }
 
             bool isFocusedChat = (bool)_isFocusedField.GetValue(MonoBehaviourSingleton<UIManager>.Instance.Chat);
-            if (isFocusedChat) return;
+
+            // When panel is open or chat focused, only process panel toggle/ESC
+            if (isFocusedChat || ModifierPanelUI.IsVisible)
+            {
+                if (Keyboard.current != null)
+                {
+                    var settings = Plugin.modSettings;
+                    if (IsKeyPressed(settings.panelKeybind))
+                        ModifierPanelUI.Toggle();
+                    if (Keyboard.current.escapeKey.wasPressedThisFrame && ModifierPanelUI.IsVisible)
+                        ModifierPanelUI.Hide();
+                }
+                return;
+            }
 
             if (Plugin.spawnPuckAction.WasPressedThisFrame())
             {
