@@ -3,6 +3,7 @@
 using System;
 using System.Linq;
 using HarmonyLib;
+using ToastersRinkCompanion.handlers;
 using UnityEngine;
 using UnityEngine.InputSystem;
 using UnityEngine.Rendering;

@@ -340,6 +340,7 @@ public static class UpdatableChat
         public static void Postfix()
         {
             Update();
+            ToastersRinkCompanion.modifiers.VotePopupUI.Tick();
         }
     }
 

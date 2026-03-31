@@ -6,6 +6,9 @@ namespace ToastersRinkCompanion;
 public class ModSettings
 {
     public string spawnPuckKeybind { get; set; } = "<keyboard>/g";
+    public string voteYesKeybind { get; set; } = "f1";
+    public string voteNoKeybind { get; set; } = "f2";
+    public string panelKeybind { get; set; } = "f3";
     
     static string ConfigurationFileName = $"{Plugin.MOD_NAME}.json";
 

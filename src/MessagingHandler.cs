@@ -67,6 +67,10 @@ public static class MessagingHandler
             FuckGoals.CleanupAllCustomFrames();
             Plugin.Log("Local client disconnected, handlers will be re-registered on reconnect");
             RockEventUI.Hide();
+            ToastersRinkCompanion.modifiers.ModifierRegistry.Clear();
+            ToastersRinkCompanion.modifiers.ActiveModifiersHUD.Clear();
+            ToastersRinkCompanion.modifiers.VotePopupUI.Hide();
+            ToastersRinkCompanion.modifiers.ModifierPanelUI.Hide();
         }
     }
 
@@ -83,6 +87,12 @@ public static class MessagingHandler
 
             // Register juggle rally timer handlers
             JuggleRallyTimer.RegisterHandlers();
+
+            // Register chat formatting handlers (donor prefix, team suffix)
+            ChatFormatting.RegisterHandlers();
+
+            // Register modifier system handlers
+            ToastersRinkCompanion.modifiers.ModifierMessaging.RegisterHandlers();
 
             JsonMessageRouter.RegisterHandler("greetings", (sender, payloadJson) =>
             {
@@ -108,6 +118,7 @@ public static class MessagingHandler
                     if (greetingsPayload?.companionTargetVersion != null)
                     {
                         connectedToToastersRink = true;
+                        serverVersion = greetingsPayload?.toastersRinkSuiteVersion ?? "";
                         Plugin.AddLocalChatMessage($"<size=14><i>Toaster's Rink Companion version {Plugin.MOD_VERSION} connected.</i> {(greetingsPayload?.companionTargetVersion == Plugin.MOD_VERSION ? "" : $" <br><color=red>Companion is out of date (server expecting {greetingsPayload?.companionTargetVersion}, client on {Plugin.MOD_VERSION})! Type <b>/outdated</b> for info.</color>")}</size>");
                         Plugin.Log($"Received `Greetings` message from Toaster's Rink {greetingsPayload?.companionTargetVersion}, we're connected!");
                         Sign.SpawnSign();
@@ -822,10 +833,13 @@ public static class MessagingHandler
         }
     }
     
+    public static string serverVersion = "";
+
     [Serializable]
     public class GreetingsPayload
     {
         public string companionTargetVersion;
+        public string toastersRinkSuiteVersion;
     }
     
     [Serializable]

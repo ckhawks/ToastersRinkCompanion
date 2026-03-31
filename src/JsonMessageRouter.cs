@@ -3,6 +3,7 @@
 using System;
 using System.Collections.Generic;
 using System.Text;
+using Newtonsoft.Json;
 using Unity.Collections;
 using Unity.Netcode;
 using UnityEngine;
@@ -178,11 +179,8 @@ public static class JsonMessageRouter
     {
         Initialize();
 
-        // Serialize the payload directly to JSON first
-        // TODO make this match how the server is serializing shit
-        string payloadJson = JsonUtility.ToJson(payload);
-        
-        // Create envelope manually to avoid Unity JsonUtility issues with object types
+        // Serialize with Newtonsoft to properly handle Dictionary and complex types
+        string payloadJson = JsonConvert.SerializeObject(payload);
         string envelopeJson = $"{{\"type\":\"{messageType}\",\"payload\":{payloadJson}}}";
         
         Plugin.Log($"Sending envelope: '{envelopeJson}'"); // Debug log
