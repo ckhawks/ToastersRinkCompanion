@@ -33,13 +33,45 @@ public static class ActiveModifiersHUD
         _container = new VisualElement();
         _container.name = "ActiveModifiersHUD";
         _container.style.position = Position.Absolute;
-        _container.style.left = 16;
-        _container.style.bottom = 50;
         _container.style.flexDirection = FlexDirection.ColumnReverse;
-        _container.style.alignItems = Align.FlexStart;
+        ApplyPosition();
         root.Add(_container);
 
         _isSetup = true;
+    }
+
+    private const float ScreenPadding = 16f;
+
+    public static void ApplyPosition()
+    {
+        if (_container == null) return;
+        var settings = Plugin.modSettings;
+        int x = settings?.hudPositionX ?? 0;
+        int y = settings?.hudPositionY ?? 95;
+
+        // Position using left % with translate to center the container on that point
+        // X: 0% = left edge, 50% = center, 100% = right edge
+        _container.style.left = new StyleLength(new Length(x, LengthUnit.Percent));
+        _container.style.right = StyleKeyword.Auto;
+        _container.style.top = new StyleLength(new Length(y, LengthUnit.Percent));
+        _container.style.bottom = StyleKeyword.Auto;
+
+        // Alignment: left half aligns left, right half aligns right
+        bool isRight = x > 50;
+        _container.style.alignItems = isRight ? Align.FlexEnd : Align.FlexStart;
+
+        // Stack direction: top half stacks down, bottom half stacks up
+        bool isBottom = y > 50;
+        _container.style.flexDirection = isBottom ? FlexDirection.ColumnReverse : FlexDirection.Column;
+
+        // Use translate to anchor the container correctly:
+        // X: lerp from 0% (left-aligned) to -100% (right-aligned)
+        // Y: lerp from 0% (top-aligned) to -100% (bottom-aligned)
+        float translateX = -x; // at 0% -> 0, at 50% -> -50%, at 100% -> -100%
+        float translateY = -y;
+        _container.style.translate = new Translate(
+            new Length(translateX, LengthUnit.Percent),
+            new Length(translateY, LengthUnit.Percent));
     }
 
     public static void Refresh()
@@ -48,6 +80,8 @@ public static class ActiveModifiersHUD
         if (_container == null) return;
 
         _container.Clear();
+
+        if (Plugin.modSettings != null && !Plugin.modSettings.showModifiersHUD) return;
 
         // Sort by category so same-category modifiers are grouped
         var sorted = new List<ActiveModifierEntry>(ModifierRegistry.ActiveModifiers);

@@ -17,18 +17,108 @@ public static class ModifierListTab
     // Track which categories are collapsed
     private static readonly HashSet<string> _collapsedCategories = new();
 
+    private static string _searchFilter = "";
+
+    private static ScrollView _scrollView;
+
     public static void BuildContent(VisualElement parent)
     {
-        var scrollView = new ScrollView(ScrollViewMode.Vertical);
-        scrollView.style.flexGrow = 1;
-        parent.Add(scrollView);
+        // Top bar: title + flavor badge on left, filter on right
+        var topBar = new VisualElement();
+        topBar.style.flexDirection = FlexDirection.Row;
+        topBar.style.alignItems = Align.Center;
+        topBar.style.paddingLeft = 12;
+        topBar.style.paddingRight = 16;
+        topBar.style.paddingTop = 8;
+        topBar.style.paddingBottom = 4;
+        parent.Add(topBar);
+
+        var titleLabel = new Label("Modifiers");
+        titleLabel.style.fontSize = 18;
+        titleLabel.style.unityFontStyleAndWeight = FontStyle.Bold;
+        titleLabel.style.color = UIHelpers.TextPrimary;
+        titleLabel.style.marginRight = 10;
+        topBar.Add(titleLabel);
+
+        // Server flavor badge
+        string flavor = ModifierRegistry.ServerFlavor;
+        if (!string.IsNullOrEmpty(flavor))
+        {
+            var flavorBadge = new Label(flavor);
+            flavorBadge.style.fontSize = 12;
+            flavorBadge.style.paddingLeft = 6;
+            flavorBadge.style.paddingRight = 6;
+            flavorBadge.style.paddingTop = 2;
+            flavorBadge.style.paddingBottom = 2;
+            flavorBadge.style.borderTopLeftRadius = 3;
+            flavorBadge.style.borderTopRightRadius = 3;
+            flavorBadge.style.borderBottomLeftRadius = 3;
+            flavorBadge.style.borderBottomRightRadius = 3;
+
+            Color flavorColor = flavor.ToLower() switch
+            {
+                "chaos" => new Color(0.9f, 0.55f, 0.1f),
+                "standard" => new Color(0.0f, 0.44f, 0.78f),
+                "training" => new Color(0.35f, 0.76f, 0.32f),
+                _ => new Color(0.5f, 0.5f, 0.5f)
+            };
+            flavorBadge.style.backgroundColor = new StyleColor(new Color(flavorColor.r * 0.3f, flavorColor.g * 0.3f, flavorColor.b * 0.3f));
+            flavorBadge.style.color = new StyleColor(flavorColor);
+            topBar.Add(flavorBadge);
+        }
+
+        // Spacer
+        var spacer = new VisualElement();
+        spacer.style.flexGrow = 1;
+        topBar.Add(spacer);
+
+        // Filter
+        var filterLabel = new Label("Filter");
+        filterLabel.style.fontSize = 13;
+        filterLabel.style.color = new StyleColor(UIHelpers.TextSecondary);
+        filterLabel.style.marginRight = 8;
+        topBar.Add(filterLabel);
+
+        var searchField = new TextField();
+        searchField.value = _searchFilter;
+        searchField.style.minWidth = 160;
+        searchField.style.maxWidth = 220;
+        searchField.RegisterCallback<AttachToPanelEvent>(evt =>
+        {
+            UIHelpers.StyleInputField(searchField);
+            var input = searchField.Q(className: "unity-base-text-field__input");
+            if (input != null)
+            {
+                input.style.fontSize = 14;
+                input.style.paddingTop = 4;
+                input.style.paddingBottom = 4;
+            }
+        });
+        searchField.RegisterValueChangedCallback(evt =>
+        {
+            _searchFilter = evt.newValue;
+            RebuildScrollContent();
+        });
+        topBar.Add(searchField);
+
+        _scrollView = new ScrollView(ScrollViewMode.Vertical);
+        _scrollView.style.flexGrow = 1;
+        parent.Add(_scrollView);
 
         // Padding on the content container so scrollbar stays outside
-        var contentContainer = scrollView.contentContainer;
-        contentContainer.style.paddingLeft = 12;
-        contentContainer.style.paddingRight = 16;
-        contentContainer.style.paddingTop = 8;
-        contentContainer.style.paddingBottom = 8;
+        var contentContainer = _scrollView.contentContainer;
+        contentContainer.style.paddingLeft = 16;
+        contentContainer.style.paddingRight = 20;
+        contentContainer.style.paddingTop = 12;
+        contentContainer.style.paddingBottom = 12;
+
+        RebuildScrollContent();
+    }
+
+    private static void RebuildScrollContent()
+    {
+        if (_scrollView == null) return;
+        _scrollView.Clear();
 
         var modifiers = ModifierRegistry.Modifiers;
         if (modifiers == null || modifiers.Count == 0)
@@ -38,12 +128,24 @@ public static class ModifierListTab
             emptyLabel.style.fontSize = 14;
             emptyLabel.style.paddingTop = 20;
             emptyLabel.style.unityTextAlign = TextAnchor.MiddleCenter;
-            scrollView.Add(emptyLabel);
+            _scrollView.Add(emptyLabel);
             return;
         }
 
-        // Group by category
-        var grouped = modifiers.Values
+        // Split into available and unavailable, applying search filter
+        var allMods = modifiers.Values.AsEnumerable();
+        if (!string.IsNullOrWhiteSpace(_searchFilter))
+        {
+            var filter = _searchFilter.Trim();
+            allMods = allMods.Where(m =>
+                (m.name != null && m.name.IndexOf(filter, System.StringComparison.OrdinalIgnoreCase) >= 0) ||
+                (m.description != null && m.description.IndexOf(filter, System.StringComparison.OrdinalIgnoreCase) >= 0));
+        }
+
+        var availableMods = allMods.Where(m => m.availableOnFlavor).ToList();
+        var unavailableMods = allMods.Where(m => !m.availableOnFlavor).ToList();
+
+        var grouped = availableMods
             .GroupBy(m => m.category ?? "Gameplay")
             .ToDictionary(g => g.Key, g => g.OrderBy(m => m.name).ToList());
 
@@ -53,7 +155,7 @@ public static class ModifierListTab
 
         // Active section at top for quick disable
         if (activeKeys.Count > 0)
-            BuildActiveSection(scrollView, modifiers, activeKeys);
+            BuildActiveSection(_scrollView, modifiers, activeKeys);
 
         var serverCategories = ModifierRegistry.Categories;
         var shownKeys = new HashSet<string>();
@@ -63,14 +165,82 @@ public static class ModifierListTab
             if (!grouped.ContainsKey(cat.key)) continue;
             var mods = grouped[cat.key];
             shownKeys.Add(cat.key);
-            BuildCategorySection(scrollView, cat.key, cat.label, UIHelpers.ParseHexColor(cat.color), mods, activeKeys);
+            BuildCategorySection(_scrollView, cat.key, cat.label, UIHelpers.ParseHexColor(cat.color), mods, activeKeys);
         }
 
         // Any modifiers in categories not defined by server
         foreach (var kvp in grouped)
         {
             if (shownKeys.Contains(kvp.Key)) continue;
-            BuildCategorySection(scrollView, kvp.Key, kvp.Key, DefaultCategoryColor, kvp.Value, activeKeys);
+            BuildCategorySection(_scrollView, kvp.Key, kvp.Key, DefaultCategoryColor, kvp.Value, activeKeys);
+        }
+
+        // Unavailable modifiers section
+        if (unavailableMods.Count > 0)
+        {
+            var unavailableGrouped = unavailableMods
+                .GroupBy(m => m.category ?? "Gameplay")
+                .ToDictionary(g => g.Key, g => g.OrderBy(m => m.name).ToList());
+
+            // Divider
+            var divider = new VisualElement();
+            divider.style.height = 1;
+            divider.style.backgroundColor = new StyleColor(new Color(0.25f, 0.25f, 0.25f));
+            divider.style.marginTop = 16;
+            divider.style.marginBottom = 8;
+            _scrollView.Add(divider);
+
+            var unavailTitle = new Label("Unavailable Modifiers");
+            unavailTitle.style.fontSize = 16;
+            unavailTitle.style.unityFontStyleAndWeight = FontStyle.Bold;
+            unavailTitle.style.color = new StyleColor(new Color(0.45f, 0.45f, 0.45f));
+            unavailTitle.style.marginBottom = 4;
+            unavailTitle.style.paddingLeft = 4;
+            _scrollView.Add(unavailTitle);
+
+            var noticeRow = new VisualElement();
+            noticeRow.style.flexDirection = FlexDirection.Row;
+            noticeRow.style.alignItems = Align.Center;
+            noticeRow.style.marginBottom = 8;
+            noticeRow.style.paddingLeft = 4;
+            _scrollView.Add(noticeRow);
+
+            var noticeLabel = new Label("Try a Chaos server for access to all modifiers!");
+            noticeLabel.style.fontSize = 12;
+            noticeLabel.style.color = new StyleColor(new Color(0.4f, 0.4f, 0.4f));
+            noticeLabel.style.marginRight = 8;
+            noticeRow.Add(noticeLabel);
+
+            var serversBtn = new Button(() => ModifierPanelUI.SwitchToTabByName("Servers"));
+            serversBtn.text = "Browse Servers";
+            serversBtn.style.fontSize = 11;
+            serversBtn.style.backgroundColor = new StyleColor(new Color(0.2f, 0.2f, 0.2f));
+            serversBtn.style.color = new StyleColor(new Color(0.7f, 0.7f, 0.7f));
+            serversBtn.style.paddingLeft = 8;
+            serversBtn.style.paddingRight = 8;
+            serversBtn.style.paddingTop = 2;
+            serversBtn.style.paddingBottom = 2;
+            serversBtn.style.borderTopLeftRadius = 3;
+            serversBtn.style.borderTopRightRadius = 3;
+            serversBtn.style.borderBottomLeftRadius = 3;
+            serversBtn.style.borderBottomRightRadius = 3;
+            noticeRow.Add(serversBtn);
+
+            var unavailableShownKeys = new HashSet<string>();
+            foreach (var cat in serverCategories)
+            {
+                if (!unavailableGrouped.ContainsKey(cat.key)) continue;
+                unavailableShownKeys.Add(cat.key);
+                BuildCategorySection(_scrollView, "unavail_" + cat.key, cat.label,
+                    DimColor(UIHelpers.ParseHexColor(cat.color)), unavailableGrouped[cat.key], activeKeys, true);
+            }
+
+            foreach (var kvp in unavailableGrouped)
+            {
+                if (unavailableShownKeys.Contains(kvp.Key)) continue;
+                BuildCategorySection(_scrollView, "unavail_" + kvp.Key, kvp.Key,
+                    DimColor(DefaultCategoryColor), kvp.Value, activeKeys, true);
+            }
         }
     }
 
@@ -83,15 +253,6 @@ public static class ModifierListTab
         headerRow.style.alignItems = Align.Center;
         headerRow.style.paddingTop = 4;
         headerRow.style.paddingBottom = 6;
-
-        var colorBar = new VisualElement();
-        colorBar.style.width = 4;
-        colorBar.style.height = 18;
-        colorBar.style.backgroundColor = new StyleColor(UIHelpers.TextSecondary);
-        colorBar.style.borderTopLeftRadius = 2;
-        colorBar.style.borderBottomLeftRadius = 2;
-        colorBar.style.marginRight = 8;
-        headerRow.Add(colorBar);
 
         var headerLabel = new Label("Active");
         headerLabel.style.color = UIHelpers.TextPrimary;
@@ -135,9 +296,14 @@ public static class ModifierListTab
         parent.Add(bottomSep);
     }
 
+    private static Color DimColor(Color c)
+    {
+        return new Color(c.r * 0.4f, c.g * 0.4f, c.b * 0.4f);
+    }
+
     private static void BuildCategorySection(VisualElement parent, string catKey,
         string catLabel, Color catColor, List<ModifierRegistryEntry> mods,
-        HashSet<string> activeKeys)
+        HashSet<string> activeKeys, bool dimmed = false)
     {
         bool collapsed = _collapsedCategories.Contains(catKey);
         int activeCount = mods.Count(m => activeKeys.Contains(m.key));
@@ -148,16 +314,6 @@ public static class ModifierListTab
         headerRow.style.alignItems = Align.Center;
         headerRow.style.paddingTop = 10;
         headerRow.style.paddingBottom = 6;
-
-        // Color bar
-        var colorBar = new VisualElement();
-        colorBar.style.width = 4;
-        colorBar.style.height = 18;
-        colorBar.style.backgroundColor = new StyleColor(catColor);
-        colorBar.style.borderTopLeftRadius = 2;
-        colorBar.style.borderBottomLeftRadius = 2;
-        colorBar.style.marginRight = 8;
-        headerRow.Add(colorBar);
 
         // Collapse arrow (unicode triangles)
         var arrow = new Label(collapsed ? "\u25B6" : "\u25BC");
@@ -219,11 +375,11 @@ public static class ModifierListTab
         foreach (var mod in mods)
         {
             bool isActive = activeKeys.Contains(mod.key);
-            BuildModifierRow(modsContainer, mod, isActive);
+            BuildModifierRow(modsContainer, mod, isActive, dimmed);
         }
     }
 
-    private static void BuildModifierRow(VisualElement parent, ModifierRegistryEntry mod, bool isActive)
+    private static void BuildModifierRow(VisualElement parent, ModifierRegistryEntry mod, bool isActive, bool dimmed = false)
     {
         var row = new VisualElement();
         row.style.flexDirection = FlexDirection.Row;
@@ -261,7 +417,9 @@ public static class ModifierListTab
         row.Add(infoCol);
 
         var nameLabel = new Label(mod.name);
-        nameLabel.style.color = isActive ? new StyleColor(Color.white) : new StyleColor(new Color(0.8f, 0.8f, 0.8f));
+        nameLabel.style.color = dimmed
+            ? new StyleColor(new Color(0.4f, 0.4f, 0.4f))
+            : isActive ? new StyleColor(Color.white) : new StyleColor(new Color(0.8f, 0.8f, 0.8f));
         nameLabel.style.fontSize = 14;
         nameLabel.style.unityFontStyleAndWeight = isActive ? FontStyle.Bold : FontStyle.Normal;
         infoCol.Add(nameLabel);
@@ -269,7 +427,9 @@ public static class ModifierListTab
         if (!string.IsNullOrEmpty(mod.description))
         {
             var descLabel = new Label(mod.description);
-            descLabel.style.color = new StyleColor(new Color(0.5f, 0.5f, 0.5f));
+            descLabel.style.color = dimmed
+                ? new StyleColor(new Color(0.3f, 0.3f, 0.3f))
+                : new StyleColor(new Color(0.5f, 0.5f, 0.5f));
             descLabel.style.fontSize = 11;
             descLabel.style.whiteSpace = WhiteSpace.Normal;
             infoCol.Add(descLabel);

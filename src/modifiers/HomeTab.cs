@@ -14,6 +14,7 @@ public static class HomeTab
         new() { Title = "Actions", Description = "Puck spawning, cones, passer, goalie training", TabName = "Actions", Color = new Color(0.3f, 0.8f, 0.4f) },
         new() { Title = "Modifiers", Description = "Browse and vote on game modifiers", TabName = "Modifiers", Color = UIHelpers.AccentBlue },
         new() { Title = "Players", Description = "View connected players", TabName = "Players", Color = new Color(0.2f, 0.7f, 0.8f) },
+        new() { Title = "Servers", Description = "Browse and join Toaster's Rink servers", TabName = "Servers", Color = new Color(0.9f, 0.6f, 0.1f) },
         new() { Title = "Admin", Description = "Kick, ban, jail, and server management", TabName = "Admin", Color = new Color(0.9f, 0.2f, 0.2f), AdminOnly = true },
         new() { Title = "Settings", Description = "Configure keybinds and preferences", TabName = "Settings", Color = new Color(0.6f, 0.6f, 0.6f) },
     };
@@ -31,10 +32,10 @@ public static class HomeTab
     {
         var container = new VisualElement();
         container.style.flexGrow = 1;
-        container.style.paddingLeft = 24;
-        container.style.paddingRight = 24;
-        container.style.paddingTop = 20;
-        container.style.paddingBottom = 20;
+        container.style.paddingLeft = 16;
+        container.style.paddingRight = 20;
+        container.style.paddingTop = 12;
+        container.style.paddingBottom = 12;
         parent.Add(container);
 
         // Welcome text
@@ -70,6 +71,79 @@ public static class HomeTab
             if (card.AdminOnly && !ModifierRegistry.IsAdmin) continue;
             BuildCard(grid, card);
         }
+
+        // About section
+        BuildAboutSection(container);
+    }
+
+    private static void BuildAboutSection(VisualElement parent)
+    {
+        var sep = new VisualElement();
+        sep.style.height = 1;
+        sep.style.backgroundColor = new StyleColor(new Color(0.2f, 0.2f, 0.2f));
+        sep.style.marginTop = 8;
+        sep.style.marginBottom = 12;
+        parent.Add(sep);
+
+        var desc = new Label(
+            "Toaster's Rink is a community Puck server featuring game modifiers, " +
+            "training tools, collectibles, and more. Powered by PuckStats.");
+        desc.style.fontSize = 13;
+        desc.style.color = new StyleColor(UIHelpers.TextSecondary);
+        desc.style.whiteSpace = WhiteSpace.Normal;
+        desc.style.marginBottom = 12;
+        parent.Add(desc);
+
+        var linksRow = new VisualElement();
+        linksRow.style.flexDirection = FlexDirection.Row;
+        linksRow.style.flexWrap = Wrap.Wrap;
+        parent.Add(linksRow);
+
+        BuildLinkButton(linksRow, "Discord", "https://discord.gg/4eYYQtcGGz", new Color(0.34f, 0.40f, 0.95f));
+        BuildLinkButton(linksRow, "PuckStats", "https://puckstats.io/", new Color(0.27f, 0.54f, 0.96f));
+        BuildLinkButton(linksRow, "Rules", "https://puckstats.io/rules", UIHelpers.TextSecondary);
+        BuildLinkButton(linksRow, "Donate", "https://ko-fi.com/stellaric", new Color(1f, 0.35f, 0.45f));
+        BuildLinkButton(linksRow, "EIS Discord", "https://discord.gg/swDnyXFChu", new Color(0.2f, 0.7f, 0.8f));
+    }
+
+    private static void BuildLinkButton(VisualElement parent, string label, string url, Color color)
+    {
+        var btn = new Button(() => Application.OpenURL(url));
+        btn.text = label;
+        btn.style.fontSize = 12;
+        btn.style.backgroundColor = new StyleColor(UIHelpers.BgButton);
+        btn.style.color = new StyleColor(color);
+        btn.style.paddingLeft = 12;
+        btn.style.paddingRight = 12;
+        btn.style.paddingTop = 6;
+        btn.style.paddingBottom = 6;
+        btn.style.marginRight = 8;
+        btn.style.marginBottom = 6;
+        btn.style.borderTopLeftRadius = 0;
+        btn.style.borderTopRightRadius = 0;
+        btn.style.borderBottomLeftRadius = 0;
+        btn.style.borderBottomRightRadius = 0;
+        btn.style.borderTopWidth = 1;
+        btn.style.borderBottomWidth = 1;
+        btn.style.borderLeftWidth = 1;
+        btn.style.borderRightWidth = 1;
+        btn.style.borderTopColor = new StyleColor(new Color(color.r, color.g, color.b, 0.3f));
+        btn.style.borderBottomColor = new StyleColor(new Color(color.r, color.g, color.b, 0.3f));
+        btn.style.borderLeftColor = new StyleColor(new Color(color.r, color.g, color.b, 0.3f));
+        btn.style.borderRightColor = new StyleColor(new Color(color.r, color.g, color.b, 0.3f));
+
+        // Hover: invert colors
+        btn.RegisterCallback<MouseEnterEvent>(evt =>
+        {
+            btn.style.backgroundColor = new StyleColor(color);
+            btn.style.color = new StyleColor(UIHelpers.BgDark);
+        });
+        btn.RegisterCallback<MouseLeaveEvent>(evt =>
+        {
+            btn.style.backgroundColor = new StyleColor(UIHelpers.BgButton);
+            btn.style.color = new StyleColor(color);
+        });
+        parent.Add(btn);
     }
 
     private static void BuildCard(VisualElement parent, CardInfo info)

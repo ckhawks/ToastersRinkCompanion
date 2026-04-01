@@ -314,7 +314,7 @@ public static class VotePopupUI
                 break;
             case "timed_out":
                 _resultLabel.text = "TIMED OUT";
-                _resultLabel.style.color = new Color(0.7f, 0.7f, 0.2f);
+                _resultLabel.style.color = Color.white;
                 break;
             case "overridden":
                 _resultLabel.text = "OVERRIDDEN";

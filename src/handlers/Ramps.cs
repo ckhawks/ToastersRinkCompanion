@@ -8,6 +8,7 @@ namespace ToastersRinkCompanion.handlers;
 public static class Ramps
 {
     private static List<GameObject> spawnedRamps = new List<GameObject>();
+    public static IReadOnlyList<GameObject> SpawnedObjects => spawnedRamps;
     private static GameObject rampPrefab;
     private static AssetBundle _loadedAssetBundle;
     

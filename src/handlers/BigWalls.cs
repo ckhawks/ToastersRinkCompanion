@@ -6,6 +6,7 @@ namespace ToastersRinkCompanion.handlers;
 public static class BigWalls
 {
     private static List<GameObject> spawnedBigWalls = new List<GameObject>();
+    public static IReadOnlyList<GameObject> SpawnedObjects => spawnedBigWalls;
     private static GameObject bigwallPrefab;
     private static AssetBundle _loadedAssetBundle;
     

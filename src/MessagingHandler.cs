@@ -72,6 +72,8 @@ public static class MessagingHandler
             ToastersRinkCompanion.modifiers.ActiveModifiersHUD.Clear();
             ToastersRinkCompanion.modifiers.VotePopupUI.Hide();
             ToastersRinkCompanion.modifiers.ModifierPanelUI.Hide();
+            ToastersRinkCompanion.modifiers.PlayerModStore.Clear();
+            MinimapObjects.Clear();
         }
     }
 
@@ -94,6 +96,12 @@ public static class MessagingHandler
 
             // Register modifier system handlers
             ToastersRinkCompanion.modifiers.ModifierMessaging.RegisterHandlers();
+
+            // Single goalie: suppress camera overlay during team switch
+            JsonMessageRouter.RegisterHandler("singlegoalie_switch", (sender, payloadJson) =>
+            {
+                SuppressCameraOverlay.BeginSuppression();
+            });
 
             JsonMessageRouter.RegisterHandler("greetings", (sender, payloadJson) =>
             {
@@ -822,6 +830,21 @@ public static class MessagingHandler
                 catch (Exception e)
                 {
                     Plugin.LogError($"Failed to parse jail_despawn payload: {e}");
+                }
+            });
+
+            JsonMessageRouter.RegisterHandler("player_mods", (sender, payloadJson) =>
+            {
+                if (!connectedToToastersRink) return;
+                try
+                {
+                    var payload = JsonConvert.DeserializeObject<ToastersRinkCompanion.modifiers.PlayerModStore.PlayerModsPayload>(payloadJson);
+                    if (payload != null)
+                        ToastersRinkCompanion.modifiers.PlayerModStore.Update(payload);
+                }
+                catch (Exception e)
+                {
+                    Plugin.LogError($"Failed to parse player_mods payload: {e}");
                 }
             });
 

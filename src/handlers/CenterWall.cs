@@ -5,6 +5,7 @@ namespace ToastersRinkCompanion.handlers;
 public static class CenterWall
 {
     private static GameObject spawnedCenterWall;
+    public static GameObject SpawnedObject => spawnedCenterWall;
     private static GameObject centerWallPrefab;
     private static AssetBundle _loadedAssetBundle;
     

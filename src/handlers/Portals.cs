@@ -8,6 +8,7 @@ namespace ToastersRinkCompanion.handlers;
 public static class Portals
 {
     private static List<GameObject> spawnedPortals = new List<GameObject>();
+    public static IReadOnlyList<GameObject> SpawnedObjects => spawnedPortals;
     private static GameObject portalPrefab;// cone prefab
     private static AssetBundle _loadedAssetBundle;
     

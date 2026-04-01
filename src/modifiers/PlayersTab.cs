@@ -6,10 +6,13 @@ using UnityEngine.UIElements;
 namespace ToastersRinkCompanion.modifiers;
 
 /// <summary>
-/// Players tab showing connected players with profile links.
+/// Players tab showing connected players with profile links, position, and mod info.
 /// </summary>
 public static class PlayersTab
 {
+    private static readonly HashSet<string> _expandedPlayers = new();
+    private static VisualElement _activeTooltip;
+
     public static void BuildContent(VisualElement parent)
     {
         var scrollView = new ScrollView(ScrollViewMode.Vertical);
@@ -39,10 +42,8 @@ public static class PlayersTab
             return;
         }
 
-        // Sort: by team then number
-        // Blue first, then Red, then others
         var sorted = players
-            .OrderBy(p => p.Team == PlayerTeam.Blue ? 0 : p.Team == PlayerTeam.Red ? 1 : 2)
+            .OrderBy(p => p.Team == PlayerTeam.Blue ? 0 : p.Team == PlayerTeam.Red ? 1 : p.Team == PlayerTeam.Spectator ? 3 : 2)
             .ThenBy(p => p.Number.Value).ToList();
 
         PlayerTeam lastTeam = (PlayerTeam)(-1);
@@ -51,13 +52,34 @@ public static class PlayersTab
             if (player.Team != lastTeam)
             {
                 lastTeam = player.Team;
-                bool isBlue = player.Team == PlayerTeam.Blue;
-                var teamLabel = new Label(isBlue ? "Blue" : player.Team == PlayerTeam.Red ? "Red" : player.Team.ToString());
+                string teamName;
+                Color teamLabelColor;
+
+                if (player.Team == PlayerTeam.Blue)
+                {
+                    teamName = "Blue";
+                    teamLabelColor = new Color(0.3f, 0.5f, 1f);
+                }
+                else if (player.Team == PlayerTeam.Red)
+                {
+                    teamName = "Red";
+                    teamLabelColor = new Color(0.9f, 0.2f, 0.2f);
+                }
+                else if (player.Team == PlayerTeam.Spectator)
+                {
+                    teamName = "Spectators";
+                    teamLabelColor = new Color(0.5f, 0.5f, 0.5f);
+                }
+                else
+                {
+                    teamName = player.Team.ToString();
+                    teamLabelColor = new Color(0.5f, 0.5f, 0.5f);
+                }
+
+                var teamLabel = new Label(teamName);
                 teamLabel.style.fontSize = 14;
                 teamLabel.style.unityFontStyleAndWeight = FontStyle.Bold;
-                teamLabel.style.color = isBlue
-                    ? new StyleColor(new Color(0.3f, 0.5f, 1f))
-                    : new StyleColor(new Color(0.9f, 0.2f, 0.2f));
+                teamLabel.style.color = new StyleColor(teamLabelColor);
                 teamLabel.style.marginTop = 8;
                 teamLabel.style.marginBottom = 4;
                 content.Add(teamLabel);
@@ -72,36 +94,87 @@ public static class PlayersTab
         string username = player.Username.Value.ToString();
         string steamId = player.SteamId.Value.ToString();
         int number = player.Number.Value;
-        Color teamColor = player.Team == PlayerTeam.Blue
-            ? new Color(0.3f, 0.5f, 1f)
-            : new Color(0.9f, 0.2f, 0.2f);
+        string position = player.PlayerPosition != null ? player.PlayerPosition.Name : "";
+
+        Color teamColor;
+        if (player.Team == PlayerTeam.Blue)
+            teamColor = new Color(0.3f, 0.5f, 1f);
+        else if (player.Team == PlayerTeam.Red)
+            teamColor = new Color(0.9f, 0.2f, 0.2f);
+        else
+            teamColor = new Color(0.5f, 0.5f, 0.5f);
+
+        var container = new VisualElement();
+        container.style.marginBottom = 2;
+        parent.Add(container);
 
         var row = new VisualElement();
         row.style.flexDirection = FlexDirection.Row;
         row.style.alignItems = Align.Center;
-        row.style.paddingLeft = 12;
+        row.style.paddingLeft = 10;
         row.style.paddingRight = 8;
-        row.style.paddingTop = 6;
-        row.style.paddingBottom = 6;
-        row.style.marginBottom = 2;
+        row.style.paddingTop = 4;
+        row.style.paddingBottom = 4;
         row.style.backgroundColor = new StyleColor(UIHelpers.BgRow);
         row.style.borderTopLeftRadius = 4;
         row.style.borderTopRightRadius = 4;
         row.style.borderBottomLeftRadius = 4;
         row.style.borderBottomRightRadius = 4;
-        parent.Add(row);
+        container.Add(row);
 
-        // Team color dot
-        var dot = new VisualElement();
-        dot.style.width = 8;
-        dot.style.height = 8;
-        dot.style.borderTopLeftRadius = 4;
-        dot.style.borderTopRightRadius = 4;
-        dot.style.borderBottomLeftRadius = 4;
-        dot.style.borderBottomRightRadius = 4;
-        dot.style.backgroundColor = new StyleColor(teamColor);
-        dot.style.marginRight = 10;
-        row.Add(dot);
+        // Expand arrow (placeholder for future accordion use)
+        bool isExpanded = _expandedPlayers.Contains(steamId);
+
+        var arrow = new Label(isExpanded ? "\u25BC" : "\u25B6");
+        arrow.style.fontSize = 12;
+        arrow.style.color = new StyleColor(new Color(0.5f, 0.5f, 0.5f));
+        arrow.style.minWidth = 14;
+        arrow.style.marginRight = 6;
+        arrow.style.unityTextAlign = TextAnchor.MiddleCenter;
+        row.Add(arrow);
+
+        // Player avatar with team-colored border
+        var avatarContainer = new VisualElement();
+        avatarContainer.style.width = 24;
+        avatarContainer.style.height = 24;
+        avatarContainer.style.marginRight = 8;
+        avatarContainer.style.borderTopLeftRadius = 12;
+        avatarContainer.style.borderTopRightRadius = 12;
+        avatarContainer.style.borderBottomLeftRadius = 12;
+        avatarContainer.style.borderBottomRightRadius = 12;
+        avatarContainer.style.borderTopWidth = 1;
+        avatarContainer.style.borderBottomWidth = 1;
+        avatarContainer.style.borderLeftWidth = 1;
+        avatarContainer.style.borderRightWidth = 1;
+        avatarContainer.style.borderTopColor = new StyleColor(teamColor);
+        avatarContainer.style.borderBottomColor = new StyleColor(teamColor);
+        avatarContainer.style.borderLeftColor = new StyleColor(teamColor);
+        avatarContainer.style.borderRightColor = new StyleColor(teamColor);
+        avatarContainer.style.backgroundColor = new StyleColor(new Color(0.2f, 0.2f, 0.2f));
+        row.Add(avatarContainer);
+
+        // Fetch Steam avatar
+        try
+        {
+            var cSteamId = new Steamworks.CSteamID(ulong.Parse(steamId));
+            Steamworks.SteamFriends.RequestUserInformation(cSteamId, false);
+            Texture2D avatar = SteamIntegrationManager.GetAvatar(steamId, AvatarSize.Small);
+            if (avatar != null)
+                avatarContainer.style.backgroundImage = new StyleBackground(avatar);
+        }
+        catch { /* Steam not available */ }
+
+        // Position label
+        if (!string.IsNullOrEmpty(position))
+        {
+            var posLabel = new Label(position);
+            posLabel.style.fontSize = 11;
+            posLabel.style.color = new StyleColor(new Color(0.5f, 0.5f, 0.5f));
+            posLabel.style.minWidth = 22;
+            posLabel.style.marginRight = 4;
+            posLabel.style.unityTextAlign = TextAnchor.MiddleCenter;
+            row.Add(posLabel);
+        }
 
         // Number
         var numberLabel = new Label($"#{number}");
@@ -110,12 +183,91 @@ public static class PlayersTab
         numberLabel.style.minWidth = 35;
         row.Add(numberLabel);
 
-        // Name
+        // Name + EIS pills (left-aligned together, takes remaining space)
+        var nameCol = new VisualElement();
+        nameCol.style.flexGrow = 1;
+        nameCol.style.flexShrink = 1;
+        row.Add(nameCol);
+
+        // Top row: name + pills inline
+        var nameRow = new VisualElement();
+        nameRow.style.flexDirection = FlexDirection.Row;
+        nameRow.style.alignItems = Align.Center;
+        nameCol.Add(nameRow);
+
+        // Donor badge
+        if (ChatFormatting.IsDonor(steamId))
+        {
+            var donorBadge = new Label("DONOR");
+            donorBadge.style.fontSize = 9;
+            donorBadge.style.color = new StyleColor(new Color(0.28f, 0.50f, 0.90f)); // #487fe6
+            donorBadge.style.unityFontStyleAndWeight = FontStyle.Bold;
+            donorBadge.style.marginRight = 6;
+            donorBadge.style.paddingLeft = 4;
+            donorBadge.style.paddingRight = 4;
+            donorBadge.style.paddingTop = 1;
+            donorBadge.style.paddingBottom = 1;
+            donorBadge.style.backgroundColor = new StyleColor(new Color(0.28f, 0.50f, 0.90f, 0.15f));
+            donorBadge.style.borderTopLeftRadius = 3;
+            donorBadge.style.borderTopRightRadius = 3;
+            donorBadge.style.borderBottomLeftRadius = 3;
+            donorBadge.style.borderBottomRightRadius = 3;
+            nameRow.Add(donorBadge);
+        }
+
         var nameLabel = new Label(username);
         nameLabel.style.fontSize = 14;
         nameLabel.style.color = UIHelpers.TextPrimary;
-        nameLabel.style.flexGrow = 1;
-        row.Add(nameLabel);
+        nameRow.Add(nameLabel);
+
+        // EIS team pills
+        var eisTeams = ChatFormatting.GetPlayerTeams(steamId);
+        if (eisTeams != null && eisTeams.Length > 0)
+        {
+            EISTeamData.EnsureFetched();
+            foreach (var teamEntry in eisTeams)
+            {
+                var pill = BuildTeamPill(teamEntry);
+                pill.style.marginLeft = 6;
+                nameRow.Add(pill);
+            }
+        }
+
+        // Mod count badge with hover popover
+        var modInfo = PlayerModStore.GetMods(steamId);
+        bool hasMods = modInfo != null && (modInfo.modNames.Length > 0 || modInfo.localModCount > 0);
+
+        if (hasMods)
+        {
+            int totalMods = modInfo.modNames.Length + modInfo.localModCount;
+            var modBadge = new Label($"{totalMods} mod{(totalMods != 1 ? "s" : "")}");
+            modBadge.style.fontSize = 11;
+            modBadge.style.color = new StyleColor(new Color(0.6f, 0.6f, 0.6f));
+            modBadge.style.marginRight = 8;
+            modBadge.style.paddingLeft = 4;
+            modBadge.style.paddingRight = 4;
+            modBadge.style.paddingTop = 1;
+            modBadge.style.paddingBottom = 1;
+            modBadge.style.backgroundColor = new StyleColor(new Color(0.18f, 0.18f, 0.18f));
+            modBadge.style.borderTopLeftRadius = 3;
+            modBadge.style.borderTopRightRadius = 3;
+            modBadge.style.borderBottomLeftRadius = 3;
+            modBadge.style.borderBottomRightRadius = 3;
+            row.Add(modBadge);
+
+            modBadge.RegisterCallback<MouseEnterEvent>(evt =>
+            {
+                modBadge.style.color = new StyleColor(new Color(0.9f, 0.9f, 0.9f));
+                modBadge.style.backgroundColor = new StyleColor(new Color(0.25f, 0.25f, 0.25f));
+                ShowModTooltip(modBadge, modInfo);
+            });
+            modBadge.RegisterCallback<MouseLeaveEvent>(evt =>
+            {
+                modBadge.style.color = new StyleColor(new Color(0.6f, 0.6f, 0.6f));
+                modBadge.style.backgroundColor = new StyleColor(new Color(0.18f, 0.18f, 0.18f));
+                HideModTooltip();
+            });
+        }
 
         // Ping
         var pingLabel = new Label($"{player.Ping.Value}ms");
@@ -129,7 +281,7 @@ public static class PlayersTab
         row.Add(pingLabel);
 
         // Action buttons
-        BuildSmallButton(row, "Open Steam Profile", () =>
+        BuildSmallButton(row, "Steam", () =>
         {
             Application.OpenURL($"https://steamcommunity.com/profiles/{steamId}");
         });
@@ -139,11 +291,157 @@ public static class PlayersTab
             Application.OpenURL($"https://puckstats.io/player/{steamId}");
         });
 
-        BuildSmallButton(row, "Copy Steam ID", () =>
+        BuildSmallButton(row, "Copy ID", () =>
         {
             GUIUtility.systemCopyBuffer = steamId;
             Plugin.AddLocalChatMessage($"<size=14><i>Copied Steam ID: {steamId}</i></size>");
         });
+
+        // Click row to toggle accordion
+        row.RegisterCallback<ClickEvent>(evt =>
+        {
+            if (_expandedPlayers.Contains(steamId))
+                _expandedPlayers.Remove(steamId);
+            else
+                _expandedPlayers.Add(steamId);
+            ModifierPanelUI.RefreshCurrentTab();
+        });
+
+        // Expanded section (placeholder)
+        if (isExpanded)
+        {
+            var expandedPanel = new VisualElement();
+            expandedPanel.style.paddingLeft = 34;
+            expandedPanel.style.paddingRight = 12;
+            expandedPanel.style.paddingTop = 4;
+            expandedPanel.style.paddingBottom = 6;
+            expandedPanel.style.backgroundColor = new StyleColor(new Color(0.13f, 0.13f, 0.13f));
+            expandedPanel.style.borderBottomLeftRadius = 4;
+            expandedPanel.style.borderBottomRightRadius = 4;
+            expandedPanel.style.borderLeftWidth = 3;
+            expandedPanel.style.borderLeftColor = new StyleColor(new Color(0.3f, 0.3f, 0.4f));
+            container.Add(expandedPanel);
+
+            var placeholder = new Label("More details coming soon...");
+            placeholder.style.fontSize = 12;
+            placeholder.style.color = new StyleColor(new Color(0.4f, 0.4f, 0.4f));
+            expandedPanel.Add(placeholder);
+        }
+    }
+
+    private static void ShowModTooltip(VisualElement anchor, PlayerModStore.PlayerModEntry modInfo)
+    {
+        HideModTooltip();
+
+        var tooltip = new VisualElement();
+        tooltip.style.position = Position.Absolute;
+        tooltip.style.backgroundColor = new StyleColor(new Color(0.1f, 0.1f, 0.1f, 0.95f));
+        tooltip.style.paddingLeft = 10;
+        tooltip.style.paddingRight = 10;
+        tooltip.style.paddingTop = 8;
+        tooltip.style.paddingBottom = 8;
+        tooltip.style.borderTopLeftRadius = 4;
+        tooltip.style.borderTopRightRadius = 4;
+        tooltip.style.borderBottomLeftRadius = 4;
+        tooltip.style.borderBottomRightRadius = 4;
+        UIHelpers.SetBorder(tooltip, 1, new Color(0.3f, 0.3f, 0.3f));
+        tooltip.style.minWidth = 180;
+
+        foreach (string modName in modInfo.modNames)
+        {
+            var lineLabel = new Label(modName);
+            lineLabel.style.fontSize = 12;
+            lineLabel.style.color = new StyleColor(new Color(0.8f, 0.8f, 0.8f));
+            lineLabel.style.marginBottom = 2;
+            lineLabel.style.whiteSpace = WhiteSpace.Normal;
+            tooltip.Add(lineLabel);
+        }
+
+        if (modInfo.localModCount > 0)
+        {
+            var localLabel = new Label($"{modInfo.localModCount} local mod{(modInfo.localModCount != 1 ? "s" : "")}");
+            localLabel.style.fontSize = 12;
+            localLabel.style.color = new StyleColor(new Color(0.5f, 0.5f, 0.5f));
+            tooltip.Add(localLabel);
+        }
+
+        // Add to the panel root so it's not clipped by scroll/row
+        var panelRoot = anchor.panel.visualTree;
+        panelRoot.Add(tooltip);
+        _activeTooltip = tooltip;
+
+        // Position below the badge
+        anchor.schedule.Execute(() =>
+        {
+            var badgeRect = anchor.worldBound;
+            tooltip.style.left = badgeRect.x;
+            tooltip.style.top = badgeRect.yMax + 4;
+        });
+    }
+
+    private static void HideModTooltip()
+    {
+        if (_activeTooltip != null)
+        {
+            _activeTooltip.RemoveFromHierarchy();
+            _activeTooltip = null;
+        }
+    }
+
+    private static VisualElement BuildTeamPill(ChatFormatting.TeamEntry teamEntry)
+    {
+        Color teamColor = UIHelpers.ParseHexColor(teamEntry.hexColor);
+        var eisTeam = EISTeamData.GetTeamByAcronym(teamEntry.acronym);
+        string displayName = eisTeam?.name ?? teamEntry.acronym;
+
+        var pill = new VisualElement();
+        pill.style.flexDirection = FlexDirection.Row;
+        pill.style.alignItems = Align.Center;
+        pill.style.backgroundColor = new StyleColor(new Color(teamColor.r * 0.3f, teamColor.g * 0.3f, teamColor.b * 0.3f, 0.8f));
+        pill.style.paddingLeft = 4;
+        pill.style.paddingRight = 6;
+        pill.style.paddingTop = 2;
+        pill.style.paddingBottom = 2;
+        pill.style.borderTopLeftRadius = 8;
+        pill.style.borderTopRightRadius = 8;
+        pill.style.borderBottomLeftRadius = 8;
+        pill.style.borderBottomRightRadius = 8;
+        pill.style.borderTopWidth = 1;
+        pill.style.borderBottomWidth = 1;
+        pill.style.borderLeftWidth = 1;
+        pill.style.borderRightWidth = 1;
+        pill.style.borderTopColor = new StyleColor(new Color(teamColor.r, teamColor.g, teamColor.b, 0.4f));
+        pill.style.borderBottomColor = new StyleColor(new Color(teamColor.r, teamColor.g, teamColor.b, 0.4f));
+        pill.style.borderLeftColor = new StyleColor(new Color(teamColor.r, teamColor.g, teamColor.b, 0.4f));
+        pill.style.borderRightColor = new StyleColor(new Color(teamColor.r, teamColor.g, teamColor.b, 0.4f));
+
+        // Logo placeholder - will be filled when loaded
+        var logoEl = new VisualElement();
+        logoEl.style.width = 14;
+        logoEl.style.height = 14;
+        logoEl.style.marginRight = 4;
+        logoEl.style.borderTopLeftRadius = 7;
+        logoEl.style.borderTopRightRadius = 7;
+        logoEl.style.borderBottomLeftRadius = 7;
+        logoEl.style.borderBottomRightRadius = 7;
+        pill.Add(logoEl);
+
+        // Proactively fetch logo and update element when ready
+        EISTeamData.GetLogoAsync(teamEntry.acronym, tex =>
+        {
+            if (tex != null)
+                logoEl.style.backgroundImage = new StyleBackground(tex);
+            else
+                logoEl.style.display = DisplayStyle.None; // hide placeholder if no logo
+        });
+
+        var label = new Label(displayName);
+        label.style.fontSize = 10;
+        label.style.color = new StyleColor(teamColor);
+        label.style.unityFontStyleAndWeight = FontStyle.Bold;
+        pill.Add(label);
+
+        return pill;
     }
 
     private static void BuildSmallButton(VisualElement parent, string text, System.Action onClick)

@@ -6,6 +6,7 @@ namespace ToastersRinkCompanion.handlers;
 public static class Cones
 {
     private static List<GameObject> spawnedCones = new List<GameObject>();
+    public static IReadOnlyList<GameObject> SpawnedObjects => spawnedCones;
     private static GameObject conePrefab; // cone prefab
     private static AssetBundle _loadedAssetBundle;
     

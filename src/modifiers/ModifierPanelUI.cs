@@ -22,6 +22,40 @@ public static class ModifierPanelUI
     private static readonly List<TabDefinition> _tabs = new();
     private static int _activeTabIndex = -1;
 
+    /// <summary>
+    /// Suppresses the game's own keybinds (P for position select, T for chat, etc.)
+    /// by setting interactingViews in GlobalStateManager.UIState.
+    /// The game checks UIState.IsInteracting (InteractingViews.Count > 0) before
+    /// processing keyboard shortcuts.
+    /// </summary>
+    private static void SetGameInputSuppressed(bool suppressed)
+    {
+        try
+        {
+            if (suppressed)
+            {
+                // Add the chat UIView to interactingViews so IsInteracting returns true
+                var chat = MonoBehaviourSingleton<UIManager>.Instance?.Chat;
+                if (chat != null)
+                {
+                    var views = new List<UIView> { chat };
+                    GlobalStateManager.SetUIState(new Dictionary<string, object>
+                    {
+                        { "interactingViews", views }
+                    });
+                }
+            }
+            else
+            {
+                GlobalStateManager.SetUIState(new Dictionary<string, object>
+                {
+                    { "interactingViews", new List<UIView>() }
+                });
+            }
+        }
+        catch { /* not available yet */ }
+    }
+
     public class TabDefinition
     {
         public string Name;
@@ -57,6 +91,7 @@ public static class ModifierPanelUI
         if (_activeTabIndex >= 0 && _activeTabIndex < _tabs.Count)
             SwitchToTab(_activeTabIndex);
 
+        SetGameInputSuppressed(true);
         GlobalStateManager.SetUIState(new Dictionary<string, object> { { "isMouseRequired", true } });
     }
 
@@ -65,6 +100,7 @@ public static class ModifierPanelUI
         if (_overlay != null)
             _overlay.style.display = DisplayStyle.None;
         _isVisible = false;
+        SetGameInputSuppressed(false);
         GlobalStateManager.SetUIState(new Dictionary<string, object> { { "isMouseRequired", false } });
     }
 
@@ -177,6 +213,8 @@ public static class ModifierPanelUI
         RegisterTab("Players", PlayersTab.BuildContent);
         if (ModifierRegistry.IsAdmin)
             RegisterTab("Admin", AdminTab.BuildContent);
+        RegisterTab("Servers", ServersTab.BuildContent);
+        RegisterTab("Donors", DonorsTab.BuildContent);
         RegisterTab("Settings", SettingsTab.BuildContent);
 
         _isSetup = true;

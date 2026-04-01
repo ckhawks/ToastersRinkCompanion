@@ -16,6 +16,7 @@ public static class RockEvent
     private static AssetBundle _loadedAssetBundle;
     private static List<GameObject> rockPrefabs = new List<GameObject>();
     private static GameObject spawnedRock;
+    public static GameObject SpawnedRock => spawnedRock;
     private static List<Texture2D> rockTextures = new List<Texture2D>();
     private static GameObject hitSparksParticlePrefab;
     private static AudioClip rockSpawnAudioClip;

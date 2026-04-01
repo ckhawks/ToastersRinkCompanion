@@ -9,7 +9,11 @@ public class ModSettings
     public string voteYesKeybind { get; set; } = "f1";
     public string voteNoKeybind { get; set; } = "f2";
     public string panelKeybind { get; set; } = "f3";
-    
+    public bool showModifiersHUD { get; set; } = true;
+    public bool showMinimapObjects { get; set; } = true;
+    public int hudPositionX { get; set; } = 0;   // 0-100%, 0=left edge, 100=right edge
+    public int hudPositionY { get; set; } = 95;   // 0-100%, 0=top edge, 100=bottom edge
+
     static string ConfigurationFileName = $"{Plugin.MOD_NAME}.json";
 
     public static ModSettings Load()

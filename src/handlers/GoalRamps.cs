@@ -6,6 +6,7 @@ namespace ToastersRinkCompanion.handlers;
 public class GoalRamps
 {
     private static List<GameObject> spawnedGoalRamps = new List<GameObject>();
+    public static IReadOnlyList<GameObject> SpawnedObjects => spawnedGoalRamps;
     private static GameObject goalRampPrefab;
     private static AssetBundle _loadedAssetBundle;
     

@@ -13,6 +13,9 @@ public static class FuckGoals
     private static readonly Dictionary<Goal, List<GameObject>> SpawnedFrames = new();
     private static readonly Dictionary<Goal, List<MeshRenderer>> DisabledRenderers = new();
 
+    /// <summary>True when goals have non-default position or scale (set by goalpositions handler).</summary>
+    public static bool GoalsAreNonDefault { get; private set; }
+
     // public static void FuckGoalsNow()
     // {
     //     Plugin.AddLocalChatMessage($"fucking goals!");
@@ -364,20 +367,29 @@ public static class FuckGoals
         {
             GoalPositionPayload payload = Newtonsoft.Json.JsonConvert.DeserializeObject<GoalPositionPayload>(payloadJson);
 
+            // Convert payload once before the loop
+            Vector3 redPos = new Vector3(payload.redPosition.x, payload.redPosition.y, payload.redPosition.z);
+            Vector3 redScl = new Vector3(payload.redScale.x, payload.redScale.y, payload.redScale.z);
+            Quaternion redRot = new Quaternion(payload.redRotation.x, payload.redRotation.y, payload.redRotation.z, payload.redRotation.w);
+
+            Vector3 bluePos = new Vector3(payload.bluePosition.x, payload.bluePosition.y, payload.bluePosition.z);
+            Vector3 blueScl = new Vector3(payload.blueScale.x, payload.blueScale.y, payload.blueScale.z);
+            Quaternion blueRot = new Quaternion(payload.blueRotation.x, payload.blueRotation.y, payload.blueRotation.z, payload.blueRotation.w);
+
+            // Goals are "non-default" only if their POSITIONS differ from standard.
+            // Scale varies by server (captured at runtime) so we don't use it to determine default state.
+            // The minimap only shows goal markers when positions are moved.
+            bool redNonDefaultPos = Vector3.Distance(redPos, new Vector3(0, 0, -40.92f)) > 0.5f;
+            bool blueNonDefaultPos = Vector3.Distance(bluePos, new Vector3(0, 0, 40.92f)) > 0.5f;
+            GoalsAreNonDefault = redNonDefaultPos || blueNonDefaultPos;
+
+            Plugin.Log($"Goal positions updated. NonDefault={GoalsAreNonDefault} redPos={redPos} bluePos={bluePos} redScl={redScl} blueScl={blueScl}");
+
             Goal[] goals = Object.FindObjectsByType<Goal>(FindObjectsSortMode.None);
 
             foreach (Goal goal in goals)
             {
                 bool isRed = goal.gameObject.name.Contains("Red");
-
-                // Convert simple types back to Vector3 and Quaternion
-                Vector3 redPos = new Vector3(payload.redPosition.x, payload.redPosition.y, payload.redPosition.z);
-                Vector3 redScl = new Vector3(payload.redScale.x, payload.redScale.y, payload.redScale.z);
-                Quaternion redRot = new Quaternion(payload.redRotation.x, payload.redRotation.y, payload.redRotation.z, payload.redRotation.w);
-
-                Vector3 bluePos = new Vector3(payload.bluePosition.x, payload.bluePosition.y, payload.bluePosition.z);
-                Vector3 blueScl = new Vector3(payload.blueScale.x, payload.blueScale.y, payload.blueScale.z);
-                Quaternion blueRot = new Quaternion(payload.blueRotation.x, payload.blueRotation.y, payload.blueRotation.z, payload.blueRotation.w);
 
                 // Apply position, rotation, and scale
                 if (isRed)
@@ -393,13 +405,9 @@ public static class FuckGoals
                     goal.transform.localScale = blueScl;
                 }
 
-                // Check if goals are in non-default position
-                bool isNonDefaultPosition = (isRed && redPos != new Vector3(0, 0, -40.92f)) ||
-                                    (!isRed && bluePos != new Vector3(0, 0, 40.92f));
-                
-                bool isNonDefaultScale = (isRed && redScl != new Vector3(0.9f, 0.9f, 0.8f) || !isRed && blueScl != new Vector3(0.9f, 0.9f, 0.8f));
+                bool isNonDefault = isRed ? redNonDefaultPos : blueNonDefaultPos;
 
-                if (isNonDefaultPosition || isNonDefaultScale)
+                if (isNonDefault)
                 {
                     // Apply custom frame for non-default positions
                     ApplyCustomFrame(goal);

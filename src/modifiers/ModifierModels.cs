@@ -31,6 +31,7 @@ public class ModifierRegistryEntry
     public string type;      // "Toggle", "SetValue", "FunctionCall"
     public string category;  // "Gameplay", "Admin", "Gamemode", "Silly"
     public string usage;
+    public bool availableOnFlavor = true;
     public ArgSchemaEntry[] argSchemas;
 }
 

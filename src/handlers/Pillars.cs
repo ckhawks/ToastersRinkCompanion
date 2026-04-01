@@ -6,6 +6,7 @@ namespace ToastersRinkCompanion.handlers;
 public static class Pillars
 {
     private static GameObject spawnedPillar;
+    public static GameObject SpawnedObject => spawnedPillar;
     private static GameObject pillarPrefab;
     private static AssetBundle _loadedAssetBundle;
     

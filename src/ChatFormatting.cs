@@ -10,6 +10,13 @@ public static class ChatFormatting
     private static readonly HashSet<string> _donorSteamIds = new HashSet<string>();
     private static readonly Dictionary<string, TeamEntry[]> _teamRosters = new Dictionary<string, TeamEntry[]>();
 
+    public static bool IsDonor(string steamId) => _donorSteamIds.Contains(steamId);
+
+    public static TeamEntry[] GetPlayerTeams(string steamId)
+    {
+        return _teamRosters.TryGetValue(steamId, out var teams) ? teams : null;
+    }
+
     private static readonly string DONOR_PREFIX = "<size=16><b><color=#487fe6>DONOR</color></b></size> ";
 
     public static void RegisterHandlers()

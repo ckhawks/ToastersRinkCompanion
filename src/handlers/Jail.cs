@@ -6,6 +6,7 @@ namespace ToastersRinkCompanion.handlers;
 public static class Jail
 {
     private static Dictionary<int, GameObject> spawnedJails = new Dictionary<int, GameObject>();
+    public static IReadOnlyDictionary<int, GameObject> SpawnedJails => spawnedJails;
     private static GameObject jailPrefab;
     private static AssetBundle _loadedAssetBundle;
 

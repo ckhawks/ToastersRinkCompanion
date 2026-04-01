@@ -6,6 +6,7 @@ namespace ToastersRinkCompanion.handlers;
 public static class SpeedBumps
 {
     private static List<GameObject> spawnedSpeedBumps = new List<GameObject>();
+    public static IReadOnlyList<GameObject> SpawnedObjects => spawnedSpeedBumps;
     private static GameObject speedBumpPrefab;
     private static AssetBundle _loadedAssetBundle;
     
