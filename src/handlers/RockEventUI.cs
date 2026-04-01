@@ -15,8 +15,11 @@ public static class RockEventUI
     private static VisualElement _bossBarUI;
     private static Label _bossTitleLabel;
     private static ProgressBar _bossProgressBar;
+    private static Label _timerLabel;
     private static VisualElement _progressBarProgressElement; // We'll get this via reflection
     private static bool isSetup = false;
+    private static float _secondsRemaining;
+    private static float _lastUpdateTime;
     
     // For fade animation
     private static Coroutine _fadeCoroutine;
@@ -201,6 +204,13 @@ public static class RockEventUI
         // TODO the progress bar itself does not have the rounded corners, just the border
         // TODO is it possible to have changes to the progress bar value be animated visually between the old value and new value?
         _bossBarUI.Add(_bossProgressBar);
+
+        _timerLabel = new Label("");
+        _timerLabel.style.fontSize = 12;
+        _timerLabel.style.color = new StyleColor(new Color(0.7f, 0.7f, 0.7f));
+        _timerLabel.style.marginTop = 2;
+        _timerLabel.style.unityTextAlign = TextAnchor.MiddleCenter;
+        _bossBarUI.Add(_timerLabel);
     }
     
     // Helper to start a fade coroutine. Assumes you have a MonoBehaviour to run this from.
@@ -313,6 +323,32 @@ public static class RockEventUI
     }
 
     private static bool _isFadingIn = false;
+
+    public static void UpdateTimer(float secondsRemaining)
+    {
+        _secondsRemaining = secondsRemaining;
+        _lastUpdateTime = Time.time;
+        RefreshTimerLabel();
+    }
+
+    public static void RefreshTimerLabel()
+    {
+        if (_timerLabel == null) return;
+        float remaining = Mathf.Max(0f, _secondsRemaining - (Time.time - _lastUpdateTime));
+        int minutes = (int)(remaining / 60f);
+        int seconds = (int)(remaining % 60f);
+        _timerLabel.text = remaining > 60f
+            ? $"{minutes}:{seconds:D2} remaining"
+            : $"{seconds}s remaining";
+
+        // Color: yellow when < 60s, red when < 30s
+        if (remaining < 30f)
+            _timerLabel.style.color = new StyleColor(new Color(0.9f, 0.3f, 0.3f));
+        else if (remaining < 60f)
+            _timerLabel.style.color = new StyleColor(new Color(0.9f, 0.8f, 0.2f));
+        else
+            _timerLabel.style.color = new StyleColor(new Color(0.7f, 0.7f, 0.7f));
+    }
 
     public static void ShowOrUpdateUI(int bossMaxHealth, int bossHealth, bool displayNow)
     {

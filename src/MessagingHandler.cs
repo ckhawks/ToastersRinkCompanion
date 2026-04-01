@@ -62,6 +62,7 @@ public static class MessagingHandler
             Ramps.ClearRamps();
             Jail.ClearAllJails();
             Sign.DestroySign();
+            MemeDisplay.Cleanup();
             UpdatableChat.Clear();
             JuggleRallyTimer.Clear();
             FuckGoals.CleanupAllCustomFrames();
@@ -96,6 +97,9 @@ public static class MessagingHandler
 
             // Register modifier system handlers
             ToastersRinkCompanion.modifiers.ModifierMessaging.RegisterHandlers();
+
+            // Register daily meme handlers
+            MemeDisplay.RegisterHandlers();
 
             // Single goalie: suppress camera overlay during team switch
             JsonMessageRouter.RegisterHandler("singlegoalie_switch", (sender, payloadJson) =>

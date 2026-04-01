@@ -97,7 +97,7 @@ public static class SettingsTab
         });
 
         // HUD Position
-        var posHeader = new Label("HUD Position");
+        var posHeader = new Label("Modifiers List HUD Position");
         posHeader.style.fontSize = 18;
         posHeader.style.unityFontStyleAndWeight = FontStyle.Bold;
         posHeader.style.color = Color.white;

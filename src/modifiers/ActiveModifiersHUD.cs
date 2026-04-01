@@ -49,29 +49,33 @@ public static class ActiveModifiersHUD
         int x = settings?.hudPositionX ?? 0;
         int y = settings?.hudPositionY ?? 95;
 
-        // Position using left % with translate to center the container on that point
-        // X: 0% = left edge, 50% = center, 100% = right edge
-        _container.style.left = new StyleLength(new Length(x, LengthUnit.Percent));
-        _container.style.right = StyleKeyword.Auto;
-        _container.style.top = new StyleLength(new Length(y, LengthUnit.Percent));
-        _container.style.bottom = StyleKeyword.Auto;
+        // We want a parent container that represents the "safe area" (screen minus padding).
+        // Then position within that using percentages. Since we can't easily create a
+        // parent, we use calc-style: left = padding + x% * (100% - 2*padding).
+        // UIToolkit doesn't support calc(), so we use the parent's resolved size.
+        var root = _container.parent;
+        float parentW = root?.resolvedStyle.width ?? 1920f;
+        float parentH = root?.resolvedStyle.height ?? 1080f;
+        float safeW = parentW - ScreenPadding * 2f;
+        float safeH = parentH - ScreenPadding * 2f;
 
-        // Alignment: left half aligns left, right half aligns right
+        float pixelX = ScreenPadding + (x / 100f) * safeW;
+        float pixelY = ScreenPadding + (y / 100f) * safeH;
+
         bool isRight = x > 50;
-        _container.style.alignItems = isRight ? Align.FlexEnd : Align.FlexStart;
-
-        // Stack direction: top half stacks down, bottom half stacks up
         bool isBottom = y > 50;
+
+        // Anchor from the appropriate edge so the container grows away from it
+        _container.style.left = isRight ? StyleKeyword.Auto : pixelX;
+        _container.style.right = isRight ? (parentW - pixelX) : StyleKeyword.Auto;
+        _container.style.top = isBottom ? StyleKeyword.Auto : pixelY;
+        _container.style.bottom = isBottom ? (parentH - pixelY) : StyleKeyword.Auto;
+
+        _container.style.alignItems = isRight ? Align.FlexEnd : Align.FlexStart;
         _container.style.flexDirection = isBottom ? FlexDirection.ColumnReverse : FlexDirection.Column;
 
-        // Use translate to anchor the container correctly:
-        // X: lerp from 0% (left-aligned) to -100% (right-aligned)
-        // Y: lerp from 0% (top-aligned) to -100% (bottom-aligned)
-        float translateX = -x; // at 0% -> 0, at 50% -> -50%, at 100% -> -100%
-        float translateY = -y;
-        _container.style.translate = new Translate(
-            new Length(translateX, LengthUnit.Percent),
-            new Length(translateY, LengthUnit.Percent));
+        // No translate needed - anchored from the correct edge
+        _container.style.translate = new Translate(0, 0);
     }
 
     public static void Refresh()

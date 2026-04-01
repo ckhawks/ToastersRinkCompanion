@@ -65,6 +65,7 @@ public static class RockEvent
         
         RockEventUI.ShowOrUpdateUI(payload.RockMaxHealth, payload.RockCurrentHealth, payload.AlreadyBegun);
         RockEventUI.SetBossName(payload.RockName);
+        RockEventUI.UpdateTimer(payload.SecondsRemaining);
     }
     
     private static void LoadPrefabs()
@@ -95,12 +96,15 @@ public static class RockEvent
     private static void RockEventTick()
     {
         if (spawnedRock == null) return; // only work when rock exists
-        
+
         // Move rock up if not up
         if (spawnedRock.transform.position.y < 0)
         {
             spawnedRock.transform.position = new Vector3(spawnedRock.transform.position.x, spawnedRock.transform.position.y + (Time.deltaTime * rockRiseSpeedMultiplier), spawnedRock.transform.position.z);
         }
+
+        // Update timer display (counts down locally between server updates)
+        RockEventUI.RefreshTimerLabel();
     }
 
     public static void PlayRockHitFromPayload(RockHitPayload payload)
@@ -143,6 +147,7 @@ public static class RockEvent
         Object.Destroy(sparksGo, mainModule.duration + mainModule.startLifetime.constantMax + 0.1f);
         
         RockEventUI.ShowOrUpdateUI(payload.RockMaxHealth, payload.RockCurrentHealth, false);
+        RockEventUI.UpdateTimer(payload.SecondsRemaining);
     }
 
     [HarmonyPatch(typeof(LevelController), "Event_Everyone_OnGameStateChanged")]
@@ -225,8 +230,9 @@ public class RockEventPayload
     public int RockCurrentHealth { get; set; } = 20;
     public int RockShape { get; set; }
     public int RockType { get; set; }
+    public float SecondsRemaining { get; set; }
 
-    public RockEventPayload(Vector3 p, Vector3 r, string n, bool a, int m, int c, int s, int t)
+    public RockEventPayload(Vector3 p, Vector3 r, string n, bool a, int m, int c, int s, int t, float secs = 300f)
     {
         Position = p;
         Rotation = r;
@@ -236,6 +242,7 @@ public class RockEventPayload
         RockCurrentHealth = c;
         RockShape = s;
         RockType = t;
+        SecondsRemaining = secs;
     }
 }
 
@@ -247,14 +254,16 @@ public class RockHitPayload
     public ulong HitterClientId { get; set; }
     public int RockMaxHealth { get; set; }
     public int RockCurrentHealth { get; set; }
+    public float SecondsRemaining { get; set; }
 
-    public RockHitPayload(Vector3 p, Vector3 n, ulong id, int m, int c)
+    public RockHitPayload(Vector3 p, Vector3 n, ulong id, int m, int c, float secs = 300f)
     {
         Position = p;
         NormalDirection = n;
         HitterClientId = id;
         RockMaxHealth = m;
         RockCurrentHealth = c;
+        SecondsRemaining = secs;
     }
 }
 
