@@ -104,6 +104,49 @@ public static class HomeTab
         BuildLinkButton(linksRow, "Rules", "https://puckstats.io/rules", UIHelpers.TextSecondary);
         BuildLinkButton(linksRow, "Donate", "https://ko-fi.com/stellaric", new Color(1f, 0.35f, 0.45f));
         BuildLinkButton(linksRow, "EIS Discord", "https://discord.gg/swDnyXFChu", new Color(0.2f, 0.7f, 0.8f));
+
+        // Credits section
+        var creditsSep = new VisualElement();
+        creditsSep.style.height = 1;
+        creditsSep.style.backgroundColor = new StyleColor(new Color(0.2f, 0.2f, 0.2f));
+        creditsSep.style.marginTop = 12;
+        creditsSep.style.marginBottom = 10;
+        parent.Add(creditsSep);
+
+        var creditsTitle = new Label("Credits");
+        creditsTitle.style.fontSize = 14;
+        creditsTitle.style.unityFontStyleAndWeight = FontStyle.Bold;
+        creditsTitle.style.color = UIHelpers.TextPrimary;
+        creditsTitle.style.marginBottom = 6;
+        parent.Add(creditsTitle);
+
+        BuildCreditLine(parent, "Toaster (Stellaric)",
+            "Server mod, client mod, backend, PuckStats, and 95% of models");
+        BuildCreditLine(parent, "Amikiir",
+            "Base of AI Goalie implementation (heavily inspired by dem's goalie bots)");
+        // BuildCreditLine(parent, "Dalfan & oomtm",
+        //     "Base of stats implementation");
+    }
+
+    private static void BuildCreditLine(VisualElement parent, string name, string role)
+    {
+        var row = new VisualElement();
+        row.style.flexDirection = FlexDirection.Row;
+        row.style.marginBottom = 3;
+        parent.Add(row);
+
+        var nameLabel = new Label(name);
+        nameLabel.style.fontSize = 12;
+        nameLabel.style.unityFontStyleAndWeight = FontStyle.Bold;
+        nameLabel.style.color = new StyleColor(UIHelpers.TextPrimary);
+        nameLabel.style.marginRight = 6;
+        row.Add(nameLabel);
+
+        var roleLabel = new Label("— " + role);
+        roleLabel.style.fontSize = 12;
+        roleLabel.style.color = new StyleColor(UIHelpers.TextSecondary);
+        roleLabel.style.whiteSpace = WhiteSpace.Normal;
+        row.Add(roleLabel);
     }
 
     private static void BuildLinkButton(VisualElement parent, string label, string url, Color color)

@@ -307,26 +307,102 @@ public static class PlayersTab
             ModifierPanelUI.RefreshCurrentTab();
         });
 
-        // Expanded section (placeholder)
+        // Expanded section with stats
         if (isExpanded)
         {
             var expandedPanel = new VisualElement();
             expandedPanel.style.paddingLeft = 34;
             expandedPanel.style.paddingRight = 12;
-            expandedPanel.style.paddingTop = 4;
-            expandedPanel.style.paddingBottom = 6;
+            expandedPanel.style.paddingTop = 6;
+            expandedPanel.style.paddingBottom = 8;
             expandedPanel.style.backgroundColor = new StyleColor(new Color(0.13f, 0.13f, 0.13f));
             expandedPanel.style.borderBottomLeftRadius = 4;
             expandedPanel.style.borderBottomRightRadius = 4;
             expandedPanel.style.borderLeftWidth = 3;
-            expandedPanel.style.borderLeftColor = new StyleColor(new Color(0.3f, 0.3f, 0.4f));
+            expandedPanel.style.borderLeftColor = new StyleColor(teamColor);
             container.Add(expandedPanel);
 
-            var placeholder = new Label("More details coming soon...");
-            placeholder.style.fontSize = 12;
-            placeholder.style.color = new StyleColor(new Color(0.4f, 0.4f, 0.4f));
-            expandedPanel.Add(placeholder);
+            BuildPlayerStats(expandedPanel, steamId);
         }
+    }
+
+    private static void BuildPlayerStats(VisualElement parent, string steamId)
+    {
+        var stats = PlayerStatsStore.GetStats(steamId);
+        if (stats == null)
+        {
+            var noStats = new Label("No match stats available.");
+            noStats.style.fontSize = 12;
+            noStats.style.color = new StyleColor(new Color(0.4f, 0.4f, 0.4f));
+            parent.Add(noStats);
+            return;
+        }
+
+        // Scoring row
+        var scoringRow = new VisualElement();
+        scoringRow.style.flexDirection = FlexDirection.Row;
+        scoringRow.style.flexWrap = Wrap.Wrap;
+        scoringRow.style.marginBottom = 4;
+        parent.Add(scoringRow);
+
+        BuildStatCell(scoringRow, "Goals", stats.goals.ToString());
+        BuildStatCell(scoringRow, "Assists", stats.assists.ToString());
+        BuildStatCell(scoringRow, "Points", (stats.goals + stats.assists).ToString());
+        BuildStatCell(scoringRow, "Shots", stats.shots.ToString());
+        BuildStatCell(scoringRow, "Saves", stats.saves.ToString());
+        BuildStatCell(scoringRow, "Touches", stats.touches.ToString());
+
+        // Possession & time row
+        var timeRow = new VisualElement();
+        timeRow.style.flexDirection = FlexDirection.Row;
+        timeRow.style.flexWrap = Wrap.Wrap;
+        timeRow.style.marginBottom = 4;
+        parent.Add(timeRow);
+
+        BuildStatCell(timeRow, "Possessions", stats.possessions.ToString());
+        BuildStatCell(timeRow, "Poss. Time", FormatTime(stats.possessionSeconds));
+        BuildStatCell(timeRow, "Ice Time", FormatTime(stats.onIceSeconds));
+
+        // Movement row
+        var moveRow = new VisualElement();
+        moveRow.style.flexDirection = FlexDirection.Row;
+        moveRow.style.flexWrap = Wrap.Wrap;
+        parent.Add(moveRow);
+
+        BuildStatCell(moveRow, "Distance", $"{stats.totalDistanceTravelled:F0}u");
+        BuildStatCell(moveRow, "Avg Speed", $"{stats.averageSpeed:F1}");
+        BuildStatCell(moveRow, "Jumps", stats.jumps.ToString());
+        BuildStatCell(moveRow, "Air Time", FormatTime(stats.airborneSeconds));
+        BuildStatCell(moveRow, "Slides", stats.slides.ToString());
+        BuildStatCell(moveRow, "Revolutions", $"{stats.totalRevolutions:F1}");
+    }
+
+    private static void BuildStatCell(VisualElement parent, string label, string value)
+    {
+        var cell = new VisualElement();
+        cell.style.minWidth = 80;
+        cell.style.marginRight = 12;
+        cell.style.marginBottom = 2;
+        parent.Add(cell);
+
+        var valLabel = new Label(value);
+        valLabel.style.fontSize = 14;
+        valLabel.style.unityFontStyleAndWeight = FontStyle.Bold;
+        valLabel.style.color = UIHelpers.TextPrimary;
+        cell.Add(valLabel);
+
+        var nameLabel = new Label(label);
+        nameLabel.style.fontSize = 10;
+        nameLabel.style.color = new StyleColor(UIHelpers.TextMuted);
+        cell.Add(nameLabel);
+    }
+
+    private static string FormatTime(int totalSeconds)
+    {
+        if (totalSeconds < 60) return $"{totalSeconds}s";
+        int min = totalSeconds / 60;
+        int sec = totalSeconds % 60;
+        return $"{min}:{sec:D2}";
     }
 
     private static void ShowModTooltip(VisualElement anchor, PlayerModStore.PlayerModEntry modInfo)

@@ -852,6 +852,21 @@ public static class MessagingHandler
                 }
             });
 
+            JsonMessageRouter.RegisterHandler("player_stats", (sender, payloadJson) =>
+            {
+                if (!connectedToToastersRink) return;
+                try
+                {
+                    var payload = JsonConvert.DeserializeObject<ToastersRinkCompanion.modifiers.PlayerStatsStore.PlayerStatsPayload>(payloadJson);
+                    if (payload != null)
+                        ToastersRinkCompanion.modifiers.PlayerStatsStore.Update(payload);
+                }
+                catch (Exception e)
+                {
+                    Plugin.LogError($"Failed to parse player_stats payload: {e}");
+                }
+            });
+
             _handlersRegistered = true;
             Plugin.Log($"Setup is complete - handlers registered.");
         }
