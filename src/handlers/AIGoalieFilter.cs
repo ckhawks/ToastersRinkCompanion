@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using HarmonyLib;
+using UnityEngine;
 
 namespace ToastersRinkCompanion.handlers;
 
@@ -12,11 +13,55 @@ public static class AIGoalieFilter
 {
     private const string BotNamePrefix = "TotBot";
 
+    /// <summary>
+    /// Debug: log when any Player is added to PlayerManager to see if replay copies arrive.
+    /// </summary>
+    [HarmonyPatch(typeof(PlayerManager), nameof(PlayerManager.AddPlayer))]
+    public static class DebugPlayerAddedPatch
+    {
+        [HarmonyPostfix]
+        public static void Postfix(Player player)
+        {
+            try
+            {
+                string name = player.Username.Value.ToString();
+                if (name.StartsWith(BotNamePrefix))
+                {
+                    Debug.Log($"[AIGoalieFilter] AddPlayer: {name} clientId={player.OwnerClientId} isReplay={player.IsReplay.Value} isCharSpawned={player.IsCharacterSpawned}");
+                }
+            }
+            catch { }
+        }
+    }
+
+    /// <summary>
+    /// Debug: log when any PlayerBody spawns for a TotBot.
+    /// </summary>
+    [HarmonyPatch(typeof(Player), "OnNetworkPostSpawn")]
+    public static class DebugPlayerPostSpawnPatch
+    {
+        [HarmonyPostfix]
+        public static void Postfix(Player __instance)
+        {
+            try
+            {
+                string name = __instance.Username.Value.ToString();
+                if (name.StartsWith(BotNamePrefix))
+                {
+                    Debug.Log($"[AIGoalieFilter] OnNetworkPostSpawn: {name} clientId={__instance.OwnerClientId} isReplay={__instance.IsReplay.Value}");
+                }
+            }
+            catch { }
+        }
+    }
+
     public static bool IsAIGoalie(Player player)
     {
         if (player == null) return false;
         try
         {
+            // Don't filter replay copies - they need to be visible during replays
+            if (player.IsReplay.Value) return false;
             string username = player.Username.Value.ToString();
             return username.StartsWith(BotNamePrefix);
         }
@@ -44,9 +89,15 @@ public static class AIGoalieFilter
     public static class ExcludeFromPlayerListPatch
     {
         [HarmonyPostfix]
-        public static void Postfix(ref List<Player> __result)
+        public static void Postfix(ref List<Player> __result, bool includeReplay)
         {
+            int before = __result.Count;
             __result = __result.Where(p => !IsAIGoalie(p)).ToList();
+            int after = __result.Count;
+            if (before != after && includeReplay)
+            {
+                Debug.Log($"[AIGoalieFilter] GetPlayers(includeReplay={includeReplay}): filtered {before - after} AI goalies, {after} remaining");
+            }
         }
     }
 
