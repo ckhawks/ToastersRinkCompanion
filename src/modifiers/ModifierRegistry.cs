@@ -41,6 +41,10 @@ public static class ModifierRegistry
         {
             ActiveModifiers.AddRange(payload.activeModifiers);
         }
+
+        // Sync stick modifier states to client-side patches
+        handlers.StickModifiers.SetFreeBlade(ActiveModifiers.Exists(m => m.key == "freeblade"));
+        handlers.StickModifiers.SetHighSticking(ActiveModifiers.Exists(m => m.key == "highsticking"));
     }
 
     public static void Clear()

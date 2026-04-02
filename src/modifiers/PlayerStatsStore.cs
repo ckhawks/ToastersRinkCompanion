@@ -24,6 +24,7 @@ public static class PlayerStatsStore
         public float totalDistanceTravelled;
         public float averageSpeed;
         public float totalRevolutions;
+        public int juggles;
     }
 
     [Serializable]

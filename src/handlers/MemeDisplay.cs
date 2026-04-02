@@ -24,10 +24,10 @@ public static class MemeDisplay
     private static readonly Vector3 BoardPosition = new Vector3(-22.4f, 3.5f, 0f);
     private static readonly float BoardHeight = 4f; // meters tall, width scales with aspect ratio
 
-    // Button visual positions — must match server-side DailyMeme.cs
-    private static readonly float ButtonSize = 1.2f;
+    // Button visual positions — decorative only, colliders are server-side
+    private static readonly float ButtonSize = 0.6f;
     private static readonly float ButtonOffsetZ = 3.5f;
-    private static readonly float ButtonY = 0.8f;
+    private static readonly float ButtonY = 1.8f;
 
     public static void RegisterHandlers()
     {
@@ -255,14 +255,14 @@ public static class MemeDisplay
         dislikeMat.color = new Color(0.7f, 0.2f, 0.2f); // red
         dislikeBtn.GetComponent<MeshRenderer>().material = dislikeMat;
 
-        // Like count label — parent on board, not on button, to avoid scale distortion
-        var likeLabelPos = likeBtn.transform.localPosition + new Vector3(0.15f, 0f, 0f);
+        // Like count label — positioned in front of button (positive X = toward rink)
+        var likeLabelPos = likeBtn.transform.localPosition + new Vector3(ButtonSize / 3f / 2f + 0.01f, 0f, 0f);
         _likeCountText = CreateWorldText(_memeBoard.transform,
             $"{_currentPayload?.likes ?? 0}", Color.white,
             likeLabelPos, Vector3.one, 48, 0.12f);
 
         // Dislike count label
-        var dislikeLabelPos = dislikeBtn.transform.localPosition + new Vector3(0.15f, 0f, 0f);
+        var dislikeLabelPos = dislikeBtn.transform.localPosition + new Vector3(ButtonSize / 3f / 2f + 0.01f, 0f, 0f);
         _dislikeCountText = CreateWorldText(_memeBoard.transform,
             $"{_currentPayload?.dislikes ?? 0}", Color.white,
             dislikeLabelPos, Vector3.one, 48, 0.12f);
@@ -276,7 +276,7 @@ public static class MemeDisplay
 
         // Helper text
         CreateWorldText(_memeBoard.transform,
-            "Hit the buttons with a puck to vote!", new Color(0.55f, 0.55f, 0.55f),
+            "Hit the buttons with a puck or stick to vote!", new Color(0.55f, 0.55f, 0.55f),
             new Vector3(0f, -(BoardHeight / 2f) - 0.7f, 0f), Vector3.one,
             24, 0.08f, TextAnchor.UpperCenter);
 
@@ -306,6 +306,9 @@ public static class MemeDisplay
             shadowTm.anchor = anchor;
             shadowTm.alignment = TextAlignment.Center;
             shadowTm.color = new Color(0f, 0f, 0f, 0.6f);
+
+            // Swap shadow to depth-respecting shader
+            ApplyDepthTestedTextMaterial(shadowGo.GetComponent<MeshRenderer>());
         }
 
         var tm = go.AddComponent<TextMesh>();
@@ -316,7 +319,28 @@ public static class MemeDisplay
         tm.alignment = TextAlignment.Center;
         tm.color = color;
 
+        // Swap to depth-respecting shader (GUI/Text Shader has ZTest Always hardcoded)
+        ApplyDepthTestedTextMaterial(go.GetComponent<MeshRenderer>());
+
         return tm;
+    }
+
+    private static void ApplyDepthTestedTextMaterial(MeshRenderer renderer)
+    {
+        if (renderer == null || renderer.material == null) return;
+
+        // GUI/Text Shader has ZTest Always hardcoded, so we must swap shaders.
+        // Use Sprites/Default which supports alpha and respects depth.
+        // Color comes from TextMesh vertex colors, not the material.
+        var depthShader = Shader.Find("Sprites/Default");
+        if (depthShader == null) return;
+
+        var oldMat = renderer.material;
+        var mat = new Material(depthShader);
+        mat.mainTexture = oldMat.mainTexture; // preserve font atlas
+        mat.color = Color.white; // let TextMesh vertex colors control tint
+        mat.renderQueue = 2999;
+        renderer.material = mat;
     }
 
     private static void UpdateTextWithShadow(TextMesh tm, string text)

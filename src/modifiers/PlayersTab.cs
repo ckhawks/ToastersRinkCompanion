@@ -362,6 +362,7 @@ public static class PlayersTab
         BuildStatCell(timeRow, "Possessions", stats.possessions.ToString());
         BuildStatCell(timeRow, "Poss. Time", FormatTime(stats.possessionSeconds));
         BuildStatCell(timeRow, "Ice Time", FormatTime(stats.onIceSeconds));
+        BuildStatCell(timeRow, "Juggles", stats.juggles.ToString());
 
         // Movement row
         var moveRow = new VisualElement();

@@ -171,6 +171,55 @@ public static class ClientChat
         }
     }
 
+    // DEBUG: Log all chat messages being added to trace missing leave messages
+    [HarmonyPatch(typeof(ChatManager), nameof(ChatManager.AddChatMessage))]
+    public class AddChatMessageDebugPatch
+    {
+        [HarmonyPrefix]
+        public static void Prefix(ChatMessage chatMessage)
+        {
+            Plugin.Log($"[ChatDebug] AddChatMessage: IsSystem={chatMessage.IsSystem}, Content='{chatMessage.Content}', Username='{chatMessage.Username}'");
+        }
+    }
+
+    // DEBUG: Log when players despawn (which is when leave messages should appear)
+    [HarmonyPatch(typeof(Player), "OnNetworkDespawn")]
+    public class PlayerDespawnDebugPatch
+    {
+        [HarmonyPostfix]
+        public static void Postfix(Player __instance)
+        {
+            try
+            {
+                Plugin.Log($"[ChatDebug] Player.OnNetworkDespawn: Username='{__instance.Username.Value}', SteamId='{__instance.SteamId.Value}', ClientId={__instance.OwnerClientId}");
+            }
+            catch (Exception e)
+            {
+                Plugin.Log($"[ChatDebug] Player.OnNetworkDespawn: (could not read player data: {e.Message})");
+            }
+        }
+    }
+
+    // DEBUG: Log when the ServerManagerController fires the disconnect event on the client
+    [HarmonyPatch(typeof(ServerManagerController), "Event_Everyone_OnClientDisconnected")]
+    public class ClientDisconnectEventDebugPatch
+    {
+        [HarmonyPrefix]
+        public static void Prefix(Dictionary<string, object> message)
+        {
+            if (message == null)
+            {
+                Plugin.Log($"[ChatDebug] Event_Everyone_OnClientDisconnected: message is null");
+                return;
+            }
+
+            string info = "";
+            foreach (var kvp in message)
+                info += $"{kvp.Key}={kvp.Value}, ";
+            Plugin.Log($"[ChatDebug] Event_Everyone_OnClientDisconnected: {info}");
+        }
+    }
+
     [HarmonyPatch(typeof(SpectatorCamera), "OnNetworkPostSpawn")]
     public class SpectatorCameraPatch
     {
