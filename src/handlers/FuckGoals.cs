@@ -376,15 +376,7 @@ public static class FuckGoals
             Vector3 blueScl = new Vector3(payload.blueScale.x, payload.blueScale.y, payload.blueScale.z);
             Quaternion blueRot = new Quaternion(payload.blueRotation.x, payload.blueRotation.y, payload.blueRotation.z, payload.blueRotation.w);
 
-            // Goals are "non-default" if their positions OR scale differ from standard.
-            // The minimap only shows goal markers when positions are moved.
-            bool redNonDefaultPos = Vector3.Distance(redPos, new Vector3(0, 0, -40.92f)) > 0.5f;
-            bool blueNonDefaultPos = Vector3.Distance(bluePos, new Vector3(0, 0, 40.92f)) > 0.5f;
-            bool redNonDefaultScale = Vector3.Distance(redScl, Vector3.one) > 0.01f;
-            bool blueNonDefaultScale = Vector3.Distance(blueScl, Vector3.one) > 0.01f;
-            bool redNonDefault = redNonDefaultPos || redNonDefaultScale;
-            bool blueNonDefault = blueNonDefaultPos || blueNonDefaultScale;
-            GoalsAreNonDefault = redNonDefault || blueNonDefault;
+            GoalsAreNonDefault = payload.modified;
 
             Plugin.Log($"Goal positions updated. NonDefault={GoalsAreNonDefault} redPos={redPos} bluePos={bluePos} redScl={redScl} blueScl={blueScl}");
 
@@ -408,9 +400,7 @@ public static class FuckGoals
                     goal.transform.localScale = blueScl;
                 }
 
-                bool isNonDefault = isRed ? redNonDefault : blueNonDefault;
-
-                if (isNonDefault)
+                if (payload.modified)
                 {
                     // Apply custom frame for non-default positions
                     ApplyCustomFrame(goal);
@@ -459,6 +449,7 @@ public static class FuckGoals
 [System.Serializable]
 public class GoalPositionPayload
 {
+    public bool modified;
     public Vec3 redPosition;
     public QuatData redRotation;
     public Vec3 redScale;

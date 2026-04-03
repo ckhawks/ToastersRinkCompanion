@@ -77,6 +77,7 @@ public static class MessagingHandler
             ToastersRinkCompanion.modifiers.ModifierPanelUI.Hide();
             MOTDUI.Hide();
             ToastersRinkCompanion.modifiers.PlayerModStore.Clear();
+            CollectiblesStore.Clear();
             MinimapObjects.Clear();
         }
     }
@@ -100,6 +101,9 @@ public static class MessagingHandler
 
             // Register modifier system handlers
             ToastersRinkCompanion.modifiers.ModifierMessaging.RegisterHandlers();
+
+            // Register collectibles system handlers
+            CollectiblesMessaging.RegisterHandlers();
 
             // Register daily meme handlers
             MemeDisplay.RegisterHandlers();
@@ -141,8 +145,10 @@ public static class MessagingHandler
                         Plugin.Log($"Received `Greetings` message from Toaster's Rink {greetingsPayload?.companionTargetVersion}, we're connected!");
                         Sign.SpawnSign();
                         CollectiblePrefabs.Setup();
-                        // CollectibleBloomer.MakeBloomer();
                         MOTDUI.Show();
+
+                        // Tell the server we have the companion installed
+                        JsonMessageRouter.SendMessage("companion_hello", 0, new { version = Plugin.MOD_VERSION });
                     }
 
                     return;

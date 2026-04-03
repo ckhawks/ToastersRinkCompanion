@@ -17,6 +17,7 @@ public static class ServerState
     public static bool AutocleanEnabled { get; set; }
     public static string BlueTeamName { get; set; } = "Team Blue";
     public static string RedTeamName { get; set; } = "Team Red";
+    public static bool IsWarmup { get; set; }
 
     public static void Update(ServerStatePayload payload)
     {
@@ -30,6 +31,7 @@ public static class ServerState
         AutocleanEnabled = payload.autocleanEnabled;
         BlueTeamName = payload.blueTeamName ?? "Team Blue";
         RedTeamName = payload.redTeamName ?? "Team Red";
+        IsWarmup = payload.isWarmup;
     }
 
     public static void Clear()
@@ -44,6 +46,7 @@ public static class ServerState
         AutocleanEnabled = false;
         BlueTeamName = "Team Blue";
         RedTeamName = "Team Red";
+        IsWarmup = false;
     }
 
     [Serializable]
@@ -59,5 +62,6 @@ public static class ServerState
         public bool autocleanEnabled;
         public string blueTeamName;
         public string redTeamName;
+        public bool isWarmup;
     }
 }

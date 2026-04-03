@@ -22,6 +22,8 @@ public static class ModifierPanelUI
     private static readonly List<TabDefinition> _tabs = new();
     private static int _activeTabIndex = -1;
 
+    public static VisualElement GetPanelRoot() => _panel;
+
     /// <summary>
     /// Suppresses the game's own keybinds (P for position select, T for chat, etc.)
     /// by setting interactingViews in GlobalStateManager.UIState.
@@ -215,6 +217,7 @@ public static class ModifierPanelUI
             RegisterTab("Admin", AdminTab.BuildContent);
         RegisterTab("Servers", ServersTab.BuildContent);
         RegisterTab("Donors", DonorsTab.BuildContent);
+        RegisterTab("Collectibles", ToastersRinkCompanion.collectibles.CollectiblesTab.BuildContent);
         RegisterTab("Settings", SettingsTab.BuildContent);
 
         _isSetup = true;

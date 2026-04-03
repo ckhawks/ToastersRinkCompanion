@@ -22,6 +22,7 @@ public static class AIGoalieFilter
         [HarmonyPostfix]
         public static void Postfix(Player player)
         {
+            if (!MessagingHandler.connectedToToastersRink) return;
             try
             {
                 string name = player.Username.Value.ToString();
@@ -43,6 +44,7 @@ public static class AIGoalieFilter
         [HarmonyPostfix]
         public static void Postfix(Player __instance)
         {
+            if (!MessagingHandler.connectedToToastersRink) return;
             try
             {
                 string name = __instance.Username.Value.ToString();
@@ -57,6 +59,7 @@ public static class AIGoalieFilter
 
     public static bool IsAIGoalie(Player player)
     {
+        if (!MessagingHandler.connectedToToastersRink) return false;
         if (player == null) return false;
         try
         {

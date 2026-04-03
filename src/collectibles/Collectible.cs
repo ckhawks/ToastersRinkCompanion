@@ -126,6 +126,9 @@ public class CollectibleItem // Maps to CollectibleDisplayData from socket
 
     [JsonProperty("created_at")]
     public string CreatedAt { get; set; }
+
+    [JsonProperty("protected")]
+    public bool Protected { get; set; }
 }
 
 [Serializable]
