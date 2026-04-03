@@ -1,4 +1,3 @@
-using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UIElements;
 
@@ -9,17 +8,55 @@ namespace ToastersRinkCompanion.modifiers;
 /// </summary>
 public static class SettingsTab
 {
-    private static readonly Dictionary<string, string> KeyDisplayNames = new()
-    {
-        { "f1", "F1" }, { "f2", "F2" }, { "f3", "F3" }, { "f4", "F4" },
-        { "f5", "F5" }, { "f6", "F6" }, { "f7", "F7" }, { "f8", "F8" },
-        { "f9", "F9" }, { "f10", "F10" }, { "f11", "F11" }, { "f12", "F12" },
-    };
+    private static Button _listeningButton = null;
+    private static System.Action<string> _listeningCallback = null;
+    private static string _listeningPreviousText = null;
 
-    private static readonly string[] KeyOptions =
+    public static bool IsListening => _listeningButton != null;
+
+    public static void CancelListening()
     {
-        "f1", "f2", "f3", "f4", "f5", "f6", "f7", "f8", "f9", "f10", "f11", "f12"
-    };
+        if (_listeningButton == null) return;
+        _listeningButton.text = _listeningPreviousText;
+        _listeningButton.style.backgroundColor = new StyleColor(new Color(0.25f, 0.25f, 0.25f));
+        _listeningButton = null;
+        _listeningCallback = null;
+        _listeningPreviousText = null;
+    }
+
+    public static void ApplyListening(string bindingPath)
+    {
+        if (_listeningButton == null) return;
+        _listeningButton.text = GetKeyDisplayName(bindingPath);
+        _listeningButton.style.backgroundColor = new StyleColor(new Color(0.25f, 0.25f, 0.25f));
+        _listeningCallback?.Invoke(bindingPath);
+        _listeningButton = null;
+        _listeningCallback = null;
+        _listeningPreviousText = null;
+    }
+
+    public static string GetKeyDisplayName(string bindingPath)
+    {
+        if (string.IsNullOrEmpty(bindingPath)) return "None";
+        int slashIndex = bindingPath.LastIndexOf('/');
+        string keyName = slashIndex >= 0 ? bindingPath.Substring(slashIndex + 1) : bindingPath;
+
+        var sb = new System.Text.StringBuilder();
+        for (int i = 0; i < keyName.Length; i++)
+        {
+            char c = keyName[i];
+            if (i == 0)
+                sb.Append(char.ToUpper(c));
+            else if (char.IsUpper(c))
+            {
+                sb.Append(' ');
+                sb.Append(c);
+            }
+            else
+                sb.Append(c);
+        }
+        return sb.ToString();
+    }
 
     public static void BuildContent(VisualElement parent)
     {
@@ -43,32 +80,32 @@ public static class SettingsTab
 
         var settings = Plugin.modSettings;
 
-        BuildTextSettingRow(scrollView, "Spawn Puck Bind", settings.spawnPuckKeybind,
-            "InputSystem path, e.g. <keyboard>/g", val =>
+        BuildKeybindRow(scrollView, "Spawn Puck Bind", settings.spawnPuckKeybind, val =>
         {
             settings.spawnPuckKeybind = val;
             settings.Save();
-            Plugin.spawnPuckAction.Disable();
-            Plugin.spawnPuckAction = new UnityEngine.InputSystem.InputAction(binding: val);
-            Plugin.spawnPuckAction.Enable();
+            Plugin.RecreateAction(ref Plugin.spawnPuckAction, val);
         });
 
         BuildKeybindRow(scrollView, "Vote Yes", settings.voteYesKeybind, val =>
         {
             settings.voteYesKeybind = val;
             settings.Save();
+            Plugin.RecreateAction(ref Plugin.voteYesAction, val);
         });
 
         BuildKeybindRow(scrollView, "Vote No", settings.voteNoKeybind, val =>
         {
             settings.voteNoKeybind = val;
             settings.Save();
+            Plugin.RecreateAction(ref Plugin.voteNoAction, val);
         });
 
         BuildKeybindRow(scrollView, "Open Panel", settings.panelKeybind, val =>
         {
             settings.panelKeybind = val;
             settings.Save();
+            Plugin.RecreateAction(ref Plugin.panelAction, val);
             ActiveModifiersHUD.Refresh();
         });
 
@@ -148,48 +185,32 @@ public static class SettingsTab
         labelEl.style.flexGrow = 1;
         row.Add(labelEl);
 
-        var choices = new List<string>(KeyOptions);
-        int defaultIndex = choices.IndexOf(currentValue);
-        if (defaultIndex < 0) defaultIndex = 0;
+        var bindButton = new Button();
+        bindButton.text = GetKeyDisplayName(currentValue);
+        bindButton.style.backgroundColor = new StyleColor(new Color(0.25f, 0.25f, 0.25f));
+        bindButton.style.color = Color.white;
+        bindButton.style.fontSize = 13;
+        bindButton.style.minWidth = 100;
+        bindButton.style.paddingLeft = 12;
+        bindButton.style.paddingRight = 12;
+        bindButton.style.paddingTop = 4;
+        bindButton.style.paddingBottom = 4;
+        bindButton.style.borderTopLeftRadius = 4;
+        bindButton.style.borderTopRightRadius = 4;
+        bindButton.style.borderBottomLeftRadius = 4;
+        bindButton.style.borderBottomRightRadius = 4;
 
-        var dropdown = new PopupField<string>(choices, defaultIndex,
-            val => KeyDisplayNames.ContainsKey(val) ? KeyDisplayNames[val] : val.ToUpper(),
-            val => KeyDisplayNames.ContainsKey(val) ? KeyDisplayNames[val] : val.ToUpper());
-        StyleDropdown(dropdown, 80, 100);
+        bindButton.RegisterCallback<ClickEvent>(evt =>
+        {
+            CancelListening();
+            _listeningButton = bindButton;
+            _listeningCallback = onChanged;
+            _listeningPreviousText = bindButton.text;
+            bindButton.text = "Press a key...";
+            bindButton.style.backgroundColor = new StyleColor(new Color(0.8f, 0.5f, 0.1f));
+        });
 
-        dropdown.RegisterValueChangedCallback(evt => onChanged(evt.newValue));
-        row.Add(dropdown);
-    }
-
-    private static void BuildTextSettingRow(VisualElement parent, string label, string currentValue,
-        string tooltip, System.Action<string> onChanged)
-    {
-        var row = new VisualElement();
-        row.style.flexDirection = FlexDirection.Row;
-        row.style.alignItems = Align.Center;
-        row.style.marginBottom = 8;
-        row.style.paddingLeft = 8;
-        row.style.paddingRight = 8;
-        row.style.paddingTop = 6;
-        row.style.paddingBottom = 6;
-        row.style.backgroundColor = new StyleColor(new Color(0.15f, 0.15f, 0.15f));
-        parent.Add(row);
-
-        var labelEl = new Label(label);
-        labelEl.style.color = Color.white;
-        labelEl.style.fontSize = 14;
-        labelEl.style.flexGrow = 1;
-        row.Add(labelEl);
-
-        var field = new TextField();
-        field.value = currentValue;
-        field.style.minWidth = 160;
-        field.style.maxWidth = 200;
-
-        field.RegisterCallback<AttachToPanelEvent>(evt => UIHelpers.StyleInputField(field));
-
-        field.RegisterValueChangedCallback(evt => onChanged(evt.newValue));
-        row.Add(field);
+        row.Add(bindButton);
     }
 
     private static void BuildToggleRow(VisualElement parent, string label, bool currentValue,
@@ -271,6 +292,4 @@ public static class SettingsTab
         });
     }
 
-    private static void StyleDropdown(VisualElement dropdown, int minWidth = 100, int maxWidth = 160)
-        => UIHelpers.StyleDropdown(dropdown, minWidth, maxWidth);
 }

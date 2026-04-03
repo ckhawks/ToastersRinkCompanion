@@ -55,6 +55,8 @@ public static class MessagingHandler
             // Local client disconnected, reset state
             _handlersRegistered = false;
             connectedToToastersRink = false;
+            serverFlavor = "";
+            serverCompTweaksEnabled = false;
             PuckScale.currentPuckScale = 1;
             Balls.currentBallsEnabled = false;
             Cones.ClearCones();
@@ -73,6 +75,7 @@ public static class MessagingHandler
             ToastersRinkCompanion.modifiers.ActiveModifiersHUD.Clear();
             ToastersRinkCompanion.modifiers.VotePopupUI.Hide();
             ToastersRinkCompanion.modifiers.ModifierPanelUI.Hide();
+            MOTDUI.Hide();
             ToastersRinkCompanion.modifiers.PlayerModStore.Clear();
             MinimapObjects.Clear();
         }
@@ -132,11 +135,14 @@ public static class MessagingHandler
                     {
                         connectedToToastersRink = true;
                         serverVersion = greetingsPayload?.toastersRinkSuiteVersion ?? "";
+                        serverFlavor = greetingsPayload?.serverFlavor ?? "";
+                        serverCompTweaksEnabled = greetingsPayload?.compTweaksEnabled ?? false;
                         Plugin.AddLocalChatMessage($"<size=14><i>Toaster's Rink Companion version {Plugin.MOD_VERSION} connected.</i> {(greetingsPayload?.companionTargetVersion == Plugin.MOD_VERSION ? "" : $" <br><color=red>Companion is out of date (server expecting {greetingsPayload?.companionTargetVersion}, client on {Plugin.MOD_VERSION})! Type <b>/outdated</b> for info.</color>")}</size>");
                         Plugin.Log($"Received `Greetings` message from Toaster's Rink {greetingsPayload?.companionTargetVersion}, we're connected!");
                         Sign.SpawnSign();
                         CollectiblePrefabs.Setup();
                         // CollectibleBloomer.MakeBloomer();
+                        MOTDUI.Show();
                     }
 
                     return;
@@ -877,12 +883,16 @@ public static class MessagingHandler
     }
     
     public static string serverVersion = "";
+    public static string serverFlavor = "";
+    public static bool serverCompTweaksEnabled = false;
 
     [Serializable]
     public class GreetingsPayload
     {
         public string companionTargetVersion;
         public string toastersRinkSuiteVersion;
+        public string serverFlavor;
+        public bool compTweaksEnabled;
     }
     
     [Serializable]

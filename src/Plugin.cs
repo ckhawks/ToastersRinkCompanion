@@ -20,6 +20,9 @@ public class Plugin : IPuckMod
     static readonly Harmony harmony = new Harmony(MOD_GUID);
     
     public static InputAction spawnPuckAction;
+    public static InputAction voteYesAction;
+    public static InputAction voteNoAction;
+    public static InputAction panelAction;
     public static ModSettings modSettings;
 
     public bool OnEnable()
@@ -64,6 +67,12 @@ public class Plugin : IPuckMod
                 modSettings.Save(); // So that it writes any missing config values immediately
                 spawnPuckAction = new InputAction(binding: modSettings.spawnPuckKeybind);
                 spawnPuckAction.Enable();
+                voteYesAction = new InputAction(binding: modSettings.voteYesKeybind);
+                voteYesAction.Enable();
+                voteNoAction = new InputAction(binding: modSettings.voteNoKeybind);
+                voteNoAction.Enable();
+                panelAction = new InputAction(binding: modSettings.panelKeybind);
+                panelAction.Enable();
                 Plugin.Log($"Fully setup!");
             }
             
@@ -118,6 +127,13 @@ public class Plugin : IPuckMod
             Plugin.Log($" - {m.DeclaringType.FullName}.{m.Name}");
     }
     
+    public static void RecreateAction(ref InputAction action, string binding)
+    {
+        action?.Disable();
+        action = new InputAction(binding: binding);
+        action.Enable();
+    }
+
     public static void Log(string message)
     {
         Debug.Log($"[{MOD_NAME}] {message}");

@@ -138,7 +138,7 @@ public static class ActiveModifiersHUD
         // Hint at bottom
         if (ModifierRegistry.ActiveModifiers.Count > 0 || ModifierRegistry.Modifiers.Count > 0)
         {
-            string key = Plugin.modSettings?.panelKeybind?.ToUpper() ?? "F3";
+            string key = SettingsTab.GetKeyDisplayName(Plugin.modSettings?.panelKeybind ?? "<keyboard>/f3");
             var hint = new Label($"Press <b>{key}</b> to open menu");
             hint.style.fontSize = 14;
             hint.style.color = new StyleColor(new Color(0.45f, 0.45f, 0.45f));

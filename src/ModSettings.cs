@@ -6,9 +6,9 @@ namespace ToastersRinkCompanion;
 public class ModSettings
 {
     public string spawnPuckKeybind { get; set; } = "<keyboard>/g";
-    public string voteYesKeybind { get; set; } = "f1";
-    public string voteNoKeybind { get; set; } = "f2";
-    public string panelKeybind { get; set; } = "f3";
+    public string voteYesKeybind { get; set; } = "<keyboard>/f1";
+    public string voteNoKeybind { get; set; } = "<keyboard>/f2";
+    public string panelKeybind { get; set; } = "<keyboard>/f3";
     public bool showModifiersHUD { get; set; } = true;
     public bool showMinimapObjects { get; set; } = true;
     public int hudPositionX { get; set; } = 0;   // 0-100%, 0=left edge, 100=right edge
@@ -39,7 +39,9 @@ public class ModSettings
                     {
                         PropertyNameCaseInsensitive = true
                     });
-                return settings ?? new ModSettings();
+                settings ??= new ModSettings();
+                settings.MigrateKeybinds();
+                return settings;
             }
             catch (JsonException je)
             {
@@ -73,6 +75,20 @@ public class ModSettings
             {
                 WriteIndented = true
             }));
+    }
+
+    public void MigrateKeybinds()
+    {
+        voteYesKeybind = MigrateKeyValue(voteYesKeybind);
+        voteNoKeybind = MigrateKeyValue(voteNoKeybind);
+        panelKeybind = MigrateKeyValue(panelKeybind);
+    }
+
+    private static string MigrateKeyValue(string value)
+    {
+        if (string.IsNullOrEmpty(value)) return "<keyboard>/f1";
+        if (value.StartsWith("<")) return value;
+        return $"<keyboard>/{value}";
     }
 
     public static string GetConfigPath()

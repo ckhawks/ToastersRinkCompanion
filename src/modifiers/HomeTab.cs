@@ -72,6 +72,36 @@ public static class HomeTab
             BuildCard(grid, card);
         }
 
+        // MOTD button
+        var motdButton = new Button(() => MOTDUI.Show());
+        motdButton.text = "View Server Info & Rules";
+        motdButton.style.fontSize = 13;
+        motdButton.style.backgroundColor = new StyleColor(UIHelpers.BgButton);
+        motdButton.style.color = new StyleColor(UIHelpers.AccentBlue);
+        motdButton.style.paddingLeft = 14;
+        motdButton.style.paddingRight = 14;
+        motdButton.style.paddingTop = 8;
+        motdButton.style.paddingBottom = 8;
+        motdButton.style.marginTop = 8;
+        motdButton.style.marginBottom = 4;
+        motdButton.style.borderTopLeftRadius = 0;
+        motdButton.style.borderTopRightRadius = 0;
+        motdButton.style.borderBottomLeftRadius = 0;
+        motdButton.style.borderBottomRightRadius = 0;
+        UIHelpers.SetBorder(motdButton, 1, new Color(UIHelpers.AccentBlue.r, UIHelpers.AccentBlue.g, UIHelpers.AccentBlue.b, 0.3f));
+
+        motdButton.RegisterCallback<MouseEnterEvent>(evt =>
+        {
+            motdButton.style.backgroundColor = new StyleColor(UIHelpers.AccentBlue);
+            motdButton.style.color = new StyleColor(UIHelpers.BgDark);
+        });
+        motdButton.RegisterCallback<MouseLeaveEvent>(evt =>
+        {
+            motdButton.style.backgroundColor = new StyleColor(UIHelpers.BgButton);
+            motdButton.style.color = new StyleColor(UIHelpers.AccentBlue);
+        });
+        container.Add(motdButton);
+
         // About section
         BuildAboutSection(container);
     }

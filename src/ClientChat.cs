@@ -172,6 +172,7 @@ public static class ClientChat
     }
 
     // DEBUG: Log all chat messages being added to trace missing leave messages
+    // Also replaces server-sent placeholders with client keybind display names
     [HarmonyPatch(typeof(ChatManager), nameof(ChatManager.AddChatMessage))]
     public class AddChatMessageDebugPatch
     {
@@ -179,6 +180,41 @@ public static class ClientChat
         public static void Prefix(ChatMessage chatMessage)
         {
             Plugin.Log($"[ChatDebug] AddChatMessage: IsSystem={chatMessage.IsSystem}, Content='{chatMessage.Content}', Username='{chatMessage.Username}'");
+
+            if (chatMessage.IsSystem && chatMessage.Content.Length > 0)
+            {
+                string content = chatMessage.Content.ToString();
+                string replaced = ReplacePlaceholders(content);
+                if (replaced != content)
+                    chatMessage.Content = replaced;
+            }
+        }
+
+        private static string ReplacePlaceholders(string content)
+        {
+            if (content.Contains("%modifierMenuKeybind%"))
+            {
+                string displayName = GetKeyDisplayName(Plugin.modSettings.panelKeybind);
+                content = content.Replace("%modifierMenuKeybind%", displayName);
+            }
+            if (content.Contains("%spawnPuckKeybind%"))
+            {
+                string displayName = GetKeyDisplayName(Plugin.modSettings.spawnPuckKeybind);
+                content = content.Replace("%spawnPuckKeybind%", displayName);
+            }
+            return content;
+        }
+
+        private static string GetKeyDisplayName(string keybind)
+        {
+            // Handle InputSystem paths like "<keyboard>/g"
+            if (keybind.Contains("/"))
+            {
+                string key = keybind.Substring(keybind.LastIndexOf('/') + 1);
+                return key.ToUpper();
+            }
+            // Handle simple names like "f3"
+            return keybind.ToUpper();
         }
     }
 
