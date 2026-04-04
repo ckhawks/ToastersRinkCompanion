@@ -20,6 +20,7 @@ public static class SpawnPuckKeybind
     {
         private static float lastPressTimeSpawnPuck = 0f;
         private static float lastPressTimeVote = 0f;
+        private static float lastPressTimeDrill = 0f;
 
         [HarmonyPostfix]
         public static void Postfix(PlayerInput __instance)
@@ -75,6 +76,24 @@ public static class SpawnPuckKeybind
                 if (Time.time - lastPressTimeSpawnPuck > pressCooldown){
                     lastPressTimeSpawnPuck = Time.time;
                     NetworkBehaviourSingleton<ChatManager>.Instance.Client_SendChatMessage("/s", false, false);
+                }
+            }
+
+            if (Plugin.drillSaveAction != null && Plugin.drillSaveAction.WasPressedThisFrame())
+            {
+                if (Time.time - lastPressTimeDrill > pressCooldown)
+                {
+                    lastPressTimeDrill = Time.time;
+                    NetworkBehaviourSingleton<ChatManager>.Instance.Client_SendChatMessage("/drill save", false, false);
+                }
+            }
+
+            if (Plugin.drillLoadAction != null && Plugin.drillLoadAction.WasPressedThisFrame())
+            {
+                if (Time.time - lastPressTimeDrill > pressCooldown)
+                {
+                    lastPressTimeDrill = Time.time;
+                    NetworkBehaviourSingleton<ChatManager>.Instance.Client_SendChatMessage("/drill load", false, false);
                 }
             }
 

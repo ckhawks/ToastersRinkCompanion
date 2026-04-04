@@ -23,6 +23,8 @@ public class Plugin : IPuckMod
     public static InputAction voteYesAction;
     public static InputAction voteNoAction;
     public static InputAction panelAction;
+    public static InputAction drillSaveAction;
+    public static InputAction drillLoadAction;
     public static ModSettings modSettings;
 
     public bool OnEnable()
@@ -60,6 +62,7 @@ public class Plugin : IPuckMod
                     }
                 }
                 Plugin.Log($"Patching complete: {patchedCount} succeeded, {failedCount} failed.");
+                AIGoalieFilter.TryPatchTRLHeadColors(harmony);
                 Plugin.Log($"Patched methods:");
                 LogAllPatchedMethods();
                 MessagingHandler.Setup();
@@ -73,6 +76,10 @@ public class Plugin : IPuckMod
                 voteNoAction.Enable();
                 panelAction = new InputAction(binding: modSettings.panelKeybind);
                 panelAction.Enable();
+                drillSaveAction = new InputAction(binding: modSettings.drillSaveKeybind);
+                drillSaveAction.Enable();
+                drillLoadAction = new InputAction(binding: modSettings.drillLoadKeybind);
+                drillLoadAction.Enable();
                 Plugin.Log($"Fully setup!");
             }
             

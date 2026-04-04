@@ -17,6 +17,7 @@ public static class HomeTab
         new() { Title = "Servers", Description = "Browse and join Toaster's Rink servers", TabName = "Servers", Color = new Color(0.9f, 0.6f, 0.1f) },
         new() { Title = "Admin", Description = "Kick, ban, jail, and server management", TabName = "Admin", Color = new Color(0.9f, 0.2f, 0.2f), AdminOnly = true },
         new() { Title = "Collectibles", Description = "Shop, open cases, and manage inventory", TabName = "Collectibles", Color = new Color(1f, 0.64f, 0.08f) },
+        new() { Title = "Feedback", Description = "Report bugs, request features, or share feedback", TabName = "Feedback", Color = new Color(0.7f, 0.5f, 0.9f) },
         new() { Title = "Settings", Description = "Configure keybinds and preferences", TabName = "Settings", Color = new Color(0.6f, 0.6f, 0.6f) },
     };
 

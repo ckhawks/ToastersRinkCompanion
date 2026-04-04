@@ -1,4 +1,5 @@
-﻿using System.IO;
+﻿using System.Collections.Generic;
+using System.IO;
 using System.Text.Json;
 
 namespace ToastersRinkCompanion;
@@ -9,10 +10,13 @@ public class ModSettings
     public string voteYesKeybind { get; set; } = "<keyboard>/f1";
     public string voteNoKeybind { get; set; } = "<keyboard>/f2";
     public string panelKeybind { get; set; } = "<keyboard>/f3";
+    public string drillSaveKeybind { get; set; } = "<keyboard>/j";
+    public string drillLoadKeybind { get; set; } = "<keyboard>/k";
     public bool showModifiersHUD { get; set; } = true;
     public bool showMinimapObjects { get; set; } = true;
     public int hudPositionX { get; set; } = 0;   // 0-100%, 0=left edge, 100=right edge
     public int hudPositionY { get; set; } = 95;   // 0-100%, 0=top edge, 100=bottom edge
+    public List<string> favoriteModifiers { get; set; } = new();
 
     static string ConfigurationFileName = $"{Plugin.MOD_NAME}.json";
 
@@ -82,6 +86,8 @@ public class ModSettings
         voteYesKeybind = MigrateKeyValue(voteYesKeybind);
         voteNoKeybind = MigrateKeyValue(voteNoKeybind);
         panelKeybind = MigrateKeyValue(panelKeybind);
+        drillSaveKeybind = MigrateKeyValue(drillSaveKeybind);
+        drillLoadKeybind = MigrateKeyValue(drillLoadKeybind);
     }
 
     private static string MigrateKeyValue(string value)

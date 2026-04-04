@@ -59,6 +59,7 @@ public static class MessagingHandler
             serverCompTweaksEnabled = false;
             PuckScale.currentPuckScale = 1;
             Balls.currentBallsEnabled = false;
+            Cubes.currentCubesEnabled = false;
             Cones.ClearCones();
             Portals.ClearPortals();
             Ramps.ClearRamps();
@@ -78,6 +79,7 @@ public static class MessagingHandler
             MOTDUI.Hide();
             ToastersRinkCompanion.modifiers.PlayerModStore.Clear();
             CollectiblesStore.Clear();
+            ToastersRinkCompanion.modifiers.FeedbackTab.Clear();
             MinimapObjects.Clear();
         }
     }
@@ -138,6 +140,7 @@ public static class MessagingHandler
                     if (greetingsPayload?.companionTargetVersion != null)
                     {
                         connectedToToastersRink = true;
+                        AIGoalieFilter.RemoveExistingAIGoalies();
                         serverVersion = greetingsPayload?.toastersRinkSuiteVersion ?? "";
                         serverFlavor = greetingsPayload?.serverFlavor ?? "";
                         serverCompTweaksEnabled = greetingsPayload?.compTweaksEnabled ?? false;
@@ -721,6 +724,34 @@ public static class MessagingHandler
                 }
             });
 
+            JsonMessageRouter.RegisterHandler("cubes", (sender, payloadJson) =>
+            {
+                if (!connectedToToastersRink) return;
+
+                try
+                {
+                    if (string.IsNullOrEmpty(payloadJson))
+                    {
+                        Plugin.LogError("Payload JSON is null or empty");
+                        return;
+                    }
+
+                    var cubesPayload = JsonConvert.DeserializeObject<CubesPayload>(payloadJson);
+
+                    if (cubesPayload == null)
+                    {
+                        Plugin.LogError("Failed to deserialize cubesPayload - result is null");
+                        return;
+                    }
+
+                    Cubes.UpdateCubesToPayload(cubesPayload);
+                }
+                catch (Exception e)
+                {
+                    Plugin.LogError($"Failed to parse cubes payload: {e}");
+                }
+            });
+
             JsonMessageRouter.RegisterHandler("portals", (sender, payloadJson) =>
             {
                 if (!connectedToToastersRink) return;
@@ -879,6 +910,21 @@ public static class MessagingHandler
                 }
             });
 
+            JsonMessageRouter.RegisterHandler("feedback_submit_result", (sender, payloadJson) =>
+            {
+                if (!connectedToToastersRink) return;
+                try
+                {
+                    var payload = JsonConvert.DeserializeObject<FeedbackSubmitResultPayload>(payloadJson);
+                    if (payload != null)
+                        ToastersRinkCompanion.modifiers.FeedbackTab.HandleSubmitResult(payload.status, payload.message);
+                }
+                catch (Exception e)
+                {
+                    Plugin.LogError($"Failed to parse feedback_submit_result payload: {e}");
+                }
+            });
+
             _handlersRegistered = true;
             Plugin.Log($"Setup is complete - handlers registered.");
         }
@@ -959,4 +1005,11 @@ public static class MessagingHandler
 
     [Serializable]
     public struct Vec3 { public float x, y, z; }
+
+    [Serializable]
+    public class FeedbackSubmitResultPayload
+    {
+        public string status;
+        public string message;
+    }
 }

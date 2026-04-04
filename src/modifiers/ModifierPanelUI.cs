@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Reflection;
 using UnityEngine;
 using UnityEngine.UIElements;
 
@@ -103,7 +104,45 @@ public static class ModifierPanelUI
             _overlay.style.display = DisplayStyle.None;
         _isVisible = false;
         SetGameInputSuppressed(false);
-        GlobalStateManager.SetUIState(new Dictionary<string, object> { { "isMouseRequired", false } });
+
+        // Instead of unconditionally hiding the cursor, ask the game to re-evaluate
+        // whether any of its own UIViews still need it (e.g. scoreboard, settings, chat).
+        // This prevents stealing the cursor from other open UI when closing our panel.
+        if (!AnyGameViewRequiresMouse())
+        {
+            GlobalStateManager.SetUIState(new Dictionary<string, object> { { "isMouseRequired", false } });
+        }
+    }
+
+    /// <summary>
+    /// Checks whether any of the game's own UIViews currently require the mouse cursor.
+    /// Mirrors the logic in UIManager.CheckMouseRequirement().
+    /// </summary>
+    private static bool AnyGameViewRequiresMouse()
+    {
+        try
+        {
+            var uiManager = MonoBehaviourSingleton<UIManager>.Instance;
+            if (uiManager == null) return false;
+
+            var viewsField = typeof(UIManager).GetField("views", BindingFlags.NonPublic | BindingFlags.Instance);
+            if (viewsField == null) return false;
+
+            var views = viewsField.GetValue(uiManager) as List<UIView>;
+            if (views == null) return false;
+
+            foreach (var view in views)
+            {
+                if ((view.VisibilityRequiresMouse && view.IsVisible) ||
+                    (view.FocusRequiresMouse && view.IsFocused))
+                {
+                    return true;
+                }
+            }
+        }
+        catch { /* reflection failed, safe to fall through */ }
+
+        return false;
     }
 
     private static void Setup()
@@ -218,6 +257,7 @@ public static class ModifierPanelUI
         RegisterTab("Servers", ServersTab.BuildContent);
         RegisterTab("Donors", DonorsTab.BuildContent);
         RegisterTab("Collectibles", ToastersRinkCompanion.collectibles.CollectiblesTab.BuildContent);
+        RegisterTab("Feedback", FeedbackTab.BuildContent);
         RegisterTab("Settings", SettingsTab.BuildContent);
 
         _isSetup = true;

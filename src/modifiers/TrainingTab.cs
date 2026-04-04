@@ -73,15 +73,13 @@ public static class TrainingTab
             ServerState.BlueGoalieEnabled && ServerState.RedGoalieEnabled ? "Both sides"
                 : ServerState.BlueGoalieEnabled ? "Blue side"
                 : ServerState.RedGoalieEnabled ? "Red side" : null);
-        BuildToggleRow(rightCol, "Dummy", "Spawns a skating dummy player", "/dummy",
-            ServerState.BlueDummyEnabled || ServerState.RedDummyEnabled,
-            "/dummy",
-            ServerState.BlueDummyEnabled && ServerState.RedDummyEnabled ? "Both sides"
-                : ServerState.BlueDummyEnabled ? "Blue side"
-                : ServerState.RedDummyEnabled ? "Red side" : null);
+        BuildDummyRow(rightCol);
         BuildToggleRow(rightCol, "Puck on String", "Attach the puck to your stick", "/string",
             ServerState.PuckOnStringPlayerCount > 0, "/string",
             ServerState.PuckOnStringPlayerCount > 0 ? $"{ServerState.PuckOnStringPlayerCount} active" : null);
+
+        BuildSection(rightCol, "Drill Snapshots");
+        BuildDrillRow(rightCol);
 
         BuildSection(rightCol, "Team Names");
         BuildTeamNameRow(rightCol);
@@ -206,6 +204,97 @@ public static class TrainingTab
         var btn = MakeRunButton(command);
         btn.text = isEnabled ? "Disable" : "Enable";
         row.Add(btn);
+    }
+
+    private static void BuildDummyRow(VisualElement parent)
+    {
+        var row = MakeRow(parent);
+
+        // Status dot
+        var anyEnabled = ServerState.BlueDummyEnabled || ServerState.RedDummyEnabled;
+        var dot = new VisualElement();
+        dot.style.width = 8;
+        dot.style.height = 8;
+        dot.style.borderTopLeftRadius = 4;
+        dot.style.borderTopRightRadius = 4;
+        dot.style.borderBottomLeftRadius = 4;
+        dot.style.borderBottomRightRadius = 4;
+        dot.style.backgroundColor = anyEnabled
+            ? new StyleColor(UIHelpers.ActiveGreen)
+            : new StyleColor(new Color(0.3f, 0.3f, 0.3f));
+        dot.style.marginRight = 8;
+        row.Add(dot);
+
+        var infoCol = new VisualElement();
+        infoCol.style.flexGrow = 1;
+        row.Add(infoCol);
+
+        var nameRow = new VisualElement();
+        nameRow.style.flexDirection = FlexDirection.Row;
+        nameRow.style.alignItems = Align.Center;
+        infoCol.Add(nameRow);
+
+        var nameLabel = new Label("Dummy");
+        nameLabel.style.fontSize = 13;
+        nameLabel.style.color = anyEnabled ? UIHelpers.TextPrimary : new StyleColor(UIHelpers.TextSecondary);
+        nameRow.Add(nameLabel);
+
+        var cmdText = new Label("/dummy");
+        cmdText.style.fontSize = 10;
+        cmdText.style.color = new StyleColor(UIHelpers.TextMuted);
+        cmdText.style.marginLeft = 8;
+        nameRow.Add(cmdText);
+
+        var descLabel = new Label("Spawns a skating dummy player");
+        descLabel.style.fontSize = 11;
+        descLabel.style.color = new StyleColor(UIHelpers.TextSecondary);
+        descLabel.style.whiteSpace = WhiteSpace.Normal;
+        infoCol.Add(descLabel);
+
+        // Blue toggle button
+        var blueBtn = new Button(() =>
+        {
+            NetworkBehaviourSingleton<ChatManager>.Instance.Client_SendChatMessage("/dummy blue", false, false);
+            ModifierPanelUI.Hide();
+        });
+        blueBtn.text = ServerState.BlueDummyEnabled ? "Blue ✓" : "Blue";
+        blueBtn.style.fontSize = 12;
+        blueBtn.style.backgroundColor = ServerState.BlueDummyEnabled
+            ? new StyleColor(new Color(0.2f, 0.35f, 0.7f))
+            : new StyleColor(UIHelpers.BgButton);
+        blueBtn.style.color = UIHelpers.TextPrimary;
+        blueBtn.style.paddingLeft = 8;
+        blueBtn.style.paddingRight = 8;
+        blueBtn.style.paddingTop = 3;
+        blueBtn.style.paddingBottom = 3;
+        blueBtn.style.marginRight = 4;
+        blueBtn.style.borderTopLeftRadius = 0;
+        blueBtn.style.borderTopRightRadius = 0;
+        blueBtn.style.borderBottomLeftRadius = 0;
+        blueBtn.style.borderBottomRightRadius = 0;
+        row.Add(blueBtn);
+
+        // Red toggle button
+        var redBtn = new Button(() =>
+        {
+            NetworkBehaviourSingleton<ChatManager>.Instance.Client_SendChatMessage("/dummy red", false, false);
+            ModifierPanelUI.Hide();
+        });
+        redBtn.text = ServerState.RedDummyEnabled ? "Red ✓" : "Red";
+        redBtn.style.fontSize = 12;
+        redBtn.style.backgroundColor = ServerState.RedDummyEnabled
+            ? new StyleColor(new Color(0.7f, 0.15f, 0.15f))
+            : new StyleColor(UIHelpers.BgButton);
+        redBtn.style.color = UIHelpers.TextPrimary;
+        redBtn.style.paddingLeft = 8;
+        redBtn.style.paddingRight = 8;
+        redBtn.style.paddingTop = 3;
+        redBtn.style.paddingBottom = 3;
+        redBtn.style.borderTopLeftRadius = 0;
+        redBtn.style.borderTopRightRadius = 0;
+        redBtn.style.borderBottomLeftRadius = 0;
+        redBtn.style.borderBottomRightRadius = 0;
+        row.Add(redBtn);
     }
 
     private static void BuildTimeRow(VisualElement parent)
@@ -336,6 +425,49 @@ public static class TrainingTab
         redBtn.style.borderBottomLeftRadius = 0;
         redBtn.style.borderBottomRightRadius = 0;
         row.Add(redBtn);
+    }
+
+    private static void BuildDrillRow(VisualElement parent)
+    {
+        var descLabel = new Label("Save your position + puck state, then reload it to repeat drills. Warmup only.");
+        descLabel.style.fontSize = 11;
+        descLabel.style.color = new StyleColor(UIHelpers.TextSecondary);
+        descLabel.style.whiteSpace = WhiteSpace.Normal;
+        descLabel.style.marginBottom = 4;
+        parent.Add(descLabel);
+
+        var row = MakeRow(parent);
+
+        var saveBtn = new Button(() =>
+        {
+            NetworkBehaviourSingleton<ChatManager>.Instance.Client_SendChatMessage("/drill save", false, false);
+            ModifierPanelUI.Hide();
+        });
+        saveBtn.text = "Save";
+        StyleSmallButton(saveBtn);
+        row.Add(saveBtn);
+
+        var saveHint = new Label(SettingsTab.GetKeyDisplayName(Plugin.modSettings.drillSaveKeybind));
+        saveHint.style.fontSize = 10;
+        saveHint.style.color = new StyleColor(UIHelpers.TextMuted);
+        saveHint.style.marginLeft = 4;
+        saveHint.style.marginRight = 12;
+        row.Add(saveHint);
+
+        var loadBtn = new Button(() =>
+        {
+            NetworkBehaviourSingleton<ChatManager>.Instance.Client_SendChatMessage("/drill load", false, false);
+            ModifierPanelUI.Hide();
+        });
+        loadBtn.text = "Load";
+        StyleSmallButton(loadBtn);
+        row.Add(loadBtn);
+
+        var loadHint = new Label(SettingsTab.GetKeyDisplayName(Plugin.modSettings.drillLoadKeybind));
+        loadHint.style.fontSize = 10;
+        loadHint.style.color = new StyleColor(UIHelpers.TextMuted);
+        loadHint.style.marginLeft = 4;
+        row.Add(loadHint);
     }
 
     private static VisualElement MakeRow(VisualElement parent)

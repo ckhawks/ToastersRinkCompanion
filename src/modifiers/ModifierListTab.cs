@@ -157,6 +157,15 @@ public static class ModifierListTab
         if (activeKeys.Count > 0)
             BuildActiveSection(_scrollView, modifiers, activeKeys);
 
+        // Favorites section
+        var favoriteKeys = Plugin.modSettings.favoriteModifiers;
+        var favoriteMods = availableMods
+            .Where(m => favoriteKeys.Contains(m.key))
+            .OrderBy(m => m.name)
+            .ToList();
+        if (favoriteMods.Count > 0)
+            BuildFavoritesSection(_scrollView, favoriteMods, activeKeys);
+
         var serverCategories = ModifierRegistry.Categories;
         var shownKeys = new HashSet<string>();
 
@@ -296,6 +305,79 @@ public static class ModifierListTab
         parent.Add(bottomSep);
     }
 
+    private static void BuildFavoritesSection(VisualElement parent,
+        List<ModifierRegistryEntry> favoriteMods, HashSet<string> activeKeys)
+    {
+        var headerRow = new VisualElement();
+        headerRow.style.flexDirection = FlexDirection.Row;
+        headerRow.style.alignItems = Align.Center;
+        headerRow.style.paddingTop = 4;
+        headerRow.style.paddingBottom = 6;
+
+        var starLabel = new Label("\u2605");
+        starLabel.style.color = new StyleColor(new Color(1f, 0.85f, 0.3f));
+        starLabel.style.fontSize = 14;
+        starLabel.style.marginRight = 6;
+        headerRow.Add(starLabel);
+
+        var headerLabel = new Label("Favorites");
+        headerLabel.style.color = UIHelpers.TextPrimary;
+        headerLabel.style.fontSize = 16;
+        headerLabel.style.unityFontStyleAndWeight = FontStyle.Bold;
+        headerRow.Add(headerLabel);
+
+        var countLabel = new Label($"  ({favoriteMods.Count})");
+        countLabel.style.color = new StyleColor(new Color(0.5f, 0.5f, 0.5f));
+        countLabel.style.fontSize = 13;
+        headerRow.Add(countLabel);
+
+        bool collapsed = _collapsedCategories.Contains("__favorites");
+        var arrow = new Label(collapsed ? "\u25B6" : "\u25BC");
+        arrow.style.color = new StyleColor(new Color(0.5f, 0.5f, 0.5f));
+        arrow.style.fontSize = 10;
+        arrow.style.marginLeft = 8;
+        headerRow.Add(arrow);
+
+        headerRow.RegisterCallback<ClickEvent>(evt =>
+        {
+            if (_collapsedCategories.Contains("__favorites"))
+                _collapsedCategories.Remove("__favorites");
+            else
+                _collapsedCategories.Add("__favorites");
+            ModifierPanelUI.RefreshCurrentTab();
+        });
+
+        parent.Add(headerRow);
+
+        var sep = new VisualElement();
+        sep.style.height = 1;
+        sep.style.backgroundColor = new StyleColor(new Color(0.2f, 0.2f, 0.2f));
+        sep.style.marginBottom = 4;
+        parent.Add(sep);
+
+        if (collapsed) return;
+
+        var container = new VisualElement();
+        container.style.borderLeftWidth = 3;
+        container.style.borderLeftColor = new StyleColor(new Color(1f, 0.85f, 0.3f));
+        container.style.marginLeft = 6;
+        container.style.paddingLeft = 8;
+        container.style.marginBottom = 4;
+        parent.Add(container);
+
+        foreach (var mod in favoriteMods)
+        {
+            bool isActive = activeKeys.Contains(mod.key);
+            BuildModifierRow(container, mod, isActive);
+        }
+
+        var bottomSep = new VisualElement();
+        bottomSep.style.height = 1;
+        bottomSep.style.backgroundColor = new StyleColor(new Color(0.2f, 0.2f, 0.2f));
+        bottomSep.style.marginBottom = 8;
+        parent.Add(bottomSep);
+    }
+
     private static Color DimColor(Color c)
     {
         return new Color(c.r * 0.4f, c.g * 0.4f, c.b * 0.4f);
@@ -395,6 +477,35 @@ public static class ModifierListTab
         row.style.borderBottomLeftRadius = 4;
         row.style.borderBottomRightRadius = 4;
         parent.Add(row);
+
+        // Favorite star toggle
+        bool isFavorite = Plugin.modSettings.favoriteModifiers.Contains(mod.key);
+        var starBtn = new Button(() =>
+        {
+            var favorites = Plugin.modSettings.favoriteModifiers;
+            if (favorites.Contains(mod.key))
+                favorites.Remove(mod.key);
+            else
+                favorites.Add(mod.key);
+            Plugin.modSettings.Save();
+            RebuildScrollContent();
+        });
+        starBtn.text = isFavorite ? "\u2605" : "\u2606";
+        starBtn.style.fontSize = 14;
+        starBtn.style.color = isFavorite
+            ? new StyleColor(new Color(1f, 0.85f, 0.3f))
+            : new StyleColor(new Color(0.35f, 0.35f, 0.35f));
+        starBtn.style.backgroundColor = StyleKeyword.None;
+        starBtn.style.borderTopWidth = 0;
+        starBtn.style.borderBottomWidth = 0;
+        starBtn.style.borderLeftWidth = 0;
+        starBtn.style.borderRightWidth = 0;
+        starBtn.style.paddingLeft = 2;
+        starBtn.style.paddingRight = 6;
+        starBtn.style.paddingTop = 0;
+        starBtn.style.paddingBottom = 0;
+        starBtn.style.marginRight = 4;
+        row.Add(starBtn);
 
         // Active indicator dot
         var dot = new VisualElement();

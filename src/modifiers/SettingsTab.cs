@@ -109,6 +109,20 @@ public static class SettingsTab
             ActiveModifiersHUD.Refresh();
         });
 
+        BuildKeybindRow(scrollView, "Drill Save", settings.drillSaveKeybind, val =>
+        {
+            settings.drillSaveKeybind = val;
+            settings.Save();
+            Plugin.RecreateAction(ref Plugin.drillSaveAction, val);
+        });
+
+        BuildKeybindRow(scrollView, "Drill Load", settings.drillLoadKeybind, val =>
+        {
+            settings.drillLoadKeybind = val;
+            settings.Save();
+            Plugin.RecreateAction(ref Plugin.drillLoadAction, val);
+        });
+
         // Display section
         var displayHeader = new Label("Display");
         displayHeader.style.fontSize = 18;

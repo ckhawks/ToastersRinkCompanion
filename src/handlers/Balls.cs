@@ -96,11 +96,11 @@ public static class Balls
                 sphereRenderer.material = originalMaterial;
             }
         
-            // Calculate proper scale - much smaller than before
-            Bounds originalBounds = puckMeshRenderer.bounds;
-            // float scaleFactor = PuckScale.currentPuckScale;
-            // Use a more reasonable scale calculation
-            float baseSize = originalBounds.extents.magnitude * 0.8f; // Half the original size
+            // Use local bounds so sizing is independent of puckScale.
+            // The sphere is a child of the puck, so it inherits transform.localScale automatically.
+            MeshFilter mf = puckMeshRenderer.GetComponent<MeshFilter>();
+            Bounds localBounds = mf != null ? mf.sharedMesh.bounds : puckMeshRenderer.localBounds;
+            float baseSize = localBounds.extents.magnitude * 0.8f;
             float diameter = baseSize * 2f;
             sphereVisual.transform.localScale = new Vector3(diameter, diameter, diameter);
         
