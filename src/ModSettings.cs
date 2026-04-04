@@ -14,6 +14,7 @@ public class ModSettings
     public string drillLoadKeybind { get; set; } = "<keyboard>/k";
     public bool showModifiersHUD { get; set; } = true;
     public bool showMinimapObjects { get; set; } = true;
+    public bool showJuggleNotifications { get; set; } = true;
     public int hudPositionX { get; set; } = 0;   // 0-100%, 0=left edge, 100=right edge
     public int hudPositionY { get; set; } = 95;   // 0-100%, 0=top edge, 100=bottom edge
     public List<string> favoriteModifiers { get; set; } = new();

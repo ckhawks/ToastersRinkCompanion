@@ -147,6 +147,12 @@ public static class SettingsTab
             if (!val) handlers.MinimapObjects.Clear();
         });
 
+        BuildToggleRow(scrollView, "Show Juggle Notifications", settings.showJuggleNotifications, val =>
+        {
+            settings.showJuggleNotifications = val;
+            settings.Save();
+        });
+
         // HUD Position
         var posHeader = new Label("Modifiers List HUD Position");
         posHeader.style.fontSize = 18;

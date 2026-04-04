@@ -25,6 +25,7 @@ public static class JuggleRallyTimer
         JsonMessageRouter.RegisterHandler("rally_started", (sender, payloadJson) =>
         {
             if (!MessagingHandler.connectedToToastersRink) return;
+            if (!Plugin.modSettings.showJuggleNotifications) return;
 
             try
             {

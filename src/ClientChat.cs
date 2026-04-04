@@ -177,17 +177,24 @@ public static class ClientChat
     public class AddChatMessageDebugPatch
     {
         [HarmonyPrefix]
-        public static void Prefix(ChatMessage chatMessage)
+        public static bool Prefix(ChatMessage chatMessage)
         {
             Plugin.Log($"[ChatDebug] AddChatMessage: IsSystem={chatMessage.IsSystem}, Content='{chatMessage.Content}', Username='{chatMessage.Username}'");
 
             if (chatMessage.IsSystem && chatMessage.Content.Length > 0)
             {
                 string content = chatMessage.Content.ToString();
+
+                // Suppress juggle messages when the setting is off
+                if (!Plugin.modSettings.showJuggleNotifications && content.Contains("<b>JUGGLE</b>"))
+                    return false;
+
                 string replaced = ReplacePlaceholders(content);
                 if (replaced != content)
                     chatMessage.Content = replaced;
             }
+
+            return true;
         }
 
         private static string ReplacePlaceholders(string content)
