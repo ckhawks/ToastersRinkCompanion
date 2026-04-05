@@ -181,14 +181,15 @@ public static class ClientChat
         {
             Plugin.Log($"[ChatDebug] AddChatMessage: IsSystem={chatMessage.IsSystem}, Content='{chatMessage.Content}', Username='{chatMessage.Username}'");
 
+            // Suppress juggle messages when the setting is off
+            if (!Plugin.modSettings.showJuggleNotifications
+                && chatMessage.Content.Length > 0
+                && chatMessage.Content.ToString().Contains("<b>JUGGLE</b>"))
+                return false;
+
             if (chatMessage.IsSystem && chatMessage.Content.Length > 0)
             {
                 string content = chatMessage.Content.ToString();
-
-                // Suppress juggle messages when the setting is off
-                if (!Plugin.modSettings.showJuggleNotifications && content.Contains("<b>JUGGLE</b>"))
-                    return false;
-
                 string replaced = ReplacePlaceholders(content);
                 if (replaced != content)
                     chatMessage.Content = replaced;

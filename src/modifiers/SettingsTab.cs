@@ -256,6 +256,12 @@ public static class SettingsTab
         var toggle = new Toggle();
         toggle.value = currentValue;
         toggle.RegisterValueChangedCallback(evt => onChanged(evt.newValue));
+        toggle.RegisterCallback<AttachToPanelEvent>(evt =>
+        {
+            var input = toggle.Q(className: "unity-toggle__input");
+            if (input != null)
+                input.style.backgroundColor = new StyleColor(new Color(0.1f, 0.1f, 0.1f));
+        });
         row.Add(toggle);
     }
 

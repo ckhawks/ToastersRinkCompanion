@@ -156,6 +156,8 @@ public static class HomeTab
             "Server mod, client mod, backend, PuckStats, and 95% of models");
         BuildCreditLine(parent, "Amikiir",
             "Base of AI Goalie implementation (heavily inspired by dem's goalie bots)");
+        BuildCreditLine(parent, "BlamedLurker",
+            "Original author of CompetitiveTweaks");
         // BuildCreditLine(parent, "Dalfan & oomtm",
         //     "Base of stats implementation");
     }
