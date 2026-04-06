@@ -348,6 +348,7 @@ public static class FuckGoals
 
     public static void CleanupAllCustomFrames()
     {
+        GoalsAreNonDefault = false;
         Goal[] goals = Object.FindObjectsByType<Goal>(FindObjectsSortMode.None);
         foreach (Goal goal in goals)
         {

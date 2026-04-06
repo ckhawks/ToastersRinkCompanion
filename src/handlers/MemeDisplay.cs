@@ -238,7 +238,7 @@ public static class MemeDisplay
         var likeBtn = GameObject.CreatePrimitive(PrimitiveType.Cube);
         likeBtn.name = "MemeLikeButtonVisual";
         likeBtn.transform.SetParent(_memeBoard.transform, false);
-        likeBtn.transform.localPosition = new Vector3(0.15f, ButtonY - BoardPosition.y, ButtonOffsetZ);
+        likeBtn.transform.localPosition = new Vector3(-0.1f, ButtonY - BoardPosition.y, ButtonOffsetZ);
         likeBtn.transform.localScale = new Vector3(ButtonSize / 3f, ButtonSize, ButtonSize);
         UnityEngine.Object.Destroy(likeBtn.GetComponent<Collider>());
         var likeMat = new Material(backingShader ?? Shader.Find("Standard"));
@@ -249,7 +249,7 @@ public static class MemeDisplay
         var dislikeBtn = GameObject.CreatePrimitive(PrimitiveType.Cube);
         dislikeBtn.name = "MemeDislikeButtonVisual";
         dislikeBtn.transform.SetParent(_memeBoard.transform, false);
-        dislikeBtn.transform.localPosition = new Vector3(0.15f, ButtonY - BoardPosition.y, -ButtonOffsetZ);
+        dislikeBtn.transform.localPosition = new Vector3(-0.1f, ButtonY - BoardPosition.y, -ButtonOffsetZ);
         dislikeBtn.transform.localScale = new Vector3(ButtonSize / 3f, ButtonSize, ButtonSize);
         UnityEngine.Object.Destroy(dislikeBtn.GetComponent<Collider>());
         var dislikeMat = new Material(backingShader ?? Shader.Find("Standard"));

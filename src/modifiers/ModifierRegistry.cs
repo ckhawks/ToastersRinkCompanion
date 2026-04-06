@@ -54,6 +54,10 @@ public static class ModifierRegistry
         Modifiers.Clear();
         ActiveModifiers.Clear();
         CurrentVote = null;
+
+        // Reset stick modifier client-side patches so they don't persist across servers
+        handlers.StickModifiers.SetFreeBlade(false);
+        handlers.StickModifiers.SetHighSticking(false);
     }
 }
 
