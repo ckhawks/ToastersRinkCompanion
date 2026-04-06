@@ -15,6 +15,20 @@ public static class SpawnPuckKeybind
             BindingFlags.Instance | BindingFlags.NonPublic);
 
 
+    /// <summary>
+    /// Prevents the game from opening/closing the pause menu when our panel
+    /// is visible or was closed on this same frame (same Escape press).
+    /// </summary>
+    [HarmonyPatch(typeof(UIManager), "OnPauseActionPerformed")]
+    public static class BlockPauseWhilePanelOpen
+    {
+        [HarmonyPrefix]
+        public static bool Prefix()
+        {
+            return !ModifierPanelUI.ShouldBlockPauseAction();
+        }
+    }
+
     [HarmonyPatch(typeof(PlayerInput), "Update")]
     public static class PlayerInputUpdatePatch
     {

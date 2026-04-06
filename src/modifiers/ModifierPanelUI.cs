@@ -50,9 +50,27 @@ public static class ModifierPanelUI
             }
             else
             {
+                // Rebuild the interacting views list the same way the game's
+                // CheckInteraction() does, so we don't clobber views (like
+                // the pause menu) that are legitimately interactive right now.
+                var uiManager = MonoBehaviourSingleton<UIManager>.Instance;
+                var viewsField = typeof(UIManager).GetField("views", BindingFlags.NonPublic | BindingFlags.Instance);
+                var gameViews = viewsField?.GetValue(uiManager) as List<UIView>;
+                var rebuilt = new List<UIView>();
+                if (gameViews != null)
+                {
+                    foreach (var v in gameViews)
+                    {
+                        if ((v.VisibilityIsInteractive && v.IsVisible) ||
+                            (v.FocusIsInteractive && v.IsFocused))
+                        {
+                            rebuilt.Add(v);
+                        }
+                    }
+                }
                 GlobalStateManager.SetUIState(new Dictionary<string, object>
                 {
-                    { "interactingViews", new List<UIView>() }
+                    { "interactingViews", rebuilt }
                 });
             }
         }
@@ -103,6 +121,17 @@ public static class ModifierPanelUI
         if (_overlay != null)
             _overlay.style.display = DisplayStyle.None;
         _isVisible = false;
+
+        // Only block the pause action on this frame if the pause menu
+        // wasn't already open — otherwise the user needs Esc to close it.
+        try
+        {
+            var pauseMenu = MonoBehaviourSingleton<UIManager>.Instance?.PauseMenu;
+            if (pauseMenu == null || !pauseMenu.IsVisible)
+                _hideFrame = Time.frameCount;
+        }
+        catch { _hideFrame = Time.frameCount; }
+
         SetGameInputSuppressed(false);
 
         // Instead of unconditionally hiding the cursor, ask the game to re-evaluate
@@ -112,6 +141,23 @@ public static class ModifierPanelUI
         {
             GlobalStateManager.SetUIState(new Dictionary<string, object> { { "isMouseRequired", false } });
         }
+    }
+
+    /// <summary>
+    /// The frame number on which Hide() was last called (without the pause menu open).
+    /// Used by the pause-action patch to suppress the game opening
+    /// the pause menu on the same Escape press that closed our panel.
+    /// </summary>
+    private static int _hideFrame = -1;
+
+    /// <summary>
+    /// Returns true if our panel is open or was closed this frame
+    /// (while the pause menu wasn't already open), meaning the game's
+    /// pause action should be suppressed.
+    /// </summary>
+    public static bool ShouldBlockPauseAction()
+    {
+        return _isVisible || _hideFrame == Time.frameCount;
     }
 
     /// <summary>

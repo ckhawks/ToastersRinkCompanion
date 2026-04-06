@@ -7,46 +7,70 @@ namespace ToastersRinkCompanion.modifiers;
 /// </summary>
 public static class ServerState
 {
-    public static bool PasserEnabled { get; set; }
-    public static bool ConesEnabled { get; set; }
-    public static bool RedGoalieEnabled { get; set; }
-    public static bool BlueGoalieEnabled { get; set; }
-    public static bool RedDummyEnabled { get; set; }
-    public static bool BlueDummyEnabled { get; set; }
-    public static int PuckOnStringPlayerCount { get; set; }
-    public static bool AutocleanEnabled { get; set; }
-    public static string BlueTeamName { get; set; } = "Team Blue";
-    public static string RedTeamName { get; set; } = "Team Red";
-    public static bool IsWarmup { get; set; }
+    private static bool _passerEnabled;
+    private static bool _conesEnabled;
+    private static bool _redGoalieEnabled;
+    private static bool _blueGoalieEnabled;
+    private static bool _redDummyEnabled;
+    private static bool _blueDummyEnabled;
+    private static int _puckOnStringPlayerCount;
+    private static bool _autocleanEnabled;
+    private static string _blueTeamName = "Team Blue";
+    private static string _redTeamName = "Team Red";
+    private static bool _isWarmup;
 
-    public static void Update(ServerStatePayload payload)
+    public static bool PasserEnabled => _passerEnabled;
+    public static bool ConesEnabled => _conesEnabled;
+    public static bool RedGoalieEnabled => _redGoalieEnabled;
+    public static bool BlueGoalieEnabled => _blueGoalieEnabled;
+    public static bool RedDummyEnabled => _redDummyEnabled;
+    public static bool BlueDummyEnabled => _blueDummyEnabled;
+    public static int PuckOnStringPlayerCount => _puckOnStringPlayerCount;
+    public static bool AutocleanEnabled => _autocleanEnabled;
+    public static string BlueTeamName => _blueTeamName;
+    public static string RedTeamName => _redTeamName;
+    public static bool IsWarmup => _isWarmup;
+
+    /// <summary>
+    /// Updates cached state from payload. Returns true if any value changed.
+    /// </summary>
+    public static bool Update(ServerStatePayload payload)
     {
-        PasserEnabled = payload.passerEnabled;
-        ConesEnabled = payload.conesEnabled;
-        RedGoalieEnabled = payload.redGoalieEnabled;
-        BlueGoalieEnabled = payload.blueGoalieEnabled;
-        RedDummyEnabled = payload.redDummyEnabled;
-        BlueDummyEnabled = payload.blueDummyEnabled;
-        PuckOnStringPlayerCount = payload.puckOnStringPlayerCount;
-        AutocleanEnabled = payload.autocleanEnabled;
-        BlueTeamName = payload.blueTeamName ?? "Team Blue";
-        RedTeamName = payload.redTeamName ?? "Team Red";
-        IsWarmup = payload.isWarmup;
+        bool changed = false;
+        changed |= Set(ref _passerEnabled, payload.passerEnabled);
+        changed |= Set(ref _conesEnabled, payload.conesEnabled);
+        changed |= Set(ref _redGoalieEnabled, payload.redGoalieEnabled);
+        changed |= Set(ref _blueGoalieEnabled, payload.blueGoalieEnabled);
+        changed |= Set(ref _redDummyEnabled, payload.redDummyEnabled);
+        changed |= Set(ref _blueDummyEnabled, payload.blueDummyEnabled);
+        changed |= Set(ref _puckOnStringPlayerCount, payload.puckOnStringPlayerCount);
+        changed |= Set(ref _autocleanEnabled, payload.autocleanEnabled);
+        changed |= Set(ref _blueTeamName, payload.blueTeamName ?? "Team Blue");
+        changed |= Set(ref _redTeamName, payload.redTeamName ?? "Team Red");
+        changed |= Set(ref _isWarmup, payload.isWarmup);
+        return changed;
+    }
+
+    private static bool Set<T>(ref T field, T value)
+    {
+        if (Equals(field, value)) return false;
+        field = value;
+        return true;
     }
 
     public static void Clear()
     {
-        PasserEnabled = false;
-        ConesEnabled = false;
-        RedGoalieEnabled = false;
-        BlueGoalieEnabled = false;
-        RedDummyEnabled = false;
-        BlueDummyEnabled = false;
-        PuckOnStringPlayerCount = 0;
-        AutocleanEnabled = false;
-        BlueTeamName = "Team Blue";
-        RedTeamName = "Team Red";
-        IsWarmup = false;
+        _passerEnabled = false;
+        _conesEnabled = false;
+        _redGoalieEnabled = false;
+        _blueGoalieEnabled = false;
+        _redDummyEnabled = false;
+        _blueDummyEnabled = false;
+        _puckOnStringPlayerCount = 0;
+        _autocleanEnabled = false;
+        _blueTeamName = "Team Blue";
+        _redTeamName = "Team Red";
+        _isWarmup = false;
     }
 
     [Serializable]

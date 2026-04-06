@@ -55,6 +55,7 @@ public static class MemeDisplay
 
                 _currentMemeId = payload.id;
                 _textureReady = false;
+                HideBoard(); // tear down old board so new texture gets displayed
 
                 var monoBehaviourHook = MonoBehaviourSingleton<UIManager>.Instance?.GameState;
                 if (monoBehaviourHook == null)

@@ -135,9 +135,10 @@ public static class ModifierMessaging
                 var payload = JsonConvert.DeserializeObject<ServerState.ServerStatePayload>(payloadJson);
                 if (payload == null) return;
 
-                ServerState.Update(payload);
-                ModifierPanelUI.RefreshCurrentTab();
-                Plugin.Log($"Received server_state");
+                bool changed = ServerState.Update(payload);
+                if (changed)
+                    ModifierPanelUI.RefreshCurrentTab();
+                Plugin.Log($"Received server_state (changed={changed})");
             }
             catch (Exception e)
             {
