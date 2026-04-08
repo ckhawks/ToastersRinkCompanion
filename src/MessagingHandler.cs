@@ -66,6 +66,7 @@ public static class MessagingHandler
             Jail.ClearAllJails();
             Sign.DestroySign();
             MemeDisplay.Cleanup();
+            TeamLogoDisplay.Cleanup();
             UpdatableChat.Clear();
             JuggleRallyTimer.Clear();
             FuckGoals.CleanupAllCustomFrames();
@@ -109,6 +110,9 @@ public static class MessagingHandler
 
             // Register daily meme handlers
             MemeDisplay.RegisterHandlers();
+
+            // Register EIS team logo display handlers
+            TeamLogoDisplay.RegisterHandlers();
 
             // Single goalie: suppress camera overlay during team switch
             JsonMessageRouter.RegisterHandler("singlegoalie_switch", (sender, payloadJson) =>

@@ -1,3 +1,6 @@
+using System.Collections.Generic;
+using System.Linq;
+using ToastersRinkCompanion.extras;
 using UnityEngine;
 using UnityEngine.UIElements;
 
@@ -77,6 +80,7 @@ public static class TrainingTab
         BuildToggleRow(rightCol, "Puck on String", "Attach the puck to your stick", "/string",
             ServerState.PuckOnStringPlayerCount > 0, "/string",
             ServerState.PuckOnStringPlayerCount > 0 ? $"{ServerState.PuckOnStringPlayerCount} active" : null);
+        BuildWatchPucksOfRow(rightCol);
 
         BuildSection(rightCol, "Drill Snapshots");
         BuildDrillRow(rightCol);
@@ -468,6 +472,114 @@ public static class TrainingTab
         loadHint.style.color = new StyleColor(UIHelpers.TextMuted);
         loadHint.style.marginLeft = 4;
         row.Add(loadHint);
+    }
+
+    private static void BuildWatchPucksOfRow(VisualElement parent)
+    {
+        var isActive = WatchPucksOf.target != null;
+        var row = MakeRow(parent);
+
+        // Status dot
+        var dot = new VisualElement();
+        dot.style.width = 8;
+        dot.style.height = 8;
+        dot.style.borderTopLeftRadius = 4;
+        dot.style.borderTopRightRadius = 4;
+        dot.style.borderBottomLeftRadius = 4;
+        dot.style.borderBottomRightRadius = 4;
+        dot.style.backgroundColor = isActive
+            ? new StyleColor(UIHelpers.ActiveGreen)
+            : new StyleColor(new Color(0.3f, 0.3f, 0.3f));
+        dot.style.marginRight = 8;
+        row.Add(dot);
+
+        var infoCol = new VisualElement();
+        infoCol.style.flexGrow = 1;
+        row.Add(infoCol);
+
+        var nameRow = new VisualElement();
+        nameRow.style.flexDirection = FlexDirection.Row;
+        nameRow.style.alignItems = Align.Center;
+        infoCol.Add(nameRow);
+
+        var nameLabel = new Label("Watch Pucks Of");
+        nameLabel.style.fontSize = 13;
+        nameLabel.style.color = isActive ? UIHelpers.TextPrimary : new StyleColor(UIHelpers.TextSecondary);
+        nameRow.Add(nameLabel);
+
+        var cmdText = new Label("/watchpucksof");
+        cmdText.style.fontSize = 10;
+        cmdText.style.color = new StyleColor(UIHelpers.TextMuted);
+        cmdText.style.marginLeft = 8;
+        nameRow.Add(cmdText);
+
+        var descLabel = new Label("Follow another player's puck with your camera");
+        descLabel.style.fontSize = 11;
+        descLabel.style.color = new StyleColor(UIHelpers.TextSecondary);
+        descLabel.style.whiteSpace = WhiteSpace.Normal;
+        infoCol.Add(descLabel);
+
+        if (isActive)
+        {
+            var activeLabel = new Label($"Watching {WatchPucksOf.target.Username.Value}");
+            activeLabel.style.fontSize = 11;
+            activeLabel.style.color = new StyleColor(UIHelpers.AccentBlue);
+            infoCol.Add(activeLabel);
+
+            var disableBtn = new Button(() =>
+            {
+                NetworkBehaviourSingleton<ChatManager>.Instance.Client_SendChatMessage("/watchpucksof", false, false);
+                ModifierPanelUI.Hide();
+            });
+            disableBtn.text = "Disable";
+            StyleSmallButton(disableBtn);
+            row.Add(disableBtn);
+        }
+        else
+        {
+            var players = PlayerManager.Instance.GetPlayers();
+            var localPlayer = PlayerManager.Instance.GetLocalPlayer();
+            var choices = new List<string>();
+            var playerMap = new Dictionary<string, Player>();
+
+            if (players != null)
+            {
+                foreach (var player in players.OrderBy(p => p.Number.Value))
+                {
+                    if (player == localPlayer) continue;
+                    var display = $"#{player.Number.Value} {player.Username.Value}";
+                    choices.Add(display);
+                    playerMap[display] = player;
+                }
+            }
+
+            if (choices.Count > 0)
+            {
+                var dropdown = new PopupField<string>(choices, 0);
+                UIHelpers.StyleDropdown(dropdown, 120, 180);
+                row.Add(dropdown);
+
+                var watchBtn = new Button(() =>
+                {
+                    if (playerMap.TryGetValue(dropdown.value, out var selected))
+                    {
+                        NetworkBehaviourSingleton<ChatManager>.Instance.Client_SendChatMessage(
+                            $"/watchpucksof {selected.Number.Value}", false, false);
+                        ModifierPanelUI.Hide();
+                    }
+                });
+                watchBtn.text = "Watch";
+                StyleSmallButton(watchBtn);
+                row.Add(watchBtn);
+            }
+            else
+            {
+                var noPlayers = new Label("No players");
+                noPlayers.style.fontSize = 11;
+                noPlayers.style.color = new StyleColor(UIHelpers.TextMuted);
+                row.Add(noPlayers);
+            }
+        }
     }
 
     private static VisualElement MakeRow(VisualElement parent)

@@ -189,7 +189,6 @@ public static class AIGoalieFilter
 
                 string name = player.Username.Value.ToString();
                 if (!name.StartsWith(BotNamePrefix)) return;
-                if (player.IsReplay.Value) return;
 
                 PlayerHead playerHead = __instance.PlayerMesh?.PlayerHead;
                 if (playerHead == null)
@@ -271,7 +270,6 @@ public static class AIGoalieFilter
 
             string name = player.Username.Value.ToString();
             if (!name.StartsWith(BotNamePrefix)) return;
-            if (player.IsReplay.Value) return;
 
             ApplyRobotAppearance(playerHead, player);
             Debug.Log($"[AIGoalieFilter] Re-applied robot appearance after TRL for {name}");

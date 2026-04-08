@@ -42,7 +42,7 @@ public static class ModifierRegistry
             ActiveModifiers.AddRange(payload.activeModifiers);
         }
 
-        // Sync stick modifier states to client-side patches
+        // Sync modifier states to client-side patches
         handlers.StickModifiers.SetFreeBlade(ActiveModifiers.Exists(m => m.key == "freeblade"));
         handlers.StickModifiers.SetHighSticking(ActiveModifiers.Exists(m => m.key == "highsticking"));
     }
@@ -55,7 +55,7 @@ public static class ModifierRegistry
         ActiveModifiers.Clear();
         CurrentVote = null;
 
-        // Reset stick modifier client-side patches so they don't persist across servers
+        // Reset client-side patches so they don't persist across servers
         handlers.StickModifiers.SetFreeBlade(false);
         handlers.StickModifiers.SetHighSticking(false);
     }
