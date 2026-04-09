@@ -25,6 +25,22 @@ public static class PlayerStatsStore
         public float averageSpeed;
         public float totalRevolutions;
         public int juggles;
+        // Advanced tracking stats
+        public int tacklesGiven;
+        public int tacklesReceived;
+        public int passes;
+        public int passesReceived;
+        public int blocks;
+        public int shotsFaced;
+        public int savesByStick;
+        public int savesByBody;
+        public int savesHomePlate;
+        public int takeaways;
+        public int turnovers;
+        public int faceoffWins;
+        public int faceoffTotal;
+        public int plusMinus;
+        public int ownGoals;
     }
 
     [Serializable]

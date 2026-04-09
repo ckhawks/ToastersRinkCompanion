@@ -348,9 +348,47 @@ public static class PlayersTab
         BuildStatCell(scoringRow, "Goals", stats.goals.ToString());
         BuildStatCell(scoringRow, "Assists", stats.assists.ToString());
         BuildStatCell(scoringRow, "Points", (stats.goals + stats.assists).ToString());
-        BuildStatCell(scoringRow, "Shots", stats.shots.ToString());
+        BuildStatCell(scoringRow, "SOG", stats.shots.ToString());
         BuildStatCell(scoringRow, "Saves", stats.saves.ToString());
-        BuildStatCell(scoringRow, "Touches", stats.touches.ToString());
+        BuildStatCell(scoringRow, "+/-", FormatPlusMinus(stats.plusMinus));
+
+        // Advanced stats row
+        var advancedRow = new VisualElement();
+        advancedRow.style.flexDirection = FlexDirection.Row;
+        advancedRow.style.flexWrap = Wrap.Wrap;
+        advancedRow.style.marginBottom = 4;
+        parent.Add(advancedRow);
+
+        BuildStatCell(advancedRow, "Hits", stats.tacklesGiven.ToString());
+        BuildStatCell(advancedRow, "Hits Taken", stats.tacklesReceived.ToString());
+        BuildStatCell(advancedRow, "Passes", stats.passes.ToString());
+        BuildStatCell(advancedRow, "Pass Recv", stats.passesReceived.ToString());
+        BuildStatCell(advancedRow, "Blocks", stats.blocks.ToString());
+        BuildStatCell(advancedRow, "Takeaways", stats.takeaways.ToString());
+        BuildStatCell(advancedRow, "Turnovers", stats.turnovers.ToString());
+        BuildStatCell(advancedRow, "Faceoffs", stats.faceoffTotal > 0
+            ? $"{stats.faceoffWins}/{stats.faceoffTotal}"
+            : "0");
+        if (stats.ownGoals > 0)
+            BuildStatCell(advancedRow, "Own Goals", stats.ownGoals.ToString());
+
+        // Save breakdown row (only show if goalie has faced shots)
+        if (stats.shotsFaced > 0)
+        {
+            var saveRow = new VisualElement();
+            saveRow.style.flexDirection = FlexDirection.Row;
+            saveRow.style.flexWrap = Wrap.Wrap;
+            saveRow.style.marginBottom = 4;
+            parent.Add(saveRow);
+
+            float svPct = (float)stats.saves / stats.shotsFaced * 100f;
+            BuildStatCell(saveRow, "SV%", $"{svPct:F1}%");
+            BuildStatCell(saveRow, "Shots Faced", stats.shotsFaced.ToString());
+            BuildStatCell(saveRow, "Stick Saves", stats.savesByStick.ToString());
+            BuildStatCell(saveRow, "Body Saves", stats.savesByBody.ToString());
+            if (stats.savesHomePlate > 0)
+                BuildStatCell(saveRow, "HP Saves", stats.savesHomePlate.ToString());
+        }
 
         // Possession & time row
         var timeRow = new VisualElement();
@@ -359,6 +397,7 @@ public static class PlayersTab
         timeRow.style.marginBottom = 4;
         parent.Add(timeRow);
 
+        BuildStatCell(timeRow, "Touches", stats.touches.ToString());
         BuildStatCell(timeRow, "Possessions", stats.possessions.ToString());
         BuildStatCell(timeRow, "Poss. Time", FormatTime(stats.possessionSeconds));
         BuildStatCell(timeRow, "Ice Time", FormatTime(stats.onIceSeconds));
@@ -404,6 +443,13 @@ public static class PlayersTab
         int min = totalSeconds / 60;
         int sec = totalSeconds % 60;
         return $"{min}:{sec:D2}";
+    }
+
+    private static string FormatPlusMinus(int value)
+    {
+        if (value > 0) return $"+{value}";
+        if (value < 0) return value.ToString();
+        return "0";
     }
 
     private static void ShowModTooltip(VisualElement anchor, PlayerModStore.PlayerModEntry modInfo)
