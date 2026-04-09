@@ -349,6 +349,11 @@ public static class PlayersTab
         BuildStatCell(scoringRow, "Assists", stats.assists.ToString());
         BuildStatCell(scoringRow, "Points", (stats.goals + stats.assists).ToString());
         BuildStatCell(scoringRow, "SOG", stats.shots.ToString());
+        if (stats.shots > 0)
+        {
+            float shPct = (float)stats.goals / stats.shots * 100f;
+            BuildStatCell(scoringRow, "SH%", $"{shPct:F0}%");
+        }
         BuildStatCell(scoringRow, "Saves", stats.saves.ToString());
         BuildStatCell(scoringRow, "+/-", FormatPlusMinus(stats.plusMinus));
 
@@ -402,6 +407,54 @@ public static class PlayersTab
         BuildStatCell(timeRow, "Poss. Time", FormatTime(stats.possessionSeconds));
         BuildStatCell(timeRow, "Ice Time", FormatTime(stats.onIceSeconds));
         BuildStatCell(timeRow, "Juggles", stats.juggles.ToString());
+
+        // Skater vs Goalie ice time
+        int skaterSeconds = stats.onIceSeconds - stats.asGoalieSeconds;
+        if (stats.asGoalieSeconds > 0 && skaterSeconds > 0)
+        {
+            BuildStatCell(timeRow, "As Skater", FormatTime(skaterSeconds));
+            BuildStatCell(timeRow, "As Goalie", FormatTime(stats.asGoalieSeconds));
+        }
+
+        // Team participation bar (only show if player was on at least one team)
+        int totalTeamSeconds = stats.onBlueSeconds + stats.onRedSeconds;
+        if (totalTeamSeconds > 0)
+        {
+            var teamBarContainer = new VisualElement();
+            teamBarContainer.style.marginTop = 4;
+            teamBarContainer.style.marginBottom = 4;
+            parent.Add(teamBarContainer);
+
+            float bluePct = (float)stats.onBlueSeconds / totalTeamSeconds * 100f;
+            float redPct = 100f - bluePct;
+
+            var teamLabel = new Label($"Team: {bluePct:F0}% Blue / {redPct:F0}% Red");
+            teamLabel.style.fontSize = 10;
+            teamLabel.style.color = new StyleColor(UIHelpers.TextMuted);
+            teamLabel.style.marginBottom = 2;
+            teamBarContainer.Add(teamLabel);
+
+            var barRow = new VisualElement();
+            barRow.style.flexDirection = FlexDirection.Row;
+            barRow.style.height = 6;
+            barRow.style.maxWidth = 150;
+            barRow.style.borderTopLeftRadius = 3;
+            barRow.style.borderTopRightRadius = 3;
+            barRow.style.borderBottomLeftRadius = 3;
+            barRow.style.borderBottomRightRadius = 3;
+            barRow.style.overflow = Overflow.Hidden;
+            teamBarContainer.Add(barRow);
+
+            var blueBar = new VisualElement();
+            blueBar.style.flexGrow = bluePct;
+            blueBar.style.backgroundColor = new StyleColor(new Color(0.2f, 0.4f, 0.9f));
+            barRow.Add(blueBar);
+
+            var redBar = new VisualElement();
+            redBar.style.flexGrow = redPct;
+            redBar.style.backgroundColor = new StyleColor(new Color(0.85f, 0.15f, 0.15f));
+            barRow.Add(redBar);
+        }
 
         // Movement row
         var moveRow = new VisualElement();

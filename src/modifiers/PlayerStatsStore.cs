@@ -17,6 +17,9 @@ public static class PlayerStatsStore
         public int possessions;
         public int possessionSeconds;
         public int onIceSeconds;
+        public int onBlueSeconds;
+        public int onRedSeconds;
+        public int asGoalieSeconds;
         public int jumps;
         public int airborneSeconds;
         public int slides;
