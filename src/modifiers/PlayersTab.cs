@@ -13,6 +13,22 @@ public static class PlayersTab
     private static readonly HashSet<string> _expandedPlayers = new();
     private static VisualElement _activeTooltip;
 
+    /// <summary>
+    /// Rebuild stats inside already-expanded accordions without touching the rest of the tab.
+    /// Called when a stats delta arrives so numbers update live.
+    /// </summary>
+    public static void RefreshExpandedStats(VisualElement root)
+    {
+        if (root == null) return;
+        foreach (var steamId in _expandedPlayers)
+        {
+            var panel = root.Q<VisualElement>($"stats-panel-{steamId}");
+            if (panel == null) continue;
+            panel.Clear();
+            BuildPlayerStats(panel, steamId);
+        }
+    }
+
     public static void BuildContent(VisualElement parent)
     {
         var scrollView = new ScrollView(ScrollViewMode.Vertical);
@@ -311,6 +327,7 @@ public static class PlayersTab
         if (isExpanded)
         {
             var expandedPanel = new VisualElement();
+            expandedPanel.name = $"stats-panel-{steamId}";
             expandedPanel.style.paddingLeft = 34;
             expandedPanel.style.paddingRight = 12;
             expandedPanel.style.paddingTop = 6;
@@ -338,7 +355,8 @@ public static class PlayersTab
             return;
         }
 
-        // Scoring row
+        // -- Scoring --
+        BuildGroupLabel(parent, "Scoring");
         var scoringRow = new VisualElement();
         scoringRow.style.flexDirection = FlexDirection.Row;
         scoringRow.style.flexWrap = Wrap.Wrap;
@@ -348,67 +366,85 @@ public static class PlayersTab
         BuildStatCell(scoringRow, "Goals", stats.goals.ToString());
         BuildStatCell(scoringRow, "Assists", stats.assists.ToString());
         BuildStatCell(scoringRow, "Points", (stats.goals + stats.assists).ToString());
-        BuildStatCell(scoringRow, "SOG", stats.shots.ToString());
+        BuildStatCell(scoringRow, "+/-", FormatPlusMinus(stats.plusMinus));
+        if (stats.ownGoals > 0)
+            BuildStatCell(scoringRow, "Own Goals", stats.ownGoals.ToString());
+
+        // -- Shooting --
+        BuildGroupLabel(parent, "Shooting");
+        var shootingRow = new VisualElement();
+        shootingRow.style.flexDirection = FlexDirection.Row;
+        shootingRow.style.flexWrap = Wrap.Wrap;
+        shootingRow.style.marginBottom = 4;
+        parent.Add(shootingRow);
+
+        BuildStatCell(shootingRow, "SOG", stats.shots.ToString());
         if (stats.shots > 0)
         {
             float shPct = (float)stats.goals / stats.shots * 100f;
-            BuildStatCell(scoringRow, "SH%", $"{shPct:F0}%");
+            BuildStatCell(shootingRow, "SH%", $"{shPct:F0}%");
         }
-        BuildStatCell(scoringRow, "Saves", stats.saves.ToString());
-        BuildStatCell(scoringRow, "+/-", FormatPlusMinus(stats.plusMinus));
+        else
+        {
+            BuildStatCell(shootingRow, "SH%", "N/A");
+        }
 
-        // Advanced stats row
-        var advancedRow = new VisualElement();
-        advancedRow.style.flexDirection = FlexDirection.Row;
-        advancedRow.style.flexWrap = Wrap.Wrap;
-        advancedRow.style.marginBottom = 4;
-        parent.Add(advancedRow);
+        // -- Puck Work --
+        BuildGroupLabel(parent, "Puck Work");
+        var puckWorkRow = new VisualElement();
+        puckWorkRow.style.flexDirection = FlexDirection.Row;
+        puckWorkRow.style.flexWrap = Wrap.Wrap;
+        puckWorkRow.style.marginBottom = 4;
+        parent.Add(puckWorkRow);
 
-        BuildStatCell(advancedRow, "Hits", stats.tacklesGiven.ToString());
-        BuildStatCell(advancedRow, "Hits Taken", stats.tacklesReceived.ToString());
-        BuildStatCell(advancedRow, "Passes", stats.passes.ToString());
-        BuildStatCell(advancedRow, "Pass Recv", stats.passesReceived.ToString());
-        BuildStatCell(advancedRow, "Blocks", stats.blocks.ToString());
-        BuildStatCell(advancedRow, "Takeaways", stats.takeaways.ToString());
-        BuildStatCell(advancedRow, "Turnovers", stats.turnovers.ToString());
-        BuildStatCell(advancedRow, "Faceoffs", stats.faceoffTotal > 0
+        BuildStatCell(puckWorkRow, "Touches", stats.touches.ToString());
+        BuildStatCell(puckWorkRow, "Possessions", stats.possessions.ToString());
+        BuildStatCell(puckWorkRow, "Poss. Time", FormatTime(stats.possessionSeconds));
+        BuildStatCell(puckWorkRow, "Passes", stats.passes.ToString());
+        BuildStatCell(puckWorkRow, "Pass Recv", stats.passesReceived.ToString());
+        BuildStatCell(puckWorkRow, "Hits", stats.tacklesGiven.ToString());
+        BuildStatCell(puckWorkRow, "Hits Taken", stats.tacklesReceived.ToString());
+        BuildStatCell(puckWorkRow, "Takeaways", stats.takeaways.ToString());
+        BuildStatCell(puckWorkRow, "Turnovers", stats.turnovers.ToString());
+        BuildStatCell(puckWorkRow, "Faceoffs", stats.faceoffTotal > 0
             ? $"{stats.faceoffWins}/{stats.faceoffTotal}"
             : "0");
-        if (stats.ownGoals > 0)
-            BuildStatCell(advancedRow, "Own Goals", stats.ownGoals.ToString());
 
-        // Save breakdown row (only show if goalie has faced shots)
-        if (stats.shotsFaced > 0)
+        // -- Goalie / Defense (only show if player has faced shots or blocked) --
+        if (stats.shotsFaced > 0 || stats.blocks > 0)
         {
-            var saveRow = new VisualElement();
-            saveRow.style.flexDirection = FlexDirection.Row;
-            saveRow.style.flexWrap = Wrap.Wrap;
-            saveRow.style.marginBottom = 4;
-            parent.Add(saveRow);
+            BuildGroupLabel(parent, "Goalie / Defense");
+            var defenseRow = new VisualElement();
+            defenseRow.style.flexDirection = FlexDirection.Row;
+            defenseRow.style.flexWrap = Wrap.Wrap;
+            defenseRow.style.marginBottom = 4;
+            parent.Add(defenseRow);
 
-            float svPct = (float)stats.saves / stats.shotsFaced * 100f;
-            BuildStatCell(saveRow, "SV%", $"{svPct:F1}%");
-            BuildStatCell(saveRow, "Shots Faced", stats.shotsFaced.ToString());
-            BuildStatCell(saveRow, "Stick Saves", stats.savesByStick.ToString());
-            BuildStatCell(saveRow, "Body Saves", stats.savesByBody.ToString());
-            if (stats.savesHomePlate > 0)
-                BuildStatCell(saveRow, "HP Saves", stats.savesHomePlate.ToString());
+            if (stats.shotsFaced > 0)
+            {
+                float svPct = (float)stats.saves / stats.shotsFaced * 100f;
+                BuildStatCell(defenseRow, "Saves", stats.saves.ToString());
+                BuildStatCell(defenseRow, "SV%", $"{svPct:F1}%");
+                BuildStatCell(defenseRow, "Shots Faced", stats.shotsFaced.ToString());
+                BuildStatCell(defenseRow, "Stick Saves", stats.savesByStick.ToString());
+                BuildStatCell(defenseRow, "Body Saves", stats.savesByBody.ToString());
+                if (stats.savesHomePlate > 0)
+                    BuildStatCell(defenseRow, "HP Saves", stats.savesHomePlate.ToString());
+            }
+
+            BuildStatCell(defenseRow, "Blocks", stats.blocks.ToString());
         }
 
-        // Possession & time row
+        // -- Ice Time --
+        BuildGroupLabel(parent, "Ice Time");
         var timeRow = new VisualElement();
         timeRow.style.flexDirection = FlexDirection.Row;
         timeRow.style.flexWrap = Wrap.Wrap;
         timeRow.style.marginBottom = 4;
         parent.Add(timeRow);
 
-        BuildStatCell(timeRow, "Touches", stats.touches.ToString());
-        BuildStatCell(timeRow, "Possessions", stats.possessions.ToString());
-        BuildStatCell(timeRow, "Poss. Time", FormatTime(stats.possessionSeconds));
         BuildStatCell(timeRow, "Ice Time", FormatTime(stats.onIceSeconds));
-        BuildStatCell(timeRow, "Juggles", stats.juggles.ToString());
 
-        // Skater vs Goalie ice time
         int skaterSeconds = stats.onIceSeconds - stats.asGoalieSeconds;
         if (stats.asGoalieSeconds > 0 && skaterSeconds > 0)
         {
@@ -416,10 +452,10 @@ public static class PlayersTab
             BuildStatCell(timeRow, "As Goalie", FormatTime(stats.asGoalieSeconds));
         }
 
-        // Team participation bar (only show if player was on at least one team)
-        int totalTeamSeconds = stats.onBlueSeconds + stats.onRedSeconds;
-        if (totalTeamSeconds > 0)
+        // Team participation bar (only show if player switched teams mid-match)
+        if (stats.onBlueSeconds > 0 && stats.onRedSeconds > 0)
         {
+            int totalTeamSeconds = stats.onBlueSeconds + stats.onRedSeconds;
             var teamBarContainer = new VisualElement();
             teamBarContainer.style.marginTop = 4;
             teamBarContainer.style.marginBottom = 4;
@@ -456,7 +492,8 @@ public static class PlayersTab
             barRow.Add(redBar);
         }
 
-        // Movement row
+        // -- Movement --
+        BuildGroupLabel(parent, "Movement");
         var moveRow = new VisualElement();
         moveRow.style.flexDirection = FlexDirection.Row;
         moveRow.style.flexWrap = Wrap.Wrap;
@@ -467,7 +504,20 @@ public static class PlayersTab
         BuildStatCell(moveRow, "Jumps", stats.jumps.ToString());
         BuildStatCell(moveRow, "Air Time", FormatTime(stats.airborneSeconds));
         BuildStatCell(moveRow, "Slides", stats.slides.ToString());
+        BuildStatCell(moveRow, "Juggles", stats.juggles.ToString());
         BuildStatCell(moveRow, "Revolutions", $"{stats.totalRevolutions:F1}");
+    }
+
+    private static void BuildGroupLabel(VisualElement parent, string text)
+    {
+        var label = new Label(text);
+        label.style.fontSize = 10;
+        label.style.unityFontStyleAndWeight = FontStyle.Bold;
+        label.style.color = new StyleColor(UIHelpers.TextMuted);
+        label.style.marginTop = 4;
+        label.style.marginBottom = 2;
+        label.style.letterSpacing = 1;
+        parent.Add(label);
     }
 
     private static void BuildStatCell(VisualElement parent, string label, string value)
