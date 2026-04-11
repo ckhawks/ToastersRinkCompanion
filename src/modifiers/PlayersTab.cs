@@ -457,12 +457,15 @@ public static class PlayersTab
 
         BuildStatCell(timeRow, "Ice Time", FormatTime(stats.onIceSeconds));
 
-        int skaterSeconds = stats.onIceSeconds - stats.asGoalieSeconds;
-        if (stats.asGoalieSeconds > 0 && skaterSeconds > 0)
-        {
+        // "As Goalie" = real goalie role + SingleGoalie target time.
+        // (Server keeps them as separate fields so puckstats.io can store them distinctly,
+        //  but for the player-facing display the intuitive bucket is the sum.)
+        int goalieSeconds = stats.asGoalieSeconds + stats.asSingleGoalieSeconds;
+        int skaterSeconds = stats.onIceSeconds - goalieSeconds;
+        if (skaterSeconds > 0 && goalieSeconds > 0)
             BuildStatCell(timeRow, "As Skater", FormatTime(skaterSeconds));
-            BuildStatCell(timeRow, "As Goalie", FormatTime(stats.asGoalieSeconds));
-        }
+        if (goalieSeconds > 0)
+            BuildStatCell(timeRow, "As Goalie", FormatTime(goalieSeconds));
 
         BuildStatCell(timeRow, "Distance", $"{stats.totalDistanceTravelled:F0}u");
         BuildStatCell(timeRow, "Avg Speed", $"{stats.averageSpeed:F1}");

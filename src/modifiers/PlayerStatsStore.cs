@@ -20,6 +20,7 @@ public static class PlayerStatsStore
         public int onBlueSeconds;
         public int onRedSeconds;
         public int asGoalieSeconds;
+        public int asSingleGoalieSeconds;
         public int jumps;
         public int airborneSeconds;
         public int slides;
@@ -67,6 +68,7 @@ public static class PlayerStatsStore
         public int? onBlueSeconds;
         public int? onRedSeconds;
         public int? asGoalieSeconds;
+        public int? asSingleGoalieSeconds;
         public int? jumps;
         public int? airborneSeconds;
         public int? slides;
@@ -135,6 +137,7 @@ public static class PlayerStatsStore
             if (d.onBlueSeconds.HasValue)          entry.onBlueSeconds = d.onBlueSeconds.Value;
             if (d.onRedSeconds.HasValue)           entry.onRedSeconds = d.onRedSeconds.Value;
             if (d.asGoalieSeconds.HasValue)        entry.asGoalieSeconds = d.asGoalieSeconds.Value;
+            if (d.asSingleGoalieSeconds.HasValue)  entry.asSingleGoalieSeconds = d.asSingleGoalieSeconds.Value;
             if (d.jumps.HasValue)                  entry.jumps = d.jumps.Value;
             if (d.airborneSeconds.HasValue)        entry.airborneSeconds = d.airborneSeconds.Value;
             if (d.slides.HasValue)                 entry.slides = d.slides.Value;
