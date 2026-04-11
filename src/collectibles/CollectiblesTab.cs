@@ -10,7 +10,7 @@ namespace ToastersRinkCompanion.collectibles;
 public static class CollectiblesTab
 {
     private static int _activeSubTab = 0;
-    private static readonly string[] SubTabNames = { "Info", "Shop", "Inventory", "Trade" };
+    private static readonly string[] SubTabNames = { "Info", "Shop", "Inventory", "Trade", "History" };
     private static float _lastCaseOpenTime;
     private static string _inventorySort = "value";
 
@@ -32,6 +32,9 @@ public static class CollectiblesTab
             {
                 _activeSubTab = idx;
                 CollectiblesStore.ClearStatus();
+                // Always refetch transactions when switching to History tab
+                if (idx == 4)
+                    CollectiblesStore.IsTransactionsLoaded = false;
                 ModifierPanelUI.RefreshCurrentTab();
             });
             btn.text = SubTabNames[i];
@@ -107,6 +110,7 @@ public static class CollectiblesTab
             case 1: BuildShopContent(content); break;
             case 2: BuildInventoryContent(content); break;
             case 3: BuildTradeContent(content); break;
+            case 4: BuildHistoryContent(content); break;
         }
     }
 
@@ -555,6 +559,117 @@ public static class CollectiblesTab
         });
         linkBtn.style.alignSelf = Align.FlexStart;
         parent.Add(linkBtn);
+    }
+
+    // ==================== HISTORY ====================
+
+    private static void BuildHistoryContent(VisualElement parent)
+    {
+        if (!CollectiblesStore.IsTransactionsLoaded)
+        {
+            CollectiblesMessaging.RequestTransactions();
+            AddMutedLabel(parent, "Loading transactions...");
+            return;
+        }
+
+        AddSectionHeader(parent, "Recent Transactions");
+
+        if (CollectiblesStore.Transactions.Length == 0)
+        {
+            AddMutedLabel(parent, "No transactions found.");
+            return;
+        }
+
+        foreach (var tx in CollectiblesStore.Transactions)
+        {
+            var row = new VisualElement();
+            row.style.flexDirection = FlexDirection.Row;
+            row.style.alignItems = Align.Center;
+            row.style.justifyContent = Justify.SpaceBetween;
+            row.style.backgroundColor = new StyleColor(UIHelpers.BgRow);
+            row.style.paddingTop = 6;
+            row.style.paddingBottom = 6;
+            row.style.paddingLeft = 10;
+            row.style.paddingRight = 10;
+            row.style.marginBottom = 3;
+            row.style.borderTopLeftRadius = 4;
+            row.style.borderTopRightRadius = 4;
+            row.style.borderBottomLeftRadius = 4;
+            row.style.borderBottomRightRadius = 4;
+
+            // Left side: description + timestamp
+            var infoCol = new VisualElement();
+            infoCol.style.flexShrink = 1;
+
+            var descLabel = new Label(tx.Description ?? "Transaction");
+            descLabel.style.fontSize = 12;
+            descLabel.style.color = UIHelpers.TextPrimary;
+            descLabel.style.whiteSpace = WhiteSpace.Normal;
+            infoCol.Add(descLabel);
+
+            // Timestamp + type row
+            var metaRow = new VisualElement();
+            metaRow.style.flexDirection = FlexDirection.Row;
+            metaRow.style.alignItems = Align.Center;
+            metaRow.style.marginTop = 2;
+
+            string typeLabel = tx.TransactionType switch
+            {
+                "award" => "Award",
+                "purchase" => "Purchase",
+                "sale" => "Sale",
+                "trade" => "Trade",
+                _ => tx.TransactionType
+            };
+
+            var typeBadge = new Label(typeLabel);
+            typeBadge.style.fontSize = 10;
+            typeBadge.style.color = tx.TransactionType switch
+            {
+                "award" => new StyleColor(UIHelpers.ActiveGreen),
+                "purchase" => new StyleColor(UIHelpers.AccentBlue),
+                "sale" => new StyleColor(new Color(0.9f, 0.6f, 0.1f)),
+                "trade" => new StyleColor(new Color(0.7f, 0.5f, 0.9f)),
+                _ => UIHelpers.TextMuted
+            };
+            typeBadge.style.marginRight = 8;
+            metaRow.Add(typeBadge);
+
+            if (DateTime.TryParse(tx.CreatedAt, out var createdAt))
+            {
+                var timeLabel = new Label(FormatTimeAgo(createdAt));
+                timeLabel.style.fontSize = 10;
+                timeLabel.style.color = UIHelpers.TextMuted;
+                metaRow.Add(timeLabel);
+            }
+
+            infoCol.Add(metaRow);
+            row.Add(infoCol);
+
+            // Right side: amount
+            bool isPositive = tx.Amount >= 0;
+            var amountLabel = new Label($"{(isPositive ? "+" : "")}T${tx.Amount:n0}");
+            amountLabel.style.fontSize = 14;
+            amountLabel.style.unityFontStyleAndWeight = FontStyle.Bold;
+            amountLabel.style.color = isPositive
+                ? new StyleColor(UIHelpers.ActiveGreen)
+                : new StyleColor(UIHelpers.ErrorRed);
+            amountLabel.style.flexShrink = 0;
+            amountLabel.style.marginLeft = 10;
+            row.Add(amountLabel);
+
+            parent.Add(row);
+        }
+    }
+
+    private static string FormatTimeAgo(DateTime utcTime)
+    {
+        var span = DateTime.UtcNow - utcTime;
+        if (span.TotalMinutes < 1) return "just now";
+        if (span.TotalMinutes < 60) return $"{(int)span.TotalMinutes}m ago";
+        if (span.TotalHours < 24) return $"{(int)span.TotalHours}h ago";
+        if (span.TotalDays < 7) return $"{(int)span.TotalDays}d ago";
+        return utcTime.ToLocalTime().ToString("MMM d");
     }
 
     // ==================== HELPERS ====================

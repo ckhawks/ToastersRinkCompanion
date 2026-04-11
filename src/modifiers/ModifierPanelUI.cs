@@ -405,6 +405,16 @@ public static class ModifierPanelUI
         }
     }
 
+    /// <summary>
+    /// Lightweight refresh: only rebuild expanded stats panels in the Players tab.
+    /// Does nothing if the Players tab isn't currently visible.
+    /// </summary>
+    public static void RefreshPlayerStats()
+    {
+        if (!_isVisible || _contentArea == null) return;
+        PlayersTab.RefreshExpandedStats(_contentArea);
+    }
+
     public static void Destroy()
     {
         if (_overlay != null)

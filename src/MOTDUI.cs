@@ -109,11 +109,11 @@ public static class MOTDUI
         // --- About Section ---
         BuildSectionHeader(content, "About", UIHelpers.AccentBlue);
         BuildParagraph(content,
-            "Toaster's Rink is a Puck community focused on expanding the standard Puck " +
-            "experience in dynamic, sometimes silly ways. Whether you're here to compete, " +
-            "train, or just vibe \u2014 you're welcome here.");
+            $"{H("Toaster's Rink")} is a Puck community focused on {H("expanding the standard Puck experience")} " +
+            $"in dynamic, sometimes silly ways. Whether you're here to {H("compete")}, " +
+            $"{H("train")}, or just {H("vibe")} \u2014 you're welcome here.");
         BuildParagraph(content,
-            "Powered by a custom mod suite and the PuckStats backend, " +
+            $"Powered by a {H("custom mod suite")} and the {H("PuckStats backend")}, " +
             "we're always adding new ways to play Puck together.");
 
         // Get panel keybind display name
@@ -129,49 +129,49 @@ public static class MOTDUI
 
             string flavorDesc = flavor.ToLower() switch
             {
-                "chaos" => "This is a Chaos server \u2014 all modifiers are available and games are often modified. Expect portals, big pucks, speed bumps, and general silliness.",
-                "standard" => "This is a Standard server \u2014 a more regular Puck experience. Some modifiers are available, but gameplay stays closer to vanilla.",
-                "training" => "This is a Training server \u2014 warmup-only, designed for practice. Use the training tools (passer, cones, goalie trainer, dummies) to work on your game.",
-                _ => $"This server is running the \"{flavor}\" flavor."
+                "chaos" => $"This is a {H("Chaos")} server \u2014 {H("all modifiers")} are available and games are often modified. Expect {H("portals")}, {H("big pucks")}, {H("speed bumps")}, and general silliness.",
+                "standard" => $"This is a {H("Standard")} server \u2014 a more regular Puck experience. {H("Some modifiers")} are available, but gameplay stays {H("closer to vanilla")}.",
+                "training" => $"This is a {H("Training")} server \u2014 warmup-only, designed for practice. Use the {H("training tools")} (passer, cones, goalie trainer, dummies) to work on your game.",
+                _ => $"This server is running the {H($"\"{flavor}\"")} flavor."
             };
             BuildParagraph(content, flavorDesc);
 
             if (compTweaks)
             {
                 BuildParagraph(content,
-                    "This server has Comp Tweaks enabled, which adjusts gameplay physics " +
+                    $"This server has {H("Comp Tweaks")} enabled, which adjusts {H("gameplay physics")} " +
                     "like turning radius, puck size, speeds, and recovery times.");
             }
 
             BuildParagraph(content,
-                "Toaster's Rink servers come in different flavors: Chaos for full modifiers, " +
-                "Standard for a more vanilla experience, and Training for warmup and practice.");
+                $"Toaster's Rink servers come in different flavors: {H("Chaos")} for full modifiers, " +
+                $"{H("Standard")} for a more vanilla experience, and {H("Training")} for warmup and practice.");
         }
 
         // --- Features Section ---
         BuildSectionHeader(content, "Features", new Color(0.3f, 0.8f, 0.4f));
 
         BuildFeature(content, "Game Modifiers",
-            $"Vote on modifiers that change how the game plays \u2014 big puck, portals, speed bumps, and more. Press {panelKeyDisplay} to open the panel.");
+            $"{H("Vote on modifiers")} that change how the game plays \u2014 big puck, portals, speed bumps, and more. Press {H(panelKeyDisplay)} to open the panel.");
         BuildFeature(content, "Collectibles & Cases",
-            "Earn currency, open cases, and collect items with different rarities and traits. Build your collection and show it off.");
+            $"{H("Earn currency")}, {H("open cases")}, and collect items with different rarities and traits. Build your collection and show it off.");
         BuildFeature(content, "Training Tools",
-            "Spawn pucks, set up cones, use the passer and goalie trainer. Practice your skills without needing a private server.");
+            $"Spawn pucks, set up cones, use the {H("passer")} and {H("goalie trainer")}. Practice your skills without needing a private server.");
         BuildFeature(content, "Community Events",
-            "Rock boss fights, daily memes, and community-driven features that keep things fresh.");
+            $"{H("Rock boss fights")}, {H("daily memes")}, and community-driven features that keep things fresh.");
 
         // --- Rules Section ---
         BuildSectionHeader(content, "Rules", new Color(0.9f, 0.4f, 0.4f));
         BuildRule(content, "1", "Respect",
-            "Treat all players with courtesy. Harassment, personal attacks, and discriminatory language are strictly prohibited.");
+            $"Treat all players with {H("courtesy")}. {H("Harassment")}, personal attacks, and discriminatory language are {H("strictly prohibited")}.");
         BuildRule(content, "2", "Sportsmanship",
-            "Win or lose, maintain good sportsmanship. No excessive trash talk, hitting goalies in crease, or disrupting others' activities.");
+            $"Win or lose, maintain {H("good sportsmanship")}. No excessive trash talk, {H("hitting goalies in crease")}, or disrupting others' activities.");
         BuildRule(content, "3", "No Spamming",
-            "Don't spam chat with repetitive messages, mic-spam, or advertise without admin permission.");
+            $"Don't {H("spam chat")} with repetitive messages, {H("mic-spam")}, or advertise without admin permission.");
         BuildRule(content, "4", "No Cheating / Exploiting",
-            "Cheating, hacking, or exploiting glitches is forbidden. Client mods are allowed if they don't negatively impact others. Report exploits \u2014 don't abuse them.");
+            $"{H("Cheating")}, hacking, or exploiting glitches is {H("forbidden")}. Client mods are allowed if they don't negatively impact others. {H("Report exploits")} \u2014 don't abuse them.");
         BuildRule(content, "5", "Reporting & Appeals",
-            "Report rule-breakers or appeal bans via the TR Modmail user in the Toaster's Rink Discord server.");
+            $"Report rule-breakers or appeal bans via the {H("TR Modmail")} user in the {H("Toaster's Rink Discord")} server.");
 
         BuildSmallNote(content, "These are abbreviated \u2014 see the full rules at puckstats.io/rules");
 
@@ -252,6 +252,9 @@ public static class MOTDUI
 
     // --- Builder Helpers ---
 
+    /// <summary>Wraps text in a highlight color tag (white) for use in muted-base-color labels.</summary>
+    private static string H(string text) => $"<color=#FFFFFF>{text}</color>";
+
     private static void BuildSectionHeader(VisualElement parent, string text, Color color)
     {
         var label = new Label(text);
@@ -266,8 +269,9 @@ public static class MOTDUI
     private static void BuildParagraph(VisualElement parent, string text)
     {
         var label = new Label(text);
+        label.enableRichText = true;
         label.style.fontSize = 14;
-        label.style.color = new StyleColor(UIHelpers.TextPrimary);
+        label.style.color = new StyleColor(UIHelpers.TextSecondary);
         label.style.whiteSpace = WhiteSpace.Normal;
         label.style.marginBottom = 8;
         parent.Add(label);
@@ -300,6 +304,7 @@ public static class MOTDUI
         textContainer.Add(titleLabel);
 
         var descLabel = new Label(description);
+        descLabel.enableRichText = true;
         descLabel.style.fontSize = 13;
         descLabel.style.color = new StyleColor(UIHelpers.TextSecondary);
         descLabel.style.whiteSpace = WhiteSpace.Normal;
@@ -335,6 +340,7 @@ public static class MOTDUI
         container.Add(titleLabel);
 
         var descLabel = new Label(description);
+        descLabel.enableRichText = true;
         descLabel.style.fontSize = 13;
         descLabel.style.color = new StyleColor(UIHelpers.TextSecondary);
         descLabel.style.whiteSpace = WhiteSpace.Normal;

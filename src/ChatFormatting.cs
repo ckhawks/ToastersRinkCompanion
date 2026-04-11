@@ -19,6 +19,19 @@ public static class ChatFormatting
 
     private static readonly string DONOR_PREFIX = "<size=16><b><color=#487fe6>DONOR</color></b></size> ";
 
+    // Colored star prefix for the 3 stars of the last match (gold/silver/bronze).
+    // starRank: 1 = first star, 2 = second, 3 = third. Returns "" for anything else.
+    public static string GetStarPrefix(int starRank)
+    {
+        return starRank switch
+        {
+            1 => "<size=16><b><color=#FFD700>\u2605</color></b></size> ",
+            2 => "<size=16><b><color=#EDEDED>\u2605</color></b></size> ",
+            3 => "<size=16><b><color=#CD7F32>\u2605</color></b></size> ",
+            _ => ""
+        };
+    }
+
     public static void RegisterHandlers()
     {
         JsonMessageRouter.RegisterHandler("chat_metadata", (sender, payloadJson) =>
@@ -95,12 +108,14 @@ public static class ChatFormatting
 
             // Build the modified prefix
             string teamChatPrefix = chatMessage.IsTeamChat ? "[TEAM] " : "";
+            string starPrefix = GetStarPrefix(
+                ToastersRinkCompanion.modifiers.MatchStarsStore.RankBySteamId(steamId));
             string donorPrefix = _donorSteamIds.Contains(steamId) ? DONOR_PREFIX : "";
             string teamColoredName = StringUtils.WrapInTeamColor(
                 chatMessage.Username.ToString(), chatMessage.Team.Value);
             string teamSuffix = FormatTeamSuffix(steamId);
 
-            __result = teamChatPrefix + donorPrefix + teamColoredName + teamSuffix + ": ";
+            __result = teamChatPrefix + starPrefix + donorPrefix + teamColoredName + teamSuffix + ": ";
         }
     }
 

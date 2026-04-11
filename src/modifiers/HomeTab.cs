@@ -158,8 +158,8 @@ public static class HomeTab
             "Base of AI Goalie implementation (heavily inspired by dem's goalie bots)");
         BuildCreditLine(parent, "BlamedLurker",
             "Original author of CompetitiveTweaks");
-        // BuildCreditLine(parent, "Dalfan & oomtm",
-        //     "Base of stats implementation");
+        BuildCreditLine(parent, "Dalfan & oomtm",
+            "Base of stats implementation");
     }
 
     private static void BuildCreditLine(VisualElement parent, string name, string role)

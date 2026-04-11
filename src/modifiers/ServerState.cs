@@ -11,6 +11,10 @@ public static class ServerState
     private static bool _conesEnabled;
     private static bool _redGoalieEnabled;
     private static bool _blueGoalieEnabled;
+    private static string _redGoalieDifficulty = "normal";
+    private static string _blueGoalieDifficulty = "normal";
+    private static string _redGoalieTiming = "fixed";
+    private static string _blueGoalieTiming = "fixed";
     private static bool _redDummyEnabled;
     private static bool _blueDummyEnabled;
     private static int _puckOnStringPlayerCount;
@@ -23,6 +27,10 @@ public static class ServerState
     public static bool ConesEnabled => _conesEnabled;
     public static bool RedGoalieEnabled => _redGoalieEnabled;
     public static bool BlueGoalieEnabled => _blueGoalieEnabled;
+    public static string RedGoalieDifficulty => _redGoalieDifficulty;
+    public static string BlueGoalieDifficulty => _blueGoalieDifficulty;
+    public static string RedGoalieTiming => _redGoalieTiming;
+    public static string BlueGoalieTiming => _blueGoalieTiming;
     public static bool RedDummyEnabled => _redDummyEnabled;
     public static bool BlueDummyEnabled => _blueDummyEnabled;
     public static int PuckOnStringPlayerCount => _puckOnStringPlayerCount;
@@ -41,6 +49,10 @@ public static class ServerState
         changed |= Set(ref _conesEnabled, payload.conesEnabled);
         changed |= Set(ref _redGoalieEnabled, payload.redGoalieEnabled);
         changed |= Set(ref _blueGoalieEnabled, payload.blueGoalieEnabled);
+        changed |= Set(ref _redGoalieDifficulty, payload.redGoalieDifficulty ?? "normal");
+        changed |= Set(ref _blueGoalieDifficulty, payload.blueGoalieDifficulty ?? "normal");
+        changed |= Set(ref _redGoalieTiming, payload.redGoalieTiming ?? "fixed");
+        changed |= Set(ref _blueGoalieTiming, payload.blueGoalieTiming ?? "fixed");
         changed |= Set(ref _redDummyEnabled, payload.redDummyEnabled);
         changed |= Set(ref _blueDummyEnabled, payload.blueDummyEnabled);
         changed |= Set(ref _puckOnStringPlayerCount, payload.puckOnStringPlayerCount);
@@ -64,6 +76,10 @@ public static class ServerState
         _conesEnabled = false;
         _redGoalieEnabled = false;
         _blueGoalieEnabled = false;
+        _redGoalieDifficulty = "normal";
+        _blueGoalieDifficulty = "normal";
+        _redGoalieTiming = "fixed";
+        _blueGoalieTiming = "fixed";
         _redDummyEnabled = false;
         _blueDummyEnabled = false;
         _puckOnStringPlayerCount = 0;
@@ -80,6 +96,10 @@ public static class ServerState
         public bool conesEnabled;
         public bool redGoalieEnabled;
         public bool blueGoalieEnabled;
+        public string redGoalieDifficulty;
+        public string blueGoalieDifficulty;
+        public string redGoalieTiming;
+        public string blueGoalieTiming;
         public bool redDummyEnabled;
         public bool blueDummyEnabled;
         public int puckOnStringPlayerCount;

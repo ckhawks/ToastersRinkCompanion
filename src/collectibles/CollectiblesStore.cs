@@ -25,6 +25,10 @@ public static class CollectiblesStore
     public static int UsedSlots { get; private set; }
     public static bool IsInventoryLoaded { get; private set; }
 
+    // Transactions
+    public static TransactionEntry[] Transactions { get; private set; } = Array.Empty<TransactionEntry>();
+    public static bool IsTransactionsLoaded { get; set; }
+
     // Status messages (for showing purchase/sell results)
     public static string StatusMessage { get; set; }
     public static string StatusMessageType { get; set; } // "success", "error"
@@ -56,6 +60,12 @@ public static class CollectiblesStore
         TotalSlots = totalSlots;
         UsedSlots = usedSlots;
         IsInventoryLoaded = true;
+    }
+
+    public static void UpdateTransactions(TransactionEntry[] transactions)
+    {
+        Transactions = transactions ?? Array.Empty<TransactionEntry>();
+        IsTransactionsLoaded = true;
     }
 
     public static void UpdateItemProtection(string serial, bool isProtected)
@@ -98,6 +108,7 @@ public static class CollectiblesStore
         IsShopLoaded = false;
         IsCasesLoaded = false;
         IsInventoryLoaded = false;
+        IsTransactionsLoaded = false;
     }
 
     public static void Clear()
@@ -113,6 +124,8 @@ public static class CollectiblesStore
         IsShopLoaded = false;
         IsCasesLoaded = false;
         IsInventoryLoaded = false;
+        IsTransactionsLoaded = false;
+        Transactions = Array.Empty<TransactionEntry>();
         StatusMessage = null;
         StatusMessageType = null;
     }
@@ -163,4 +176,14 @@ public class PlayerCaseEntry
     [JsonProperty("quantity")] public int Quantity { get; set; }
     [JsonProperty("seriesName")] public string SeriesName { get; set; }
     [JsonProperty("shorthand")] public string Shorthand { get; set; }
+}
+
+[Serializable]
+public class TransactionEntry
+{
+    [JsonProperty("id")] public string Id { get; set; }
+    [JsonProperty("amount")] public long Amount { get; set; }
+    [JsonProperty("transaction_type")] public string TransactionType { get; set; }
+    [JsonProperty("description")] public string Description { get; set; }
+    [JsonProperty("created_at")] public string CreatedAt { get; set; }
 }

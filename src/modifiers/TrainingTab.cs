@@ -70,12 +70,7 @@ public static class TrainingTab
             ServerState.PasserEnabled, "/passer");
         BuildToggleRow(rightCol, "Cones", "Place training cones on the ice", "/cones",
             ServerState.ConesEnabled, "/cones");
-        BuildToggleRow(rightCol, "Goalie Trainer", "Shoots pucks at the net for goalie practice", "/goalie",
-            ServerState.BlueGoalieEnabled || ServerState.RedGoalieEnabled,
-            "/goalie",
-            ServerState.BlueGoalieEnabled && ServerState.RedGoalieEnabled ? "Both sides"
-                : ServerState.BlueGoalieEnabled ? "Blue side"
-                : ServerState.RedGoalieEnabled ? "Red side" : null);
+        BuildGoalieSection(rightCol);
         BuildDummyRow(rightCol);
         BuildToggleRow(rightCol, "Puck on String", "Attach the puck to your stick", "/string",
             ServerState.PuckOnStringPlayerCount > 0, "/string",
@@ -580,6 +575,112 @@ public static class TrainingTab
                 row.Add(noPlayers);
             }
         }
+    }
+
+    private static void BuildGoalieSection(VisualElement parent)
+    {
+        bool anyEnabled = ServerState.BlueGoalieEnabled || ServerState.RedGoalieEnabled;
+        string sideInfo = ServerState.BlueGoalieEnabled && ServerState.RedGoalieEnabled ? "Both sides"
+            : ServerState.BlueGoalieEnabled ? "Blue side"
+            : ServerState.RedGoalieEnabled ? "Red side" : null;
+
+        // Main toggle row
+        BuildToggleRow(parent, "Goalie Trainer", "Shoots pucks at the net for goalie practice", "/goalie",
+            anyEnabled, "/goalie", sideInfo);
+
+        // Settings rows — only show when goalie is active
+        if (!anyEnabled) return;
+
+        // Difficulty dropdown row
+        var diffRow = MakeRow(parent);
+        diffRow.style.marginLeft = 16;
+
+        var diffInfoCol = new VisualElement();
+        diffInfoCol.style.flexGrow = 1;
+        diffRow.Add(diffInfoCol);
+
+        var diffLabel = new Label("Difficulty");
+        diffLabel.style.fontSize = 12;
+        diffLabel.style.color = new StyleColor(UIHelpers.TextSecondary);
+        diffInfoCol.Add(diffLabel);
+
+        var diffDesc = new Label("Controls shot speed and time between shots");
+        diffDesc.style.fontSize = 10;
+        diffDesc.style.color = new StyleColor(UIHelpers.TextMuted);
+        diffDesc.style.whiteSpace = WhiteSpace.Normal;
+        diffInfoCol.Add(diffDesc);
+
+        // Show current value
+        string currentDifficulty = ServerState.BlueGoalieEnabled
+            ? ServerState.BlueGoalieDifficulty
+            : ServerState.RedGoalieDifficulty;
+        var diffChoices = new List<string> { "easy", "normal", "hard", "insane", "impossible" };
+        int diffIndex = diffChoices.IndexOf(currentDifficulty ?? "normal");
+        if (diffIndex < 0) diffIndex = 1;
+
+        var diffDropdown = new PopupField<string>(diffChoices, diffIndex);
+        UIHelpers.StyleDropdown(diffDropdown, 100, 130);
+        diffRow.Add(diffDropdown);
+
+        var diffBtn = new Button(() =>
+        {
+            NetworkBehaviourSingleton<ChatManager>.Instance.Client_SendChatMessage(
+                $"/goalie difficulty {diffDropdown.value}", false, false);
+            ModifierPanelUI.Hide();
+        });
+        diffBtn.text = "Set";
+        StyleSmallButton(diffBtn);
+        diffRow.Add(diffBtn);
+
+        // Timing dropdown row
+        var timingRow = MakeRow(parent);
+        timingRow.style.marginLeft = 16;
+
+        var timingInfoCol = new VisualElement();
+        timingInfoCol.style.flexGrow = 1;
+        timingRow.Add(timingInfoCol);
+
+        var timingLabel = new Label("Timing");
+        timingLabel.style.fontSize = 12;
+        timingLabel.style.color = new StyleColor(UIHelpers.TextSecondary);
+        timingInfoCol.Add(timingLabel);
+
+        var timingDesc = new Label("Controls how predictable shot timing is");
+        timingDesc.style.fontSize = 10;
+        timingDesc.style.color = new StyleColor(UIHelpers.TextMuted);
+        timingDesc.style.whiteSpace = WhiteSpace.Normal;
+        timingInfoCol.Add(timingDesc);
+
+        string currentTiming = ServerState.BlueGoalieEnabled
+            ? ServerState.BlueGoalieTiming
+            : ServerState.RedGoalieTiming;
+        var timingChoices = new List<string> { "fixed", "variable", "chaotic" };
+        int timingIndex = timingChoices.IndexOf(currentTiming ?? "fixed");
+        if (timingIndex < 0) timingIndex = 0;
+
+        var timingDropdown = new PopupField<string>(timingChoices, timingIndex);
+        UIHelpers.StyleDropdown(timingDropdown, 100, 130);
+        timingRow.Add(timingDropdown);
+
+        var timingBtn = new Button(() =>
+        {
+            NetworkBehaviourSingleton<ChatManager>.Instance.Client_SendChatMessage(
+                $"/goalie timing {timingDropdown.value}", false, false);
+            ModifierPanelUI.Hide();
+        });
+        timingBtn.text = "Set";
+        StyleSmallButton(timingBtn);
+        timingRow.Add(timingBtn);
+
+        // PHL tweaks note
+        var phlNote = new Label("Shots will also be harder on PHL tweaks preset due to higher puck speed");
+        phlNote.style.fontSize = 10;
+        phlNote.style.color = new StyleColor(UIHelpers.TextMuted);
+        phlNote.style.marginLeft = 16;
+        phlNote.style.marginTop = 2;
+        phlNote.style.marginBottom = 4;
+        phlNote.style.whiteSpace = WhiteSpace.Normal;
+        parent.Add(phlNote);
     }
 
     private static VisualElement MakeRow(VisualElement parent)

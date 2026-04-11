@@ -167,6 +167,23 @@ public static class CollectiblesMessaging
             catch (Exception e) { Plugin.LogError($"collectibles_sell_result handler: {e}"); }
         });
 
+        JsonMessageRouter.RegisterHandler("collectibles_transactions", (sender, payloadJson) =>
+        {
+            try
+            {
+                var payload = JsonConvert.DeserializeObject<TransactionsPayload>(payloadJson);
+                if (payload == null) return;
+
+                TransactionEntry[] entries = Array.Empty<TransactionEntry>();
+                if (!string.IsNullOrEmpty(payload.transactions))
+                    entries = JsonConvert.DeserializeObject<TransactionEntry[]>(payload.transactions);
+
+                CollectiblesStore.UpdateTransactions(entries);
+                ModifierPanelUI.RefreshCurrentTab();
+            }
+            catch (Exception e) { Plugin.LogError($"collectibles_transactions handler: {e}"); }
+        });
+
         JsonMessageRouter.RegisterHandler("collectibles_protect_result", (sender, payloadJson) =>
         {
             try
@@ -217,6 +234,9 @@ public static class CollectiblesMessaging
 
     public static void ToggleProtection(string serial)
         => JsonMessageRouter.SendMessage("collectibles_protect_toggle", 0, new { serial });
+
+    public static void RequestTransactions()
+        => JsonMessageRouter.SendMessage("collectibles_transactions_request", 0, new { });
 
     // --- Payload classes ---
 
@@ -277,5 +297,11 @@ public static class CollectiblesMessaging
         public string serial;
         public bool isProtected;
         public string message;
+    }
+
+    [Serializable]
+    private class TransactionsPayload
+    {
+        public string transactions; // JSON string of TransactionEntry[]
     }
 }

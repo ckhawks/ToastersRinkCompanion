@@ -211,6 +211,27 @@ public static class PlayersTab
         nameRow.style.alignItems = Align.Center;
         nameCol.Add(nameRow);
 
+        // Single goalie badge
+        var singleGoalie = handlers.SingleGoalieTag.GetSingleGoalie();
+        if (singleGoalie != null && singleGoalie == player)
+        {
+            var sgBadge = new Label("SG");
+            sgBadge.style.fontSize = 9;
+            sgBadge.style.color = new StyleColor(new Color(1f, 0.8f, 0f)); // gold
+            sgBadge.style.unityFontStyleAndWeight = FontStyle.Bold;
+            sgBadge.style.marginRight = 6;
+            sgBadge.style.paddingLeft = 4;
+            sgBadge.style.paddingRight = 4;
+            sgBadge.style.paddingTop = 1;
+            sgBadge.style.paddingBottom = 1;
+            sgBadge.style.backgroundColor = new StyleColor(new Color(1f, 0.8f, 0f, 0.15f));
+            sgBadge.style.borderTopLeftRadius = 3;
+            sgBadge.style.borderTopRightRadius = 3;
+            sgBadge.style.borderBottomLeftRadius = 3;
+            sgBadge.style.borderBottomRightRadius = 3;
+            nameRow.Add(sgBadge);
+        }
+
         // Donor badge
         if (ChatFormatting.IsDonor(steamId))
         {
@@ -355,8 +376,8 @@ public static class PlayersTab
             return;
         }
 
-        // -- Scoring --
-        BuildGroupLabel(parent, "Scoring");
+        // -- Scoring / Shooting --
+        BuildGroupLabel(parent, "Scoring / Shooting");
         var scoringRow = new VisualElement();
         scoringRow.style.flexDirection = FlexDirection.Row;
         scoringRow.style.flexWrap = Wrap.Wrap;
@@ -369,24 +390,15 @@ public static class PlayersTab
         BuildStatCell(scoringRow, "+/-", FormatPlusMinus(stats.plusMinus));
         if (stats.ownGoals > 0)
             BuildStatCell(scoringRow, "Own Goals", stats.ownGoals.ToString());
-
-        // -- Shooting --
-        BuildGroupLabel(parent, "Shooting");
-        var shootingRow = new VisualElement();
-        shootingRow.style.flexDirection = FlexDirection.Row;
-        shootingRow.style.flexWrap = Wrap.Wrap;
-        shootingRow.style.marginBottom = 4;
-        parent.Add(shootingRow);
-
-        BuildStatCell(shootingRow, "SOG", stats.shots.ToString());
+        BuildStatCell(scoringRow, "SOG", stats.shots.ToString());
         if (stats.shots > 0)
         {
             float shPct = (float)stats.goals / stats.shots * 100f;
-            BuildStatCell(shootingRow, "SH%", $"{shPct:F0}%");
+            BuildStatCell(scoringRow, "SH%", $"{shPct:F0}%");
         }
         else
         {
-            BuildStatCell(shootingRow, "SH%", "N/A");
+            BuildStatCell(scoringRow, "SH%", "N/A");
         }
 
         // -- Puck Work --
@@ -435,8 +447,8 @@ public static class PlayersTab
             BuildStatCell(defenseRow, "Blocks", stats.blocks.ToString());
         }
 
-        // -- Ice Time --
-        BuildGroupLabel(parent, "Ice Time");
+        // -- Ice Time / Movement --
+        BuildGroupLabel(parent, "Ice Time / Movement");
         var timeRow = new VisualElement();
         timeRow.style.flexDirection = FlexDirection.Row;
         timeRow.style.flexWrap = Wrap.Wrap;
@@ -451,6 +463,14 @@ public static class PlayersTab
             BuildStatCell(timeRow, "As Skater", FormatTime(skaterSeconds));
             BuildStatCell(timeRow, "As Goalie", FormatTime(stats.asGoalieSeconds));
         }
+
+        BuildStatCell(timeRow, "Distance", $"{stats.totalDistanceTravelled:F0}u");
+        BuildStatCell(timeRow, "Avg Speed", $"{stats.averageSpeed:F1}");
+        BuildStatCell(timeRow, "Jumps", stats.jumps.ToString());
+        BuildStatCell(timeRow, "Air Time", FormatTime(stats.airborneSeconds));
+        BuildStatCell(timeRow, "Slides", stats.slides.ToString());
+        BuildStatCell(timeRow, "Juggles", stats.juggles.ToString());
+        BuildStatCell(timeRow, "Revolutions", $"{stats.totalRevolutions:F1}");
 
         // Team participation bar (only show if player switched teams mid-match)
         if (stats.onBlueSeconds > 0 && stats.onRedSeconds > 0)
@@ -491,21 +511,6 @@ public static class PlayersTab
             redBar.style.backgroundColor = new StyleColor(new Color(0.85f, 0.15f, 0.15f));
             barRow.Add(redBar);
         }
-
-        // -- Movement --
-        BuildGroupLabel(parent, "Movement");
-        var moveRow = new VisualElement();
-        moveRow.style.flexDirection = FlexDirection.Row;
-        moveRow.style.flexWrap = Wrap.Wrap;
-        parent.Add(moveRow);
-
-        BuildStatCell(moveRow, "Distance", $"{stats.totalDistanceTravelled:F0}u");
-        BuildStatCell(moveRow, "Avg Speed", $"{stats.averageSpeed:F1}");
-        BuildStatCell(moveRow, "Jumps", stats.jumps.ToString());
-        BuildStatCell(moveRow, "Air Time", FormatTime(stats.airborneSeconds));
-        BuildStatCell(moveRow, "Slides", stats.slides.ToString());
-        BuildStatCell(moveRow, "Juggles", stats.juggles.ToString());
-        BuildStatCell(moveRow, "Revolutions", $"{stats.totalRevolutions:F1}");
     }
 
     private static void BuildGroupLabel(VisualElement parent, string text)

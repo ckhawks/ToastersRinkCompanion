@@ -25,7 +25,7 @@ public static class SpawnPuckKeybind
         [HarmonyPrefix]
         public static bool Prefix()
         {
-            return !ModifierPanelUI.ShouldBlockPauseAction();
+            return !ModifierPanelUI.ShouldBlockPauseAction() && !MatchEndPanel.ShouldBlockPauseAction();
         }
     }
 
@@ -51,8 +51,17 @@ public static class SpawnPuckKeybind
 
             bool isFocusedChat = (bool)_isFocusedField.GetValue(MonoBehaviourSingleton<UIManager>.Instance.Chat);
 
+            // Escape closes the match-end panel even when chat is focused or the panel is open.
+            // Handle it first so it always takes priority.
+            if (MatchEndPanel.IsVisible && Keyboard.current != null &&
+                Keyboard.current.escapeKey.wasPressedThisFrame)
+            {
+                MatchEndPanel.Hide();
+                return;
+            }
+
             // When panel is open or chat focused, only process panel toggle/ESC
-            if (isFocusedChat || ModifierPanelUI.IsVisible)
+            if (isFocusedChat || ModifierPanelUI.IsVisible || MatchEndPanel.IsVisible)
             {
                 if (Keyboard.current != null)
                 {

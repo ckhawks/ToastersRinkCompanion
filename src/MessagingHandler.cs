@@ -82,6 +82,7 @@ public static class MessagingHandler
             CollectiblesStore.Clear();
             ToastersRinkCompanion.modifiers.FeedbackTab.Clear();
             MinimapObjects.Clear();
+            ScoreboardStats.ResetHeaders();
         }
     }
 
@@ -113,6 +114,12 @@ public static class MessagingHandler
 
             // Register EIS team logo display handlers
             TeamLogoDisplay.RegisterHandlers();
+
+            // Wire up the end-of-match stars panel to the MatchStarsStore events
+            ToastersRinkCompanion.handlers.MatchEndPanel.RegisterEvents();
+
+            // Wire up the in-world fresnel glow that highlights star players during GameOver/Warmup
+            ToastersRinkCompanion.handlers.StarPlayerGlow.RegisterEvents();
 
             // Single goalie: suppress camera overlay during team switch
             JsonMessageRouter.RegisterHandler("singlegoalie_switch", (sender, payloadJson) =>
@@ -906,11 +913,53 @@ public static class MessagingHandler
                 {
                     var payload = JsonConvert.DeserializeObject<ToastersRinkCompanion.modifiers.PlayerStatsStore.PlayerStatsPayload>(payloadJson);
                     if (payload != null)
+                    {
                         ToastersRinkCompanion.modifiers.PlayerStatsStore.Update(payload);
+                        ToastersRinkCompanion.modifiers.ModifierPanelUI.RefreshPlayerStats();
+                        ToastersRinkCompanion.handlers.ScoreboardStats.RefreshAllPlayers();
+                    }
                 }
                 catch (Exception e)
                 {
                     Plugin.LogError($"Failed to parse player_stats payload: {e}");
+                }
+            });
+
+            JsonMessageRouter.RegisterHandler("player_stats_delta", (sender, payloadJson) =>
+            {
+                if (!connectedToToastersRink) return;
+                try
+                {
+                    var payload = JsonConvert.DeserializeObject<ToastersRinkCompanion.modifiers.PlayerStatsStore.PlayerStatsDeltaPayload>(payloadJson);
+                    if (payload != null)
+                    {
+                        ToastersRinkCompanion.modifiers.PlayerStatsStore.ApplyDelta(payload);
+                        ToastersRinkCompanion.modifiers.ModifierPanelUI.RefreshPlayerStats();
+                        ToastersRinkCompanion.handlers.ScoreboardStats.RefreshAllPlayers();
+                    }
+                }
+                catch (Exception e)
+                {
+                    Plugin.LogError($"Failed to parse player_stats_delta payload: {e}");
+                }
+            });
+
+            JsonMessageRouter.RegisterHandler("match_stars", (sender, payloadJson) =>
+            {
+                if (!connectedToToastersRink) return;
+                try
+                {
+                    var payload = JsonConvert.DeserializeObject<ToastersRinkCompanion.modifiers.MatchStarsStore.MatchStarsPayload>(payloadJson);
+                    if (payload != null)
+                    {
+                        ToastersRinkCompanion.modifiers.MatchStarsStore.Apply(payload);
+                        // Repaint the scoreboard so the per-row star badge shows up.
+                        ToastersRinkCompanion.handlers.ScoreboardStats.RefreshAllPlayers();
+                    }
+                }
+                catch (Exception e)
+                {
+                    Plugin.LogError($"Failed to parse match_stars payload: {e}");
                 }
             });
 
