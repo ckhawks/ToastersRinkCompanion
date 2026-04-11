@@ -102,6 +102,25 @@ public static class PlayerStatsStore
 
     private static readonly Dictionary<string, PlayerStatsEntry> _playerStats = new();
 
+    public static void RegisterHandlers()
+    {
+        JsonMessageRouter.RegisterTypedHandler<PlayerStatsPayload>("player_stats",
+            (_, payload) =>
+            {
+                Update(payload);
+                ModifierPanelUI.RefreshPlayerStats();
+                ToastersRinkCompanion.handlers.ScoreboardStats.RefreshAllPlayers();
+            });
+
+        JsonMessageRouter.RegisterTypedHandler<PlayerStatsDeltaPayload>("player_stats_delta",
+            (_, payload) =>
+            {
+                ApplyDelta(payload);
+                ModifierPanelUI.RefreshPlayerStats();
+                ToastersRinkCompanion.handlers.ScoreboardStats.RefreshAllPlayers();
+            });
+    }
+
     public static void Update(PlayerStatsPayload payload)
     {
         _playerStats.Clear();

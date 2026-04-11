@@ -13,6 +13,13 @@ public static class SuppressCameraOverlay
     private static bool _suppressing;
     private static float _suppressUntil;
 
+    public static void RegisterHandlers()
+    {
+        // The server sends an empty envelope; we just need the ping, not the payload.
+        JsonMessageRouter.RegisterHandler("singlegoalie_switch",
+            (_, _) => BeginSuppression());
+    }
+
     /// <summary>
     /// Called by the messaging system when the server signals a single goalie switch
     /// is about to happen for the local player.

@@ -8,8 +8,21 @@ namespace ToastersRinkCompanion;
 
 public static class UIPopup
 {
-    // private static VisualElement prompt; 
-    
+    public class ImageNoticePayload
+    {
+        public ulong from;
+        public string imageUrl;
+        public string note;
+    }
+
+    public static void RegisterHandlers()
+    {
+        JsonMessageRouter.RegisterTypedHandler<ImageNoticePayload>("ImageNotice",
+            (_, p) => Show(p.from, p.imageUrl, p.note));
+    }
+
+    // private static VisualElement prompt;
+
     // --- CURSOR MANAGEMENT ---
     // Static fields to store the cursor's state before we change it.
     private static bool _previousCursorVisible;

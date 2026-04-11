@@ -141,8 +141,19 @@ public static class MatchStarsStore
     }
 
     // ---------------------------------------------------------------
-    // Mutation (called from MessagingHandler match_stars handler)
+    // Mutation
     // ---------------------------------------------------------------
+
+    public static void RegisterHandlers()
+    {
+        JsonMessageRouter.RegisterTypedHandler<MatchStarsPayload>("match_stars",
+            (_, payload) =>
+            {
+                Apply(payload);
+                // Repaint the scoreboard so the per-row star badge shows up.
+                ToastersRinkCompanion.handlers.ScoreboardStats.RefreshAllPlayers();
+            });
+    }
 
     /// <summary>
     /// Apply a fresh payload from the server. Triggers <see cref="OnStarsChanged"/>,

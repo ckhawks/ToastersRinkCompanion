@@ -11,9 +11,15 @@ namespace ToastersRinkCompanion.collectibles;
 
 public static class Opening
 {
+    public static void RegisterHandlers()
+    {
+        JsonMessageRouter.RegisterTypedHandler<OpenCasePayload>("case_open",
+            (_, p) => PlayCaseOpening(p));
+    }
+
     private const float BASE_CAMERA_PUSH_DISTANCE = 0.5f; // Base push, before object size
     private const float TEXT_LINE_SPACING = 0.15f; // Vertical distance between lines (tune this for your prefab)
-    
+
     private static List<GameObject> spawnedCases;
     private static List<CaseOpeningMetadata> caseOpeningMetadatas = new List<CaseOpeningMetadata>();
 

@@ -8,7 +8,24 @@ namespace ToastersRinkCompanion.handlers;
 public static class PuckScale
 {
     public static float currentPuckScale = 1f;
-    
+
+    [Serializable]
+    public class PuckScalePayload
+    {
+        public float puckscale;
+
+        public PuckScalePayload(float ps)
+        {
+            this.puckscale = ps;
+        }
+    }
+
+    public static void RegisterHandlers()
+    {
+        JsonMessageRouter.RegisterTypedHandler<PuckScalePayload>("puckscale",
+            (_, p) => UpdatePuckScaleToPayload(p));
+    }
+
     public static void UpdatePuckScaleToPayload(PuckScalePayload payload)
     {
         currentPuckScale = payload.puckscale;
@@ -57,16 +74,5 @@ public static class PuckScale
                 puckMeshRenderer.transform.localScale = new Vector3(currentPuckScale, currentPuckScale, currentPuckScale);
             }
         }
-    }
-}
-
-[Serializable]
-public class PuckScalePayload
-{
-    public float puckscale;
-
-    public PuckScalePayload(float ps)
-    {
-        this.puckscale = ps;
     }
 }

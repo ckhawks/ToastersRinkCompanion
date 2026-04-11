@@ -10,6 +10,14 @@ public static class Jail
     private static GameObject jailPrefab;
     private static AssetBundle _loadedAssetBundle;
 
+    public static void RegisterHandlers()
+    {
+        JsonMessageRouter.RegisterTypedHandler<JailSpawnPayload>("jail_spawn",
+            (_, p) => SpawnJail(p));
+        JsonMessageRouter.RegisterTypedHandler<JailDespawnPayload>("jail_despawn",
+            (_, p) => DespawnJail(p.id));
+    }
+
     public static void SpawnJail(JailSpawnPayload payload)
     {
         if (jailPrefab == null) LoadPrefab();

@@ -10,6 +10,20 @@ namespace ToastersRinkCompanion.modifiers;
 /// </summary>
 public static class FeedbackTab
 {
+    [Serializable]
+    public class FeedbackSubmitResultPayload
+    {
+        public string status;
+        public string message;
+    }
+
+    public static void RegisterHandlers()
+    {
+        JsonMessageRouter.RegisterTypedHandler<FeedbackSubmitResultPayload>(
+            "feedback_submit_result",
+            (_, p) => HandleSubmitResult(p.status, p.message));
+    }
+
     private static readonly List<string> Categories = new()
     {
         "Bug Report",

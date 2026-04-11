@@ -9,6 +9,23 @@ public static class Cubes
 {
     public static bool currentCubesEnabled = false;
 
+    [Serializable]
+    public class CubesPayload
+    {
+        public bool enabled;
+
+        public CubesPayload(bool e)
+        {
+            this.enabled = e;
+        }
+    }
+
+    public static void RegisterHandlers()
+    {
+        JsonMessageRouter.RegisterTypedHandler<CubesPayload>("cubes",
+            (_, p) => UpdateCubesToPayload(p));
+    }
+
     public static void UpdateCubesToPayload(CubesPayload payload)
     {
         currentCubesEnabled = payload.enabled;
@@ -108,16 +125,5 @@ public static class Cubes
             if (!MessagingHandler.connectedToToastersRink || !currentCubesEnabled) return;
             ApplyCubeVisuals(__instance);
         }
-    }
-}
-
-[Serializable]
-public class CubesPayload
-{
-    public bool enabled;
-
-    public CubesPayload(bool e)
-    {
-        this.enabled = e;
     }
 }

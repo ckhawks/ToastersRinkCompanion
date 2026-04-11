@@ -14,7 +14,6 @@ public class Plugin : IPuckMod
 {
     public static string MOD_NAME = "ToastersRinkCompanion";
     public static string MOD_VERSION = "2.0.0";
-    // public static string TRS_VERSION = "Build 1054";
     public static string MOD_GUID = "pw.stellaric.toaster.rinkcompanion";
 
     static readonly Harmony harmony = new Harmony(MOD_GUID);
@@ -68,18 +67,14 @@ public class Plugin : IPuckMod
                 MessagingHandler.Setup();
                 modSettings = ModSettings.Load();
                 modSettings.Save(); // So that it writes any missing config values immediately
-                spawnPuckAction = new InputAction(binding: modSettings.spawnPuckKeybind);
-                spawnPuckAction.Enable();
-                voteYesAction = new InputAction(binding: modSettings.voteYesKeybind);
-                voteYesAction.Enable();
-                voteNoAction = new InputAction(binding: modSettings.voteNoKeybind);
-                voteNoAction.Enable();
-                panelAction = new InputAction(binding: modSettings.panelKeybind);
-                panelAction.Enable();
-                drillSaveAction = new InputAction(binding: modSettings.drillSaveKeybind);
-                drillSaveAction.Enable();
-                drillLoadAction = new InputAction(binding: modSettings.drillLoadKeybind);
-                drillLoadAction.Enable();
+
+                RecreateAction(ref spawnPuckAction, modSettings.spawnPuckKeybind);
+                RecreateAction(ref voteYesAction,   modSettings.voteYesKeybind);
+                RecreateAction(ref voteNoAction,    modSettings.voteNoKeybind);
+                RecreateAction(ref panelAction,     modSettings.panelKeybind);
+                RecreateAction(ref drillSaveAction, modSettings.drillSaveKeybind);
+                RecreateAction(ref drillLoadAction, modSettings.drillLoadKeybind);
+
                 Plugin.Log($"Fully setup!");
             }
             

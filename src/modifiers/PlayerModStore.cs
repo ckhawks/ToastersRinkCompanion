@@ -24,6 +24,12 @@ public static class PlayerModStore
     // steamId -> mod entry
     private static readonly Dictionary<string, PlayerModEntry> _playerMods = new();
 
+    public static void RegisterHandlers()
+    {
+        JsonMessageRouter.RegisterTypedHandler<PlayerModsPayload>("player_mods",
+            (_, p) => Update(p));
+    }
+
     public static void Update(PlayerModsPayload payload)
     {
         _playerMods.Clear();

@@ -18,6 +18,10 @@ public class ModSettings
     public int hudPositionX { get; set; } = 0;   // 0-100%, 0=left edge, 100=right edge
     public int hudPositionY { get; set; } = 95;   // 0-100%, 0=top edge, 100=bottom edge
     public List<string> favoriteModifiers { get; set; } = new();
+    // When true, JsonMessageRouter logs every envelope sent and received plus
+    // every handler registration. Useful for debugging protocol issues, but
+    // very noisy because most messages fire multiple times per second.
+    public bool verboseMessageLogging { get; set; } = false;
 
     static string ConfigurationFileName = $"{Plugin.MOD_NAME}.json";
 

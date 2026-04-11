@@ -9,6 +9,23 @@ public static class Balls
 {
     public static bool currentBallsEnabled = false;
 
+    [Serializable]
+    public class BallsPayload
+    {
+        public bool enabled;
+
+        public BallsPayload(bool e)
+        {
+            this.enabled = e;
+        }
+    }
+
+    public static void RegisterHandlers()
+    {
+        JsonMessageRouter.RegisterTypedHandler<BallsPayload>("balls",
+            (_, p) => UpdateBallsToPayload(p));
+    }
+
     // Store original mesh and material for restoration
     // private static Dictionary<Puck, (Mesh mesh, Material material)> originalMeshData =
     //     new Dictionary<Puck, (Mesh, Material)>();
@@ -177,16 +194,5 @@ public static class Balls
             if (!MessagingHandler.connectedToToastersRink || !currentBallsEnabled) return;
             ApplyBallVisuals(__instance);
         }
-    }
-}
-
-[Serializable]
-public class BallsPayload
-{
-    public bool enabled;
-
-    public BallsPayload(bool e)
-    {
-        this.enabled = e;
     }
 }

@@ -460,12 +460,6 @@ public class GoalPositionPayload
 }
 
 [System.Serializable]
-public struct Vec3
-{
-    public float x, y, z;
-}
-
-[System.Serializable]
 public struct QuatData
 {
     public float x, y, z, w;

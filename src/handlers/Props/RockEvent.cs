@@ -9,6 +9,16 @@ namespace ToastersRinkCompanion.handlers;
 
 public static class RockEvent
 {
+    public static void RegisterHandlers()
+    {
+        JsonMessageRouter.RegisterTypedHandler<RockEventPayload>("rock_event",
+            (_, p) => SpawnRockForPayload(p));
+        JsonMessageRouter.RegisterTypedHandler<RockHitPayload>("rock_hit",
+            (_, p) => PlayRockHitFromPayload(p));
+        JsonMessageRouter.RegisterTypedHandler<RockEventEndedPayload>("rock_dieded",
+            (_, p) => DespawnRockFromPayload(p));
+    }
+
     // configuration
     private static float rockRiseSpeedMultiplier = 0.6f;
     

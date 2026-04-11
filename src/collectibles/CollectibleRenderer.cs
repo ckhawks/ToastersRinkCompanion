@@ -15,6 +15,12 @@ namespace ToastersRinkCompanion.collectibles;
 
 public static class CollectibleRenderer
 {
+    public static void RegisterHandlers()
+    {
+        JsonMessageRouter.RegisterTypedHandler<ItemShowPayload>("item_show",
+            (_, p) => CreateCollectibleDisplayInWorld(p.CollectibleItem, p.Position));
+    }
+
     // old
     private static GameObject toasterPrefab;
 
