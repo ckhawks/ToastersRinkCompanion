@@ -189,7 +189,15 @@ public static class MemeDisplay
         HideBoard();
 
         float aspectRatio = (float)_currentTexture.width / _currentTexture.height;
+        // Cap width so landscape memes don't overlap the like/dislike buttons
+        float maxWidth = (ButtonOffsetZ - ButtonSize / 2f) * 2f - 0.4f; // clearance on each side
         float quadWidth = BoardHeight * aspectRatio;
+        float quadHeight = BoardHeight;
+        if (quadWidth > maxWidth)
+        {
+            quadWidth = maxWidth;
+            quadHeight = quadWidth / aspectRatio;
+        }
 
         // Create parent object for the whole meme board
         _memeBoard = new GameObject("DailyMemeBoard");
@@ -201,7 +209,7 @@ public static class MemeDisplay
         backing.transform.SetParent(_memeBoard.transform);
         backing.transform.localRotation = Quaternion.Euler(0f, 90f, 0f);
         backing.transform.localPosition = new Vector3(-0.05f, 0f, 0f);
-        backing.transform.localScale = new Vector3(quadWidth + 0.3f, BoardHeight + 0.3f, 0.08f);
+        backing.transform.localScale = new Vector3(quadWidth + 0.3f, quadHeight + 0.3f, 0.08f);
         UnityEngine.Object.Destroy(backing.GetComponent<Collider>());
 
         // Dark material for the backing
@@ -221,7 +229,7 @@ public static class MemeDisplay
         _memeQuad.transform.SetParent(_memeBoard.transform);
         _memeQuad.transform.localRotation = Quaternion.Euler(0f, -90f, 0f);
         _memeQuad.transform.localPosition = Vector3.zero;
-        _memeQuad.transform.localScale = new Vector3(quadWidth, BoardHeight, 1f);
+        _memeQuad.transform.localScale = new Vector3(quadWidth, quadHeight, 1f);
         UnityEngine.Object.Destroy(_memeQuad.GetComponent<Collider>());
 
         // Apply the texture — Unlit/Texture works, URP Unlit does not render properly
@@ -272,13 +280,13 @@ public static class MemeDisplay
         string submittedBy = _currentPayload?.uploaded_by_name ?? "Unknown";
         _infoText = CreateWorldText(_memeBoard.transform,
             $"From: {submittedBy}", new Color(0.85f, 0.85f, 0.85f),
-            new Vector3(0f, -(BoardHeight / 2f) - 0.3f, 0f), Vector3.one,
+            new Vector3(0f, -(quadHeight / 2f) - 0.3f, 0f), Vector3.one,
             32, 0.1f, TextAnchor.UpperCenter);
 
         // Helper text
         CreateWorldText(_memeBoard.transform,
             "Hit the buttons with a puck or stick to vote!", new Color(0.55f, 0.55f, 0.55f),
-            new Vector3(0f, -(BoardHeight / 2f) - 0.7f, 0f), Vector3.one,
+            new Vector3(0f, -(quadHeight / 2f) - 0.7f, 0f), Vector3.one,
             24, 0.08f, TextAnchor.UpperCenter);
 
         Plugin.Log($"MemeDisplay: board shown for meme #{_currentMemeId}");

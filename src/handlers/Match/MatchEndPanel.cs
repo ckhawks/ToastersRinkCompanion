@@ -121,6 +121,7 @@ public static class MatchEndPanel
         _isVisible = true;
         SetGameInputSuppressed(true);
         GlobalStateManager.SetUIState(new Dictionary<string, object> { { "isMouseRequired", true } });
+        ResetLocalPlayerInputs();
     }
 
     public static void Hide()
@@ -575,6 +576,21 @@ public static class MatchEndPanel
             }
         }
         catch { /* not available yet */ }
+    }
+
+    /// <summary>
+    /// Zero out the local player's held inputs so they don't stay stuck
+    /// when the UI begins suppressing UpdateInputs().
+    /// </summary>
+    private static void ResetLocalPlayerInputs()
+    {
+        try
+        {
+            var player = MonoBehaviourSingleton<PlayerManager>.Instance?.GetLocalPlayer();
+            if (player?.PlayerInput != null)
+                player.PlayerInput.ResetInputs(player.Handedness.Value);
+        }
+        catch { /* player may not be spawned */ }
     }
 
     private static bool AnyGameViewRequiresMouse()

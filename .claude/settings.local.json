@@ -6,7 +6,8 @@
       "Read(//c/Program Files \\(x86\\)/Steam/steamapps/common/**)",
       "Read(//c/Program Files \\(x86\\)/Steam/steamapps/common/Puck Server/**)",
       "Read(//c/Projects/Puck Plugins/ToastersRinkSuite/**)",
-      "Read(//mnt/c/Projects/Puck Plugins/**)"
+      "Read(//mnt/c/Projects/Puck Plugins/**)",
+      "Bash(rtk dotnet:*)"
     ]
   }
 }

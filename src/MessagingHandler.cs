@@ -71,11 +71,14 @@ public static class MessagingHandler
         MemeDisplay.Cleanup();
         TeamLogoDisplay.Cleanup();
         UpdatableChat.Clear();
+        ChatFormatting.Clear();
         JuggleRallyTimer.Clear();
         FuckGoals.CleanupAllCustomFrames();
         RockEventUI.Hide();
         MinimapObjects.Clear();
         ScoreboardStats.ResetHeaders();
+        MatchEndPanel.Hide();
+        StarPlayerGlow.Cleanup();
 
         ToastersRinkCompanion.modifiers.ModifierRegistry.Clear();
         ToastersRinkCompanion.modifiers.ServerState.Clear();
@@ -83,6 +86,8 @@ public static class MessagingHandler
         ToastersRinkCompanion.modifiers.VotePopupUI.Hide();
         ToastersRinkCompanion.modifiers.ModifierPanelUI.Hide();
         ToastersRinkCompanion.modifiers.PlayerModStore.Clear();
+        ToastersRinkCompanion.modifiers.PlayerStatsStore.Clear();
+        ToastersRinkCompanion.modifiers.MatchStarsStore.Clear();
         ToastersRinkCompanion.modifiers.FeedbackTab.Clear();
 
         MOTDUI.Hide();

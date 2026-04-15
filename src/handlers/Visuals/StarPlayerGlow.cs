@@ -12,10 +12,11 @@ namespace ToastersRinkCompanion.handlers;
 /// <list type="bullet">
 /// <item><b>Stars</b> (Warmup / GameOver / PostGame): highlights the three star
 /// players from the last match with gold/silver/bronze.</item>
-/// <item><b>TeamCelebration</b> (RedScore / BlueScore): highlights every player
-/// on the scoring team with that team's color. Team color is pulled from the
-/// optional ToasterReskinLoader API via <see cref="TeamColorAccess"/>, falling
-/// back to sensible defaults when TRL isn't installed.</item>
+/// <item><b>TeamCelebration</b> (RedScore / BlueScore): highlights the goal
+/// scorer with that team's color (received via the <c>goal_scored</c> envelope
+/// from the server). Team color is pulled from the optional ToasterReskinLoader
+/// API via <see cref="TeamColorAccess"/>, falling back to sensible defaults
+/// when TRL isn't installed.</item>
 /// </list>
 ///
 /// The local player is skipped to avoid first-person camera clipping.
@@ -51,6 +52,20 @@ public static class StarPlayerGlow
     private static GameObject _fresnelPrefab;
     private static Material _sharedFresnelMaterial;
 
+    /// <summary>
+    /// SteamId of the player who scored the most recent goal.  Set by the
+    /// <c>goal_scored</c> envelope from the server and consumed by celebration mode
+    /// so only the scorer gets the fresnel highlight (not the whole team).
+    /// </summary>
+    private static string _lastScorerSteamId;
+
+    [Serializable]
+    private class GoalScoredPayload
+    {
+        public string team;
+        public string scorerSteamId;
+    }
+
     // Per-player list of overlay GameObjects
     private static readonly Dictionary<string, List<GameObject>> _activeOverlays = new();
     // Material instances we created so we can destroy them on cleanup
@@ -67,6 +82,13 @@ public static class StarPlayerGlow
     {
         MatchStarsStore.OnStarsChanged += OnStarsChanged;
         TeamColorAccess.OnTeamColorsChanged += OnTeamColorsChanged;
+
+        JsonMessageRouter.RegisterTypedHandler<GoalScoredPayload>("goal_scored",
+            (_, payload) =>
+            {
+                _lastScorerSteamId = payload?.scorerSteamId;
+                Plugin.Log($"[StarPlayerGlow] goal_scored received: scorer={_lastScorerSteamId} team={payload?.team}");
+            });
     }
 
     /// <summary>
@@ -136,9 +158,10 @@ public static class StarPlayerGlow
             return;
         }
 
-        // Celebration modes
-        PlayerTeam targetTeam = _currentMode == GlowMode.BlueCelebration ? PlayerTeam.Blue : PlayerTeam.Red;
-        if (effectiveTeam != targetTeam) return;
+        // Celebration modes: only highlight the goal scorer
+        if (player.SteamId == null) return;
+        string celSteamId = player.SteamId.Value.ToString();
+        if (string.IsNullOrEmpty(_lastScorerSteamId) || celSteamId != _lastScorerSteamId) return;
 
         if (!isReplay && player.IsLocalPlayer) return;
 
@@ -311,6 +334,7 @@ public static class StarPlayerGlow
                 switch (nextMode)
                 {
                     case GlowMode.Stars:
+                        _lastScorerSteamId = null;
                         ApplyStars();
                         break;
                     case GlowMode.BlueCelebration:
@@ -319,6 +343,7 @@ public static class StarPlayerGlow
                         break;
                     case GlowMode.None:
                     default:
+                        _lastScorerSteamId = null;
                         RemoveAll();
                         break;
                 }
@@ -381,7 +406,8 @@ public static class StarPlayerGlow
 
     private static void ApplyCelebration(GlowMode mode)
     {
-        Plugin.Log($"[StarPlayerGlow] ApplyCelebration: mode={mode}");
+        Plugin.Log($"[StarPlayerGlow] ApplyCelebration: mode={mode} scorer={_lastScorerSteamId}");
+        if (string.IsNullOrEmpty(_lastScorerSteamId)) return;
         if (!EnsureAssetsLoaded()) return;
 
         RemoveAll();
@@ -391,62 +417,41 @@ public static class StarPlayerGlow
 
         var localPlayer = playerManager.GetLocalPlayer();
 
-        PlayerTeam targetTeam = mode == GlowMode.BlueCelebration ? PlayerTeam.Blue : PlayerTeam.Red;
         Color color = mode == GlowMode.BlueCelebration
             ? TeamColorAccess.BlueTeamColor
             : TeamColorAccess.RedTeamColor;
 
-        // Deep diagnostic: scan the whole scene for PlayerBody components
-        var allBodiesInScene = UnityEngine.Object.FindObjectsOfType<PlayerBody>();
-        Plugin.Log($"[StarPlayerGlow] Scene scan: FindObjectsOfType<PlayerBody>() returned {allBodiesInScene?.Length ?? 0}");
-        if (allBodiesInScene != null)
+        int applied = 0;
+
+        // Walk all spawned players (live + replay) and highlight only the scorer.
+        foreach (var player in playerManager.GetSpawnedPlayers())
         {
-            for (int i = 0; i < allBodiesInScene.Length; i++)
-            {
-                var pb = allBodiesInScene[i];
-                if (pb == null) continue;
-                string hierarchyPath = GetHierarchyPath(pb.transform);
-                int mrCount = pb.GetComponentsInChildren<MeshRenderer>(true).Length;
-                Plugin.Log($"[StarPlayerGlow]   PlayerBody[{i}] '{pb.name}' path='{hierarchyPath}' meshRenderers={mrCount}");
-            }
+            if (player == null) continue;
+            if (player.SteamId == null) continue;
+            if (player.SteamId.Value.ToString() != _lastScorerSteamId) continue;
+
+            bool isReplay = player.IsReplay != null && player.IsReplay.Value;
+            if (!isReplay && player == localPlayer) continue;
+
+            ApplyToPlayer(player, color);
+            applied++;
         }
 
-        // Two separate lists to walk:
-        //  1) GetSpawnedPlayersByTeam(team) — live players on that team
-        //  2) GetReplayPlayers() — replay clones
-        var liveList = new List<Player>();
-        var replayList = new List<Player>();
-
-        try
-        {
-            var spawned = playerManager.GetSpawnedPlayersByTeam(targetTeam);
-            if (spawned != null) liveList.AddRange(spawned);
-            Plugin.Log($"[StarPlayerGlow] GetSpawnedPlayersByTeam({targetTeam}) -> {liveList.Count}");
-        }
-        catch (System.Exception e)
-        {
-            Plugin.LogError($"[StarPlayerGlow] GetSpawnedPlayersByTeam failed: {e}");
-        }
-
+        // Also check replay clones (separate list — their SteamId may differ from
+        // the live player's OwnerClientId offset).
         try
         {
             var replays = playerManager.GetReplayPlayers();
             if (replays != null)
             {
-                Plugin.Log($"[StarPlayerGlow] GetReplayPlayers() -> {replays.Count} total");
                 foreach (var rp in replays)
                 {
-                    if (rp == null) { Plugin.Log("[StarPlayerGlow]   replay null"); continue; }
-                    string user = rp.Username.Value.ToString();
-                    bool isRep = rp.IsReplay != null && rp.IsReplay.Value;
-                    Plugin.Log($"[StarPlayerGlow]   replay candidate: {user} team={rp.Team} isReplay={isRep}");
-                    if (rp.Team != targetTeam) continue;
-                    replayList.Add(rp);
+                    if (rp == null || rp.SteamId == null) continue;
+                    if (rp.SteamId.Value.ToString() != _lastScorerSteamId) continue;
+
+                    ApplyToPlayer(rp, color);
+                    applied++;
                 }
-            }
-            else
-            {
-                Plugin.Log("[StarPlayerGlow] GetReplayPlayers() returned null");
             }
         }
         catch (System.Exception e)
@@ -454,32 +459,8 @@ public static class StarPlayerGlow
             Plugin.LogError($"[StarPlayerGlow] GetReplayPlayers failed: {e}");
         }
 
-        int applied = 0;
-        int replayCloneCount = 0;
-
-        foreach (var player in liveList)
-        {
-            if (player == null) continue;
-            // Skip the real local player (first-person camera clipping)
-            if (player == localPlayer) continue;
-            ApplyToPlayer(player, color);
-            applied++;
-        }
-
-        foreach (var player in replayList)
-        {
-            if (player == null) continue;
-            // Replay clones are third-person — never skip them, even if they
-            // correspond to the local player.
-            ApplyToPlayer(player, color);
-            applied++;
-            replayCloneCount++;
-        }
-
-        Plugin.Log($"[StarPlayerGlow] ApplyCelebration done: team={targetTeam} " +
-                   $"live={liveList.Count} replay={replayList.Count} " +
-                   $"applied={applied} (replayClones={replayCloneCount}) " +
-                   $"color=({color.r:F2},{color.g:F2},{color.b:F2})");
+        Plugin.Log($"[StarPlayerGlow] ApplyCelebration done: scorer={_lastScorerSteamId} " +
+                   $"applied={applied} color=({color.r:F2},{color.g:F2},{color.b:F2})");
     }
 
     // ---------------------------------------------------------------
@@ -609,6 +590,14 @@ public static class StarPlayerGlow
             depth++;
         }
         return sb.ToString();
+    }
+
+    public static void Cleanup()
+    {
+        RemoveAll();
+        _currentMode = GlowMode.None;
+        _lastCelebrationMode = GlowMode.None;
+        _lastScorerSteamId = null;
     }
 
     private static void RemoveAll()
