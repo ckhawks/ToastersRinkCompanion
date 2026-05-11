@@ -10,7 +10,7 @@ using UnityEngine.Rendering;
 
 namespace ToastersRinkCompanion;
 
-public class Plugin : IPuckMod
+public class Plugin : IPuckPlugin
 {
     public static string MOD_NAME = "ToastersRinkCompanion";
     public static string MOD_VERSION = "2.0.0";
