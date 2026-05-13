@@ -281,15 +281,15 @@ public static class ScoreboardStats
                 switch (starRank)
                 {
                     case 1:
-                        starLabel.text = "\u2605";
+                        starLabel.text = "★";
                         starLabel.style.color = new StyleColor(new Color32(0xFF, 0xD7, 0x00, 0xFF));
                         break;
                     case 2:
-                        starLabel.text = "\u2605";
+                        starLabel.text = "★";
                         starLabel.style.color = new StyleColor(new Color32(0xED, 0xED, 0xED, 0xFF));
                         break;
                     case 3:
-                        starLabel.text = "\u2605";
+                        starLabel.text = "★";
                         starLabel.style.color = new StyleColor(new Color32(0xCD, 0x7F, 0x32, 0xFF));
                         break;
                     default:
@@ -375,6 +375,7 @@ public static class ScoreboardStats
             label.style.width = 18;
             label.style.paddingLeft = 2;
             label.style.paddingRight = 2;
+            GlyphFont.ApplyStarFont(label);
             return label;
         }
     }

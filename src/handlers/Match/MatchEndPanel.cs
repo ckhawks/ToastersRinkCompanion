@@ -424,7 +424,8 @@ public static class MatchEndPanel
         row.style.borderLeftColor = new StyleColor(starColor);
         parent.Add(row);
 
-        var starIcon = new Label("\u2605");
+        var starIcon = new Label("★");
+        GlyphFont.ApplyStarFont(starIcon);
         starIcon.style.fontSize = 28;
         starIcon.style.unityFontStyleAndWeight = FontStyle.Bold;
         starIcon.style.color = new StyleColor(starColor);
