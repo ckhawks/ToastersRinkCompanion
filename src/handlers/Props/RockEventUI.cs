@@ -354,6 +354,9 @@ public static class RockEventUI
     {
         if (!isSetup) Setup(UIManager.Instance.Hud);
 
+        // Keep the boss bar behind overlay UIs (MOTD, modifier panel) regardless of add order
+        _bossBarUIContainer.SendToBack();
+
         // If currently hidden, initiate fade-in (but don't restart if already fading in)
         if (_bossBarUIContainer.style.display == DisplayStyle.None)
         {

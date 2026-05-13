@@ -27,6 +27,7 @@ public static class MOTDUI
 
         Build();
         root.Add(_overlay);
+        _overlay.BringToFront();
 
         UnityEngine.Cursor.visible = true;
         UnityEngine.Cursor.lockState = CursorLockMode.None;

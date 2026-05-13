@@ -98,6 +98,7 @@ public static class ModifierPanelUI
         if (_overlay == null) return;
 
         _overlay.style.display = DisplayStyle.Flex;
+        _overlay.BringToFront();
         _isVisible = true;
 
         // Update version label
