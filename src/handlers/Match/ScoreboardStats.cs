@@ -26,6 +26,31 @@ public static class ScoreboardStats
     {
         _headersInjected = false;
         _hierarchyDumped = false;
+        RemoveInjectedHeader();
+    }
+
+    /// <summary>
+    /// Remove the injected "SOG/SV%" column header from the scoreboard so it doesn't
+    /// linger on non-Toasters Rink servers after disconnecting.
+    /// </summary>
+    private static void RemoveInjectedHeader()
+    {
+        try
+        {
+            var scoreboardInstance = Object.FindObjectOfType<UIScoreboard>();
+            if (scoreboardInstance == null) return;
+
+            var scoreboardField = AccessTools.Field(typeof(UIScoreboard), "scoreboard");
+            var scoreboard = scoreboardField?.GetValue(scoreboardInstance) as VisualElement;
+            if (scoreboard == null) return;
+
+            var existing = scoreboard.Q<VisualElement>(StatHeaderWrapperName);
+            existing?.RemoveFromHierarchy();
+        }
+        catch (System.Exception e)
+        {
+            Debug.LogError($"[ScoreboardStats] Error removing injected header: {e}");
+        }
     }
 
     /// <summary>
