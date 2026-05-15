@@ -173,7 +173,7 @@ public static class VotePopupUI
         _container.Add(buttonRow);
 
         _yesButton = new Button(() => ModifierMessaging.SendCastVote(true));
-        _yesButton.text = "[F1] Yes";
+        _yesButton.text = $"[{SettingsTab.GetKeyDisplayName(Plugin.modSettings.voteYesKeybind)}] Yes";
         _yesButton.style.backgroundColor = new StyleColor(new Color(0.03f, 0.7f, 0.34f));
         _yesButton.style.color = Color.white;
         _yesButton.style.fontSize = 15;
@@ -190,7 +190,7 @@ public static class VotePopupUI
         buttonRow.Add(_yesButton);
 
         _noButton = new Button(() => ModifierMessaging.SendCastVote(false));
-        _noButton.text = "[F2] No";
+        _noButton.text = $"[{SettingsTab.GetKeyDisplayName(Plugin.modSettings.voteNoKeybind)}] No";
         _noButton.style.backgroundColor = new StyleColor(new Color(0.9f, 0.1f, 0.1f));
         _noButton.style.color = Color.white;
         _noButton.style.fontSize = 15;
@@ -230,6 +230,8 @@ public static class VotePopupUI
 
         _container.style.display = DisplayStyle.Flex;
         _resultLabel.style.display = DisplayStyle.None;
+        _yesButton.text = $"[{SettingsTab.GetKeyDisplayName(Plugin.modSettings.voteYesKeybind)}] Yes";
+        _noButton.text = $"[{SettingsTab.GetKeyDisplayName(Plugin.modSettings.voteNoKeybind)}] No";
         _yesButton.SetEnabled(true);
         _noButton.SetEnabled(true);
         _isVisible = true;
