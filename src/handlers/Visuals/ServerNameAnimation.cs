@@ -9,7 +9,7 @@ namespace ToastersRinkCompanion.handlers;
 
 /// <summary>
 /// Animates Toaster's Rink server rows in the game's native server browser.
-/// Randomly picks orange or city-color bg, corner cuts, shimmer, pulsing stars.
+/// Uses city-color bg, corner cuts, shimmer, pulsing stars.
 /// </summary>
 public static class ServerNameAnimation
 {
@@ -20,16 +20,12 @@ public static class ServerNameAnimation
 
     private static readonly Regex CityColorRegex = new(@"<color=#([0-9A-Fa-f]{6})>", RegexOptions.Compiled);
 
-    private static readonly Color OrangeBg = new(1.0f, 0.55f, 0.0f);
-    private static readonly Color OrangeBgHover = new(1.0f, 0.65f, 0.15f);
     private static readonly Color FallbackCityColor = new(0.38f, 0.38f, 0.66f);
     private static readonly Color StarBright = new(1.0f, 1.0f, 1.0f);
     private static readonly Color StarDim = new(0.5f, 0.5f, 0.5f);
     private static readonly Color CornerCutColor = new(0.196f, 0.196f, 0.196f); // #323232
 
     private const string Star = "\u2726"; // ✦
-
-    private static readonly System.Random _rng = new();
 
     private class AnimState
     {
@@ -99,11 +95,9 @@ public static class ServerNameAnimation
         var playersLabel = serverEl.Q<Label>("PlayersLabel");
         var pingLabel = serverEl.Q<Label>("PingLabel");
 
-        // Randomly pick orange or city color
         Color cityColor = ParseCityColor(originalText);
-        bool useOrange = _rng.Next(2) == 0;
-        Color bgColor = useOrange ? OrangeBg : cityColor;
-        Color bgColorHover = useOrange ? OrangeBgHover : BrightenColor(cityColor, 0.15f);
+        Color bgColor = cityColor;
+        Color bgColorHover = BrightenColor(cityColor, 0.15f);
 
         // ── Row styling ──────────────────────────────────────────────
         serverEl.style.backgroundColor = new StyleColor(bgColor);
@@ -115,27 +109,15 @@ public static class ServerNameAnimation
 
         // ── Text colors ──────────────────────────────────────────────
         nameLabel.enableRichText = true;
-        string invertedText;
-        if (useOrange)
-        {
-            invertedText = originalText.Replace(
-                "<color=orange>Toaster's Rink</color>",
-                "<color=#1A1A1A>Toaster's Rink</color>");
-        }
-        else
-        {
-            invertedText = originalText.Replace(
-                "<color=orange>Toaster's Rink</color>",
-                "<color=#FFFFFF>Toaster's Rink</color>");
-            invertedText = CityColorRegex.Replace(invertedText, "<color=#FFFFFF>");
-        }
+        string invertedText = originalText.Replace(
+            "<color=orange>Toaster's Rink</color>",
+            "<color=#FFFFFF>Toaster's Rink</color>");
+        invertedText = CityColorRegex.Replace(invertedText, "<color=#FFFFFF>");
 
         if (playersLabel != null)
-            playersLabel.style.color = new StyleColor(
-                useOrange ? new Color(0.1f, 0.1f, 0.1f) : new Color(0.95f, 0.95f, 0.95f));
+            playersLabel.style.color = new StyleColor(new Color(0.95f, 0.95f, 0.95f));
         if (pingLabel != null)
-            pingLabel.style.color = new StyleColor(
-                useOrange ? new Color(0.1f, 0.1f, 0.1f) : new Color(0.95f, 0.95f, 0.95f));
+            pingLabel.style.color = new StyleColor(new Color(0.95f, 0.95f, 0.95f));
 
         // ── Corner cuts (18px - 50% bigger) ──────────────────────────
         var cornerTR = new VisualElement();
@@ -252,20 +234,20 @@ public static class ServerNameAnimation
         // ── Build name label text ────────────────────────────────────
         var sb = new StringBuilder(state.InvertedText.Length + 120);
 
-        // Left star: pulsing ✦
-        float starPulseL = Mathf.Sin(time * 3f) * 0.5f + 0.5f;
-        Color starColorL = Color.Lerp(StarDim, StarBright, starPulseL);
-        string starHexL = ColorUtility.ToHtmlStringRGB(starColorL);
-        sb.Append("<color=#").Append(starHexL).Append('>').Append(Star).Append("</color>");
-        sb.Append("  ");
+        // // Left star: pulsing ✦
+        // float starPulseL = Mathf.Sin(time * 3f) * 0.5f + 0.5f;
+        // Color starColorL = Color.Lerp(StarDim, StarBright, starPulseL);
+        // string starHexL = ColorUtility.ToHtmlStringRGB(starColorL);
+        // sb.Append("<color=#").Append(starHexL).Append('>').Append(Star).Append("</color>");
+        // sb.Append("  ");
 
         sb.Append(state.InvertedText);
 
-        // Right star: pulsing ✦ (offset phase)
-        float starPulseR = Mathf.Sin(time * 3f + 1.5f) * 0.5f + 0.5f;
-        Color starColorR = Color.Lerp(StarDim, StarBright, starPulseR);
-        string starHexR = ColorUtility.ToHtmlStringRGB(starColorR);
-        sb.Append("  <color=#").Append(starHexR).Append('>').Append(Star).Append("</color>");
+        // // Right star: pulsing ✦ (offset phase)
+        // float starPulseR = Mathf.Sin(time * 3f + 1.5f) * 0.5f + 0.5f;
+        // Color starColorR = Color.Lerp(StarDim, StarBright, starPulseR);
+        // string starHexR = ColorUtility.ToHtmlStringRGB(starColorR);
+        // sb.Append("  <color=#").Append(starHexR).Append('>').Append(Star).Append("</color>");
 
         state.NameLabel.text = sb.ToString();
     }
