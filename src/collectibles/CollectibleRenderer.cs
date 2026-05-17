@@ -75,12 +75,13 @@ public static class CollectibleRenderer
     
     public static GameObject CreateCollectibleDisplayInWorld(CollectibleItem collectibleItem, Vector3 position)
     {
+        GameObject root = null;
         try
-        { 
+        {
             CollectiblePrefabs.InitializeTextPrefab();
             CollectiblePrefabs.LoadCollectiblesParticlesPrefab();
 
-            GameObject root = new GameObject();
+            root = new GameObject();
             root.transform.position = position;
             root.transform.localScale = Vector3.one * 100;
 
@@ -268,8 +269,8 @@ public static class CollectibleRenderer
             if (mainTextComponent == null)
             {
                 Debug.LogError("CollectibleBillboardText prefab is missing its initial TMP_Text component!");
-                // Object.Destroy(spawnedCollectible);
-                Object.Destroy(textBillboardRoot);
+                Object.Destroy(root);
+                root = null;
                 return null;
             }
 
@@ -338,11 +339,19 @@ public static class CollectibleRenderer
                 SpawnTime = Time.time,
             });
 
-            return root;
+            // Ownership handed to the active list; the Update loop owns cleanup from here.
+            GameObject result = root;
+            root = null;
+            return result;
         }
         catch (Exception e)
         {
             Plugin.LogError($"Error while creating collecting object: {e.Message}");
+            if (root != null)
+            {
+                try { Object.Destroy(root); }
+                catch (Exception destroyEx) { Plugin.LogError($"Error destroying partial collectible spawn: {destroyEx}"); }
+            }
             return null;
         }
     }
@@ -630,93 +639,94 @@ public static class CollectibleRenderer
     private static void UpdateItemShowDisplays()
     {
         if (activeItemShowDisplays.Count == 0) return;
-        
+
         List<ItemShowCollectibleMetadata> itemShowDisplaysToDespawn = new List<ItemShowCollectibleMetadata>();
-        
+
         Player localPlayer = PlayerManager.Instance.GetLocalPlayer();
         Camera currentCamera = localPlayer?.PlayerCamera?.UnityCamera;
-
-
         if (currentCamera == null)
         {
-            currentCamera = localPlayer?.SpectatorCamera.UnityCamera;
+            currentCamera = localPlayer?.SpectatorCamera?.UnityCamera;
         }
 
-        if (currentCamera == null)
-        {
-            Debug.LogWarning("Local camera not found! Cannot billboard text or despawn collectibles.");
-            return;
-        }
-        
         foreach (ItemShowCollectibleMetadata itemShowMetadata in activeItemShowDisplays)
         {
-            float howManySecondsTheDisplayHasBeenAlive = Time.time - itemShowMetadata.SpawnTime;
-            
-            // Check if it's time for this thing to be despawned
-            if (howManySecondsTheDisplayHasBeenAlive >= itemShowMetadata.DespawnDelay)
+            try
             {
+                float howManySecondsTheDisplayHasBeenAlive = Time.time - itemShowMetadata.SpawnTime;
+
+                // Time-based despawn runs even without a camera so items can never get stuck.
+                if (howManySecondsTheDisplayHasBeenAlive >= itemShowMetadata.DespawnDelay)
+                {
+                    itemShowDisplaysToDespawn.Add(itemShowMetadata);
+                    continue;
+                }
+
+                if (itemShowMetadata.displayRoot == null)
+                {
+                    itemShowDisplaysToDespawn.Add(itemShowMetadata);
+                    continue;
+                }
+
+                // Per-frame visuals require a camera; skip them this frame if there isn't one.
+                if (currentCamera == null) continue;
+
+                if (howManySecondsTheDisplayHasBeenAlive < itemShowMetadata.IntroDuration)
+                {
+                    itemShowMetadata.displayRoot.transform.localScale = Vector3.one * 100 * Mathf.Lerp(0, 1, EaseInOutQuad(howManySecondsTheDisplayHasBeenAlive) / itemShowMetadata.IntroDuration);
+                }
+
+                if (howManySecondsTheDisplayHasBeenAlive >=
+                    itemShowMetadata.DespawnDelay - itemShowMetadata.OutroDuration)
+                {
+                    itemShowMetadata.displayRoot.transform.localScale = Vector3.one * 100 * Mathf.Lerp(1, 0, EaseInOutQuad((howManySecondsTheDisplayHasBeenAlive - (itemShowMetadata.DespawnDelay - itemShowMetadata.OutroDuration)) / itemShowMetadata.OutroDuration));
+                }
+
+                float bobOffset = Mathf.Sin(Time.time * bobbingSpeed) * bobbingHeight;
+
+                Vector3 groundPosition = new Vector3(itemShowMetadata.displayRoot.transform.position.x, 0, itemShowMetadata.displayRoot.transform.position.z);
+                Vector3 currentCollectibleBasePos = groundPosition + new Vector3(0, CollectibleBaseYOffset, 0);
+
+                if (itemShowMetadata.IsUpsideDown)
+                {
+                    itemShowMetadata.displayRoot.transform.position = currentCollectibleBasePos +
+                                                                      new Vector3(0, itemShowMetadata.OriginalCollectibleHeight + bobOffset, 0);
+                }
+                else
+                {
+                    itemShowMetadata.displayRoot.transform.position =
+                        currentCollectibleBasePos + new Vector3(0, CollectibleBaseYOffset + bobOffset, 0);
+                }
+
+                itemShowMetadata.displayRoot.transform.Rotate(Vector3.up, rotationSpeed * Time.deltaTime, Space.World);
+
+                if (itemShowMetadata.TextBillboardRoot == null) continue;
+
+                Vector3 textGroundPosition =
+                    new Vector3(itemShowMetadata.displayRoot.transform.position.x, 0, itemShowMetadata.displayRoot.transform.position.z);
+
+                Vector3 directionToCamera = currentCamera.transform.position - textGroundPosition;
+                directionToCamera.y = 0;
+
+                float dynamicPushDistance = BASE_CAMERA_PUSH_DISTANCE + itemShowMetadata.MaxXZBoundsLength / 1.5f;
+                Vector3 pushOffset = directionToCamera.normalized * dynamicPushDistance;
+
+                itemShowMetadata.TextBillboardRoot.transform.position =
+                    textGroundPosition + new Vector3(0, TextBillboardYOffset, 0) + pushOffset;
+                itemShowMetadata.TextBillboardRoot.transform.rotation = currentCamera.transform.rotation;
+            }
+            catch (Exception e)
+            {
+                // One bad entry must not poison the whole queue — log it and queue for destruction.
+                Plugin.LogError($"Error updating item show display, removing: {e}");
                 itemShowDisplaysToDespawn.Add(itemShowMetadata);
-                continue;
             }
-
-            if (howManySecondsTheDisplayHasBeenAlive < itemShowMetadata.IntroDuration)
-            {
-                itemShowMetadata.displayRoot.transform.localScale = Vector3.one * 100 * Mathf.Lerp(0, 1, EaseInOutQuad(howManySecondsTheDisplayHasBeenAlive) / itemShowMetadata.IntroDuration);
-                // itemShowMetadata.TextBillboardRoot.transform.localScale = Vector3.one * Mathf.Lerp(0, 1, EaseInOutQuad(howManySecondsTheDisplayHasBeenAlive) / itemShowMetadata.IntroDuration);
-            }
-            
-            if (howManySecondsTheDisplayHasBeenAlive >=
-                itemShowMetadata.DespawnDelay - itemShowMetadata.OutroDuration)
-            {
-                itemShowMetadata.displayRoot.transform.localScale = Vector3.one * 100 * Mathf.Lerp(1, 0, EaseInOutQuad((howManySecondsTheDisplayHasBeenAlive - (itemShowMetadata.DespawnDelay - itemShowMetadata.OutroDuration)) / itemShowMetadata.OutroDuration));
-                // itemShowMetadata.TextBillboardRoot.transform.localScale = Vector3.one * Mathf.Lerp(1, 0, EaseInOutQuad((howManySecondsTheDisplayHasBeenAlive - (itemShowMetadata.DespawnDelay - itemShowMetadata.OutroDuration)) / itemShowMetadata.OutroDuration));
-            }
-            
-            // Calculate bobbing motion
-            float bobOffset = Mathf.Sin(Time.time * bobbingSpeed) * bobbingHeight;
-
-            // collectible.transform.localScale = Vector3.one;
-            // Determine the base Y position for the collectible (fixed Y from ground)
-            Vector3 groundPosition = new Vector3(itemShowMetadata.displayRoot.transform.position.x, 0, itemShowMetadata.displayRoot.transform.position.z);
-            Vector3 currentCollectibleBasePos = groundPosition + new Vector3(0, CollectibleBaseYOffset, 0);
-
-            // Adjust position based on upside down trait and bobbing
-            if (itemShowMetadata.IsUpsideDown)
-            {
-                itemShowMetadata.displayRoot.transform.position = currentCollectibleBasePos +
-                                                                  new Vector3(0, itemShowMetadata.OriginalCollectibleHeight + bobOffset,
-                                                                      0);
-            }
-            else
-            {
-                itemShowMetadata.displayRoot.transform.position =
-                    currentCollectibleBasePos + new Vector3(0, CollectibleBaseYOffset + bobOffset, 0);
-            }
-            
-            
-            // TODO might need to change the line below to rotate only the collectible inside the root, not the root
-            itemShowMetadata.displayRoot.transform.Rotate(Vector3.up, rotationSpeed * Time.deltaTime, Space.World);
-            
-            // --- Update Billboard Text Position and Rotation --
-            Vector3 textGroundPosition =
-                new Vector3(itemShowMetadata.displayRoot.transform.position.x, 0, itemShowMetadata.displayRoot.transform.position.z);
-
-            Vector3 directionToCamera = currentCamera.transform.position - textGroundPosition;
-            directionToCamera.y = 0; // Flatten to XZ plane
-
-            // Calculate dynamic push offset: Base amount + half of the object's largest XZ dimension
-            float dynamicPushDistance = BASE_CAMERA_PUSH_DISTANCE + itemShowMetadata.MaxXZBoundsLength / 1.5f;
-            Vector3 pushOffset = directionToCamera.normalized * dynamicPushDistance;
-
-            itemShowMetadata.TextBillboardRoot.transform.position =
-                textGroundPosition + new Vector3(0, TextBillboardYOffset, 0) + pushOffset;
-
-            itemShowMetadata.TextBillboardRoot.transform.rotation = currentCamera.transform.rotation;
         }
-        
+
         foreach (ItemShowCollectibleMetadata iscm in itemShowDisplaysToDespawn)
         {
-            DestroyCollectibleDisplay(iscm);
+            try { DestroyCollectibleDisplay(iscm); }
+            catch (Exception e) { Plugin.LogError($"Error destroying item show display: {e}"); }
         }
     }
 

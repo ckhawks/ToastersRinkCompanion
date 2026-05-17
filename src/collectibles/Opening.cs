@@ -38,21 +38,22 @@ public static class Opening
     
     public static void PlayCaseOpening(OpenCasePayload payload)
     {
+        GameObject caseObject = null;
         try
         {
             CollectiblePrefabs.LoadCasePrefab();
             CollectiblePrefabs.InitializeTextPrefab();
             CollectiblePrefabs.LoadCollectiblesParticlesPrefab();
-            
+
             Player localPlayer = PlayerManager.Instance.GetLocalPlayer();
             bool isForSelf = localPlayer != null &&
                              localPlayer.SteamId.Value.ToString().Equals(payload.CollectibleItem.CurrentOwnerSteamId);
-            
+
             Player ownerPlayer =
                 PlayerManager.Instance.GetPlayerBySteamId(
                     new FixedString32Bytes(payload.CollectibleItem.CurrentOwnerSteamId));
-            
-            GameObject caseObject = Object.Instantiate(CollectiblePrefabs.casePrefab);
+
+            caseObject = Object.Instantiate(CollectiblePrefabs.casePrefab);
             caseObject.transform.localScale /= 3f; // Scale the case down to normal size
             caseObject.transform.position = payload.Position;
             caseObject.transform.rotation = payload.Rotation;
@@ -275,8 +276,8 @@ public static class Opening
             if (mainTextComponent == null)
             {
                 Debug.LogError("CollectibleBillboardText prefab is missing its initial TMP_Text component!");
-                Object.Destroy(collectibleDisplay);
-                Object.Destroy(textBillboardRoot);
+                Object.Destroy(caseObject);
+                caseObject = null;
                 return;
             }
             
@@ -338,8 +339,11 @@ public static class Opening
             };
             
             caseOpeningMetadatas.Add(caseOpeningMetadata);
-            
-            Animator caseAnimator = caseObject.GetComponent<Animator>();
+            // Ownership handed to the metadata list; Update() will clean up from here on.
+            GameObject animatorTarget = caseObject;
+            caseObject = null;
+
+            Animator caseAnimator = animatorTarget.GetComponent<Animator>();
             if (caseAnimator != null)
             {
                 caseAnimator.Play("OpenAction");
@@ -354,103 +358,120 @@ public static class Opening
         catch (Exception e)
         {
             Plugin.LogError($"Error while PlayCaseOpening: {e}");
+            // Clean up any partial spawn so smoke/sparkles/etc don't get stranded in the world.
+            if (caseObject != null)
+            {
+                try { Object.Destroy(caseObject); }
+                catch (Exception destroyEx) { Plugin.LogError($"Error destroying partial case spawn: {destroyEx}"); }
+            }
         }
     }
 
     private static void Update()
     {
         if (caseOpeningMetadatas.Count == 0) return;
-        
-        List<CaseOpeningMetadata> caseOpeningMetadatasToRemove = new List<CaseOpeningMetadata>(); // TODO need to store the start time so we can destroy
-        
+
+        List<CaseOpeningMetadata> caseOpeningMetadatasToRemove = new List<CaseOpeningMetadata>();
+
         Player localPlayer = PlayerManager.Instance.GetLocalPlayer();
         Camera currentCamera = localPlayer?.PlayerCamera?.UnityCamera;
-
         if (currentCamera == null)
         {
-            currentCamera = localPlayer?.SpectatorCamera.UnityCamera;
+            currentCamera = localPlayer?.SpectatorCamera?.UnityCamera;
         }
 
-        if (currentCamera == null)
-        {
-            Debug.LogWarning("Local camera not found! Cannot billboard text or despawn collectibles.");
-            return;
-        }
-        
         foreach (CaseOpeningMetadata caseOpeningMetadata in caseOpeningMetadatas)
         {
-            GameObject emptyParent = caseOpeningMetadata.emptyParent;
-            GameObject textBillboardRoot = caseOpeningMetadata.TextBillboardRoot;
-            
-            if (Time.time - caseOpeningMetadata.SpawnTime > caseOpeningMetadata.DespawnDelay)
+            try
             {
+                // Time-based despawn runs regardless of camera availability so items can never get stuck.
+                if (Time.time - caseOpeningMetadata.SpawnTime > caseOpeningMetadata.DespawnDelay)
+                {
+                    caseOpeningMetadatasToRemove.Add(caseOpeningMetadata);
+                    continue;
+                }
+
+                GameObject emptyParent = caseOpeningMetadata.emptyParent;
+                GameObject textBillboardRoot = caseOpeningMetadata.TextBillboardRoot;
+
+                // If the underlying GameObjects were destroyed out from under us, queue removal and move on.
+                if (caseOpeningMetadata.displayRoot == null || emptyParent == null)
+                {
+                    caseOpeningMetadatasToRemove.Add(caseOpeningMetadata);
+                    continue;
+                }
+
+                // Per-frame visual updates require a camera; skip them this frame if there isn't one.
+                if (currentCamera == null) continue;
+
+                GameObject collectibleDisplay = caseOpeningMetadata.CollectibleDisplay;
+                if (collectibleDisplay != null && caseOpeningMetadata.particleObjects != null)
+                {
+                    for (int i = caseOpeningMetadata.particleObjects.Count - 1; i >= 0; i--)
+                    {
+                        GameObject particleObject = caseOpeningMetadata.particleObjects[i];
+                        if (particleObject == null)
+                        {
+                            caseOpeningMetadata.particleObjects.RemoveAt(i);
+                            continue;
+                        }
+
+                        particleObject.transform.localScale = new Vector3(
+                            Mathf.Lerp(0, collectibleDisplay.transform.localScale.x / 3f, emptyParent.transform.localScale.x / 100),
+                            Mathf.Lerp(0, collectibleDisplay.transform.localScale.y / 3f, emptyParent.transform.localScale.y / 100),
+                            Mathf.Lerp(0, collectibleDisplay.transform.localScale.z / 3f, emptyParent.transform.localScale.z / 100));
+
+                        ParticleSystem particleSystem = particleObject.GetComponent<ParticleSystem>();
+                        if (particleSystem == null) continue;
+                        var emissionModule = particleSystem.emission;
+                        emissionModule.enabled = particleObject.transform.localScale.x >= 0.01f;
+                    }
+                }
+
+                Transform particlesSearch = emptyParent.transform.Find("CollectibleParticles");
+                if (particlesSearch != null)
+                {
+                    particlesSearch.localScale = emptyParent.transform.localScale / 100;
+                }
+
+                if (textBillboardRoot == null) continue;
+
+                Vector3 textGroundPosition = emptyParent.transform.position;
+                Vector3 directionToCamera = currentCamera.transform.position - textGroundPosition;
+                directionToCamera.y = 0;
+
+                Vector3 pushOffset = directionToCamera.normalized * BASE_CAMERA_PUSH_DISTANCE;
+                textBillboardRoot.transform.position = textGroundPosition + new Vector3(0, -0.2f, 0) + pushOffset;
+                textBillboardRoot.transform.rotation = currentCamera.transform.rotation;
+            }
+            catch (Exception e)
+            {
+                // One bad entry must not poison the whole queue — log it and queue for destruction.
+                Plugin.LogError($"Error updating case opening, removing: {e}");
                 caseOpeningMetadatasToRemove.Add(caseOpeningMetadata);
             }
-
-            if (emptyParent == null || emptyParent.transform == null)
-            {
-                Plugin.LogError($"emptyParent is null");
-                caseOpeningMetadatasToRemove.Add(caseOpeningMetadata);
-                return;
-            }
-
-            foreach (GameObject particleObject in caseOpeningMetadata.particleObjects)
-            {
-                particleObject.transform.localScale = new Vector3(
-                    Mathf.Lerp(0, caseOpeningMetadata.CollectibleDisplay.transform.localScale.x / 3f, emptyParent.transform.localScale.x / 100),
-                    Mathf.Lerp(0, caseOpeningMetadata.CollectibleDisplay.transform.localScale.y / 3f, emptyParent.transform.localScale.y / 100),
-                    Mathf.Lerp(0, caseOpeningMetadata.CollectibleDisplay.transform.localScale.z / 3f, emptyParent.transform.localScale.z / 100));
-                ParticleSystem particleSystem = particleObject.GetComponent<ParticleSystem>();
-                var emissionModule = particleSystem.emission;
-                if (particleObject.transform.localScale.x < 0.01)
-                {
-                    emissionModule.enabled = false;
-                }
-                else
-                {
-                    emissionModule.enabled = true;
-                }
-            }
-            
-            // If there are particles attached, scale them with the thing
-            Transform particlesSearch = emptyParent.transform.Find("CollectibleParticles");
-            if (particlesSearch != null)
-            {
-                GameObject particlesGameObject = particlesSearch.gameObject;
-                particlesGameObject.transform.localScale = emptyParent.transform.localScale / 100; // The particles game object ignores parents scale and it's localScale is the only scale it uses
-            }
-            
-            // --- Update Billboard Text Position and Rotation ---
-            Vector3 textGroundPosition =
-                new Vector3(emptyParent.transform.position.x, emptyParent.transform.position.y, emptyParent.transform.position.z);
-            
-            Vector3 directionToCamera = currentCamera.transform.position - textGroundPosition;
-            directionToCamera.y = 0; // Flatten to XZ plane
-            
-            // Calculate dynamic push offset: Base amount + half of the object's largest XZ dimension
-            // float dynamicPushDistance = BASE_CAMERA_PUSH_DISTANCE + collectibleInfo.MaxXZBoundsLength; // TODO add XZ bounds back
-            float dynamicPushDistance = BASE_CAMERA_PUSH_DISTANCE;
-            Vector3 pushOffset = directionToCamera.normalized * dynamicPushDistance;
-            
-            // textBillboardRoot.transform.position =
-            //     textGroundPosition + new Vector3(0, TextBillboardYOffset, 0) + pushOffset;
-            textBillboardRoot.transform.position =
-                textGroundPosition + new Vector3(0, -0.2f, 0) + pushOffset;
-            
-            textBillboardRoot.transform.rotation = currentCamera.transform.rotation;
         }
-        
+
         foreach (CaseOpeningMetadata remove in caseOpeningMetadatasToRemove)
         {
-            if (remove.displayRoot != null) Object.Destroy(remove.displayRoot);
-            if (remove.TextBillboardRoot != null) Object.Destroy(remove.TextBillboardRoot);
-
-            foreach (Material mat in remove.CopiedMaterials)
+            try
             {
-                if (mat != null) Object.Destroy(mat);
-            }
+                if (remove.displayRoot != null) Object.Destroy(remove.displayRoot);
+                if (remove.TextBillboardRoot != null) Object.Destroy(remove.TextBillboardRoot);
 
-            remove.CopiedMaterials.Clear();
+                if (remove.CopiedMaterials != null)
+                {
+                    foreach (Material mat in remove.CopiedMaterials)
+                    {
+                        if (mat != null) Object.Destroy(mat);
+                    }
+                    remove.CopiedMaterials.Clear();
+                }
+            }
+            catch (Exception e)
+            {
+                Plugin.LogError($"Error destroying case opening: {e}");
+            }
 
             caseOpeningMetadatas.Remove(remove);
         }
@@ -479,15 +500,24 @@ public static class Opening
             {
                 foreach (CaseOpeningMetadata caseOpeningMetadata in caseOpeningMetadatas)
                 {
-                    if (caseOpeningMetadata.displayRoot != null) Object.Destroy(caseOpeningMetadata.displayRoot);
-                    if (caseOpeningMetadata.TextBillboardRoot != null) Object.Destroy(caseOpeningMetadata.TextBillboardRoot);
-
-                    foreach (Material mat in caseOpeningMetadata.CopiedMaterials)
+                    try
                     {
-                        if (mat != null) Object.Destroy(mat);
-                    }
+                        if (caseOpeningMetadata.displayRoot != null) Object.Destroy(caseOpeningMetadata.displayRoot);
+                        if (caseOpeningMetadata.TextBillboardRoot != null) Object.Destroy(caseOpeningMetadata.TextBillboardRoot);
 
-                    caseOpeningMetadata.CopiedMaterials.Clear();
+                        if (caseOpeningMetadata.CopiedMaterials != null)
+                        {
+                            foreach (Material mat in caseOpeningMetadata.CopiedMaterials)
+                            {
+                                if (mat != null) Object.Destroy(mat);
+                            }
+                            caseOpeningMetadata.CopiedMaterials.Clear();
+                        }
+                    }
+                    catch (Exception e)
+                    {
+                        Plugin.LogError($"Error cleaning up case opening on phase change: {e}");
+                    }
                 }
                 caseOpeningMetadatas.Clear();
             }
