@@ -18,6 +18,10 @@ public static class SingleGoalieTag
     {
         if (!MessagingHandler.connectedToToastersRink) return null;
 
+        // Training flavor: each net is independent, single-goalie logic does not apply.
+        if (string.Equals(MessagingHandler.serverFlavor, "training", System.StringComparison.OrdinalIgnoreCase))
+            return null;
+
         // Check if the DisableSingleGoalie modifier is active
         if (modifiers.ModifierRegistry.ActiveModifiers.Exists(m => m.key == "disablesinglegoalie"))
             return null;
