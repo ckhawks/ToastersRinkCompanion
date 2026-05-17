@@ -363,18 +363,40 @@ public static class CollectiblesTab
 
                 bool canOpen = isWarmup && !onCooldown && caseEntry.Quantity > 0;
                 string shorthand = caseEntry.Shorthand;
+                int quantity = caseEntry.Quantity;
 
+                // Always create the button with a click handler installed (disabled:false)
+                // so SetEnabled() can toggle interactivity later. The schedule.Execute below
+                // manages the visual disabled state and text.
                 var openBtn = MakeSmallButton(
                     onCooldown ? $"Wait ({cooldownRemaining:F0}s)" : "Open",
                     canOpen ? UIHelpers.AccentBlue : UIHelpers.TextMuted,
-                    canOpen ? () =>
+                    () =>
                     {
+                        float remaining = _lastCaseOpenTime > 0 ? 8.5f - (Time.time - _lastCaseOpenTime) : 0;
+                        if (!modifiers.ServerState.IsWarmup || remaining > 0 || quantity <= 0) return;
                         _lastCaseOpenTime = Time.time;
                         CollectiblesMessaging.OpenCase(shorthand);
                         ModifierPanelUI.Hide();
-                    } : (Action)null,
-                    !canOpen);
+                    },
+                    false);
                 caseRow.Add(openBtn);
+
+                // Tick cooldown timer on the button so it updates without a panel refresh.
+                Action updateOpenBtn = () =>
+                {
+                    float remaining = _lastCaseOpenTime > 0 ? 8.5f - (Time.time - _lastCaseOpenTime) : 0;
+                    bool cd = remaining > 0;
+                    bool warmup = modifiers.ServerState.IsWarmup;
+                    bool enabled = warmup && !cd && quantity > 0;
+
+                    openBtn.text = cd ? $"Wait ({remaining:F0}s)" : "Open";
+                    openBtn.SetEnabled(enabled);
+                    openBtn.style.backgroundColor = new StyleColor(enabled ? UIHelpers.BgButton : UIHelpers.BgButtonDisabled);
+                    openBtn.style.color = new StyleColor(enabled ? UIHelpers.TextPrimary : UIHelpers.TextMuted);
+                };
+                updateOpenBtn();
+                openBtn.schedule.Execute(updateOpenBtn).Every(250);
 
                 parent.Add(caseRow);
             }

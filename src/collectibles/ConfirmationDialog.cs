@@ -8,10 +8,21 @@ namespace ToastersRinkCompanion.collectibles;
 public static class ConfirmationDialog
 {
     private static VisualElement _overlay;
+    private static Action _pendingConfirm;
+
+    public static bool IsOpen => _overlay != null;
+
+    public static void Confirm()
+    {
+        var cb = _pendingConfirm;
+        Hide();
+        cb?.Invoke();
+    }
 
     public static void Show(string title, string message, string confirmText, Color confirmColor, Action onConfirm)
     {
         Hide(); // Clear any existing dialog
+        _pendingConfirm = onConfirm;
 
         var root = ModifierPanelUI.GetPanelRoot();
         if (root == null) return;
@@ -112,11 +123,19 @@ public static class ConfirmationDialog
         buttonRow.Add(confirmBtn);
 
         root.Add(_overlay);
+
+        // Blur whatever element triggered the dialog (Buy/Sell button) so that
+        // a subsequent Enter press doesn't re-click it via UIToolkit's nav system,
+        // which would re-open the dialog right after we close it.
+        var focusController = root.focusController;
+        if (focusController?.focusedElement is VisualElement focused)
+            focused.Blur();
     }
 
     public static void Hide()
     {
         _overlay?.RemoveFromHierarchy();
         _overlay = null;
+        _pendingConfirm = null;
     }
 }

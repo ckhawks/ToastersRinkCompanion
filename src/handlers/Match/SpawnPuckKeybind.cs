@@ -1,5 +1,6 @@
 ﻿using System.Reflection;
 using HarmonyLib;
+using ToastersRinkCompanion.collectibles;
 using ToastersRinkCompanion.modifiers;
 using UnityEngine;
 using UnityEngine.InputSystem;
@@ -84,6 +85,22 @@ public static class SpawnPuckKeybind
                             }
                         }
                         return;
+                    }
+
+                    // Confirmation dialog intercepts Esc/Enter before the panel does.
+                    if (ConfirmationDialog.IsOpen)
+                    {
+                        if (Keyboard.current.escapeKey.wasPressedThisFrame)
+                        {
+                            ConfirmationDialog.Hide();
+                            return;
+                        }
+                        if (Keyboard.current.enterKey.wasPressedThisFrame ||
+                            Keyboard.current.numpadEnterKey.wasPressedThisFrame)
+                        {
+                            ConfirmationDialog.Confirm();
+                            return;
+                        }
                     }
 
                     if (Plugin.panelAction.WasPressedThisFrame())
