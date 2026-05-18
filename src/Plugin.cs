@@ -65,6 +65,14 @@ public class Plugin : IPuckPlugin
                 Plugin.Log($"Patched methods:");
                 LogAllPatchedMethods();
                 MessagingHandler.Setup();
+
+                // Preload collectibles asset bundle + case/particle/text prefabs at boot so
+                // the first case-open broadcast doesn't pay ~4.7 MB of synchronous asset loads
+                // on the main thread mid-game. Per-item prefabs (LoadPrefab(itemName)) still
+                // load lazily since the full item list isn't known here.
+                try { ToastersRinkCompanion.collectibles.CollectiblePrefabs.Setup(); }
+                catch (Exception e) { Plugin.LogError($"CollectiblePrefabs.Setup failed: {e.Message}"); }
+
                 modSettings = ModSettings.Load();
                 modSettings.Save(); // So that it writes any missing config values immediately
 
