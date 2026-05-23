@@ -13,7 +13,7 @@ namespace ToastersRinkCompanion;
 public class Plugin : IPuckPlugin
 {
     public static string MOD_NAME = "ToastersRinkCompanion";
-    public static string MOD_VERSION = "2.0.1";
+    public static string MOD_VERSION = "2.0.2";
     public static string MOD_GUID = "pw.stellaric.toaster.rinkcompanion";
 
     static readonly Harmony harmony = new Harmony(MOD_GUID);
@@ -61,6 +61,7 @@ public class Plugin : IPuckPlugin
                     }
                 }
                 Plugin.Log($"Patching complete: {patchedCount} succeeded, {failedCount} failed.");
+                AIGoalieFilter.Setup();
                 AIGoalieFilter.TryPatchTRLHeadColors(harmony);
                 Plugin.Log($"Patched methods:");
                 LogAllPatchedMethods();

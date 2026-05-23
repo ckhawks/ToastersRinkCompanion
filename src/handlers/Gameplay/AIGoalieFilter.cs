@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
@@ -171,41 +172,46 @@ public static class AIGoalieFilter
     }
 
     /// <summary>
-    /// Apply robot appearance + headgear to AI goalies when their body spawns.
+    /// Register event listeners. Replaces the old PlayerBody.ApplyCustomizations
+    /// Harmony postfix, which conflicted with TRL + StarPlayerGlow patching the same
+    /// method (silent IL chain corruption). Using the vanilla spawn event avoids the
+    /// patch stack entirely.
     /// </summary>
-    [HarmonyPatch(typeof(PlayerBody), nameof(PlayerBody.ApplyCustomizations))]
-    public static class ApplyRobotAppearancePatch
+    public static void Setup()
     {
-        [HarmonyPostfix]
-        public static void Postfix(PlayerBody __instance)
+        EventManager.AddEventListener(
+            "Event_Everyone_OnPlayerBodySpawned",
+            new Action<Dictionary<string, object>>(OnPlayerBodySpawned));
+    }
+
+    private static void OnPlayerBodySpawned(Dictionary<string, object> message)
+    {
+        try
         {
-            // No connectedToToastersRink gate here — the bot spawns before the
-            // server handshake completes, so the flag is still false. The TotBot
-            // name prefix is unique enough to be safe on any server.
-            try
+            var playerBody = message["playerBody"] as PlayerBody;
+            if (playerBody == null) return;
+
+            Player player = playerBody.Player;
+            if (player == null) return;
+
+            string name = player.Username.Value.ToString();
+            if (!name.StartsWith(BotNamePrefix)) return;
+
+            PlayerHead playerHead = playerBody.PlayerMesh?.PlayerHead;
+            if (playerHead == null)
             {
-                Player player = __instance.Player;
-                if (player == null) return;
-
-                string name = player.Username.Value.ToString();
-                if (!name.StartsWith(BotNamePrefix)) return;
-
-                PlayerHead playerHead = __instance.PlayerMesh?.PlayerHead;
-                if (playerHead == null)
-                {
-                    Debug.Log($"[AIGoalieFilter] PlayerHead null for {name}, skipping appearance");
-                    return;
-                }
-
-                ApplyGoalieHeadgear(playerHead);
-                ApplyRobotAppearance(playerHead, player);
-
-                Debug.Log($"[AIGoalieFilter] Applied robot appearance to {name} (team={player.Team})");
+                Debug.Log($"[AIGoalieFilter] PlayerHead null for {name}, skipping appearance");
+                return;
             }
-            catch (System.Exception e)
-            {
-                Debug.LogError($"[AIGoalieFilter] Error applying robot appearance: {e}");
-            }
+
+            ApplyGoalieHeadgear(playerHead);
+            ApplyRobotAppearance(playerHead, player);
+
+            Debug.Log($"[AIGoalieFilter] Applied robot appearance to {name} (team={player.Team})");
+        }
+        catch (Exception e)
+        {
+            Debug.LogError($"[AIGoalieFilter] Error applying robot appearance: {e}");
         }
     }
 
