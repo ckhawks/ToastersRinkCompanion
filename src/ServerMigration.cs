@@ -24,9 +24,8 @@ public static class ServerMigration
 
         ushort port = (ushort)payload.port;
 
-        // Give the toast a moment to render before we tear the connection down (the
-        // in-game UI, and thus the toast, is destroyed on disconnect). Short enough to
-        // still feel immediate. Fall back to an instant connect if we can't get a host.
+        // Give the toast a moment to render before we tear the connection down. Fall back
+        // to an instant connect if we can't get a coroutine host.
         var host = MonoBehaviourSingleton<UIManager>.Instance?.GameState;
         if (host != null)
             host.StartCoroutine(MigrateAfterDelay(payload.ip, port));
