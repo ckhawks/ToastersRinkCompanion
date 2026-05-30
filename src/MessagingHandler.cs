@@ -214,11 +214,24 @@ public static class MessagingHandler
         JsonMessageRouter.RegisterTypedHandler<OpenLinkInBrowserPayload>(
             "openLink",
             (_, payload) => Application.OpenURL(payload.link));
+
+        // `migrate_server` — server is draining; connect to the destination immediately.
+        JsonMessageRouter.RegisterTypedHandler<MigrateServerPayload>(
+            "migrate_server",
+            (_, payload) => ServerMigration.Handle(payload));
     }
 
     // ---------------------------------------------------------------
     // Core envelope DTOs
     // ---------------------------------------------------------------
+
+    [Serializable]
+    public class MigrateServerPayload
+    {
+        public string ip;
+        public int port;
+        public string serverName;
+    }
 
     [Serializable]
     public class GreetingsPayload
