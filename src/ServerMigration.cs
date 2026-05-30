@@ -19,15 +19,14 @@ public static class ServerMigration
         }
 
         string dest = string.IsNullOrEmpty(payload.serverName) ? "another server" : payload.serverName;
-        Plugin.AddLocalChatMessage(
-            $"<size=16><b><color=orange>Moving you to {dest}...</color></b></size>");
+        Toast.Show($"This server is restarting — moving you to {dest}...", 6f);
         Plugin.Log($"Migrating to {dest} ({payload.ip}:{payload.port})");
 
         ushort port = (ushort)payload.port;
 
-        // Give the toast a frame to paint before we tear the connection down. The
-        // delay is short enough to still feel immediate. Fall back to an instant
-        // connect if we can't get a coroutine host.
+        // Give the toast a moment to render before we tear the connection down (the
+        // in-game UI, and thus the toast, is destroyed on disconnect). Short enough to
+        // still feel immediate. Fall back to an instant connect if we can't get a host.
         var host = MonoBehaviourSingleton<UIManager>.Instance?.GameState;
         if (host != null)
             host.StartCoroutine(MigrateAfterDelay(payload.ip, port));
@@ -37,7 +36,7 @@ public static class ServerMigration
 
     private static IEnumerator MigrateAfterDelay(string ip, ushort port)
     {
-        yield return new WaitForSeconds(0.5f);
+        yield return new WaitForSeconds(1.25f);
         Connect(ip, port);
     }
 
