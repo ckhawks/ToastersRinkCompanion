@@ -11,8 +11,8 @@ public static class CollectiblesTab
 {
     private static int _activeSubTab = 0;
     private static readonly string[] SubTabNames = { "Info", "Shop", "Inventory", "Trade", "History" };
-    private static float _lastCaseOpenTime;
     private static string _inventorySort = "value";
+    private static string _inventorySearch = "";
 
     public static void BuildContent(VisualElement parent)
     {
@@ -313,7 +313,7 @@ public static class CollectiblesTab
             AddSectionHeader(parent, "Cases");
 
             bool isWarmup = modifiers.ServerState.IsWarmup;
-            float cooldownRemaining = _lastCaseOpenTime > 0 ? 8.5f - (Time.time - _lastCaseOpenTime) : 0;
+            float cooldownRemaining = CaseOpening.CooldownRemaining;
             bool onCooldown = cooldownRemaining > 0;
 
             if (!isWarmup)
@@ -373,11 +373,8 @@ public static class CollectiblesTab
                     canOpen ? UIHelpers.AccentBlue : UIHelpers.TextMuted,
                     () =>
                     {
-                        float remaining = _lastCaseOpenTime > 0 ? 8.5f - (Time.time - _lastCaseOpenTime) : 0;
-                        if (!modifiers.ServerState.IsWarmup || remaining > 0 || quantity <= 0) return;
-                        _lastCaseOpenTime = Time.time;
-                        CollectiblesMessaging.OpenCase(shorthand);
-                        ModifierPanelUI.Hide();
+                        if (CaseOpening.TryOpen(shorthand, out _))
+                            ModifierPanelUI.Hide();
                     },
                     false);
                 caseRow.Add(openBtn);
@@ -385,7 +382,7 @@ public static class CollectiblesTab
                 // Tick cooldown timer on the button so it updates without a panel refresh.
                 Action updateOpenBtn = () =>
                 {
-                    float remaining = _lastCaseOpenTime > 0 ? 8.5f - (Time.time - _lastCaseOpenTime) : 0;
+                    float remaining = CaseOpening.CooldownRemaining;
                     bool cd = remaining > 0;
                     bool warmup = modifiers.ServerState.IsWarmup;
                     bool enabled = warmup && !cd && quantity > 0;
@@ -449,11 +446,54 @@ public static class CollectiblesTab
             return;
         }
 
-        // Sort items
-        var items = SortItems(CollectiblesStore.InventoryItems, _inventorySort);
+        // Search / filter field. Only the item list below rebuilds as you type,
+        // so the field keeps focus (a full tab refresh would recreate it).
+        var searchRow = new VisualElement();
+        searchRow.style.flexDirection = FlexDirection.Row;
+        searchRow.style.alignItems = Align.Center;
+        searchRow.style.marginBottom = 8;
 
-        foreach (var item in items)
+        var searchLabel = new Label("Search");
+        searchLabel.style.fontSize = 13;
+        searchLabel.style.color = new StyleColor(UIHelpers.TextSecondary);
+        searchLabel.style.marginRight = 8;
+        searchRow.Add(searchLabel);
+
+        var searchField = new TextField();
+        searchField.value = _inventorySearch;
+        searchField.style.flexGrow = 1;
+        searchField.RegisterCallback<AttachToPanelEvent>(evt =>
         {
+            UIHelpers.StyleInputField(searchField);
+            var input = searchField.Q(className: "unity-base-text-field__input");
+            if (input != null)
+            {
+                input.style.fontSize = 13;
+                input.style.paddingTop = 4;
+                input.style.paddingBottom = 4;
+            }
+        });
+        searchRow.Add(searchField);
+        parent.Add(searchRow);
+
+        var itemsContainer = new VisualElement();
+        parent.Add(itemsContainer);
+
+        void RebuildItems()
+        {
+            itemsContainer.Clear();
+
+            // Filter then sort
+            var items = SortItems(FilterItems(CollectiblesStore.InventoryItems, _inventorySearch), _inventorySort);
+
+            if (items.Length == 0)
+            {
+                AddMutedLabel(itemsContainer, "No items match your search.");
+                return;
+            }
+
+            foreach (var item in items)
+            {
             var row = new VisualElement();
             row.style.flexDirection = FlexDirection.Row;
             row.style.alignItems = Align.Center;
@@ -561,8 +601,17 @@ public static class CollectiblesTab
             actionsCol.Add(showBtn);
 
             row.Add(actionsCol);
-            parent.Add(row);
+            itemsContainer.Add(row);
+            }
         }
+
+        searchField.RegisterValueChangedCallback(evt =>
+        {
+            _inventorySearch = evt.newValue;
+            RebuildItems();
+        });
+
+        RebuildItems();
     }
 
     // ==================== TRADE ====================
@@ -711,6 +760,30 @@ public static class CollectiblesTab
             _ => items.OrderByDescending(i => RarityOrder.GetValueOrDefault(i.RarityName, 0))
                       .ThenByDescending(i => i.Value).ToArray(),
         };
+    }
+
+    // Free-text filter across the fields a player would search by: name, item,
+    // series, rarity, serial, pattern, sizing, and trait names. Case-insensitive.
+    private static CollectibleItem[] FilterItems(CollectibleItem[] items, string search)
+    {
+        if (string.IsNullOrWhiteSpace(search)) return items;
+        string q = search.Trim().ToLowerInvariant();
+
+        bool Contains(string s) => !string.IsNullOrEmpty(s) && s.ToLowerInvariant().Contains(q);
+
+        bool Matches(CollectibleItem item)
+        {
+            if (Contains(item.FullName) || Contains(item.ItemName) || Contains(item.Series) ||
+                Contains(item.RarityName) || Contains(item.Serial) ||
+                Contains(item.PatternName) || Contains(item.SizingName))
+                return true;
+            if (item.Traits != null)
+                foreach (var t in item.Traits)
+                    if (Contains(t.Name)) return true;
+            return false;
+        }
+
+        return items.Where(Matches).ToArray();
     }
 
     private static void AddSectionHeader(VisualElement parent, string text)

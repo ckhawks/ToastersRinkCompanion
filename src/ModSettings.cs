@@ -12,6 +12,10 @@ public class ModSettings
     public string panelKeybind { get; set; } = "<keyboard>/f3";
     public string drillSaveKeybind { get; set; } = "<keyboard>/j";
     public string drillLoadKeybind { get; set; } = "<keyboard>/k";
+    public string openCaseKeybind { get; set; } = "<keyboard>/o";
+    // Series shorthand of the last case the player opened; the open-case keybind
+    // re-opens this one. Persisted so "previous case" survives a relog.
+    public string lastOpenedCaseShorthand { get; set; } = null;
     public bool showModifiersHUD { get; set; } = true;
     public bool showMinimapObjects { get; set; } = true;
     public bool showJuggleNotifications { get; set; } = true;
@@ -93,6 +97,7 @@ public class ModSettings
         panelKeybind = MigrateKeyValue(panelKeybind);
         drillSaveKeybind = MigrateKeyValue(drillSaveKeybind);
         drillLoadKeybind = MigrateKeyValue(drillLoadKeybind);
+        openCaseKeybind = MigrateKeyValue(openCaseKeybind);
     }
 
     private static string MigrateKeyValue(string value)

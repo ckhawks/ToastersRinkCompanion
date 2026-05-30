@@ -123,6 +123,13 @@ public static class SettingsTab
             Plugin.RecreateAction(ref Plugin.drillLoadAction, val);
         });
 
+        BuildKeybindRow(scrollView, "Open Previous Case", settings.openCaseKeybind, val =>
+        {
+            settings.openCaseKeybind = val;
+            settings.Save();
+            Plugin.RecreateAction(ref Plugin.openCaseAction, val);
+        });
+
         // Display section
         var displayHeader = new Label("Display");
         displayHeader.style.fontSize = 18;

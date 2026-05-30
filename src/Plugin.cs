@@ -24,6 +24,7 @@ public class Plugin : IPuckPlugin
     public static InputAction panelAction;
     public static InputAction drillSaveAction;
     public static InputAction drillLoadAction;
+    public static InputAction openCaseAction;
     public static ModSettings modSettings;
 
     public bool OnEnable()
@@ -83,6 +84,7 @@ public class Plugin : IPuckPlugin
                 RecreateAction(ref panelAction,     modSettings.panelKeybind);
                 RecreateAction(ref drillSaveAction, modSettings.drillSaveKeybind);
                 RecreateAction(ref drillLoadAction, modSettings.drillLoadKeybind);
+                RecreateAction(ref openCaseAction,  modSettings.openCaseKeybind);
 
                 Plugin.Log($"Fully setup!");
             }

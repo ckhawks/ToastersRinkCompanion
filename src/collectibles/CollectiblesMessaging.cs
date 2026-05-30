@@ -107,6 +107,10 @@ public static class CollectiblesMessaging
                 else
                 {
                     CollectiblesStore.SetStatus(payload.message, "error");
+                    // When opened via the hotkey the panel is closed, so the status
+                    // banner is invisible — echo the error to chat instead.
+                    if (!ModifierPanelUI.IsVisible)
+                        Plugin.AddLocalChatMessage($"<color=#ff6666>{payload.message}</color>");
                 }
 
                 ModifierPanelUI.RefreshCurrentTab();

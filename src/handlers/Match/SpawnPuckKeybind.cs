@@ -36,6 +36,7 @@ public static class SpawnPuckKeybind
         private static float lastPressTimeSpawnPuck = 0f;
         private static float lastPressTimeVote = 0f;
         private static float lastPressTimeDrill = 0f;
+        private static float lastPressTimeOpenCase = 0f;
 
         [HarmonyPostfix]
         public static void Postfix(PlayerInput __instance)
@@ -134,6 +135,17 @@ public static class SpawnPuckKeybind
                 {
                     lastPressTimeDrill = Time.time;
                     NetworkBehaviourSingleton<ChatManager>.Instance.Client_SendChatMessage("/drill load", false, false);
+                }
+            }
+
+            // Open the player's previous case (CaseOpening enforces its own cooldown).
+            // Debounce the key to 1s so mashing O doesn't spam the cooldown message.
+            if (Plugin.openCaseAction != null && Plugin.openCaseAction.WasPressedThisFrame())
+            {
+                if (Time.time - lastPressTimeOpenCase > 1f)
+                {
+                    lastPressTimeOpenCase = Time.time;
+                    CaseOpening.OpenPreviousFromHotkey();
                 }
             }
 
