@@ -39,6 +39,7 @@ public static class ServerNameAnimation
         public Color BgColor;
         public Color BgColorHover;
         public bool IsHovered;
+        public IVisualElementScheduledItem Ticker;
     }
 
     [HarmonyPatch(typeof(UIServerBrowser), "StyleServer")]
@@ -174,7 +175,7 @@ public static class ServerNameAnimation
         serverEl.RegisterCallback<MouseEnterEvent>(OnMouseEnter);
         serverEl.RegisterCallback<MouseLeaveEvent>(OnMouseLeave);
 
-        serverEl.schedule
+        state.Ticker = serverEl.schedule
             .Execute(() => UpdateAnimation(serverEl))
             .Every(IntervalMs);
 
@@ -196,6 +197,7 @@ public static class ServerNameAnimation
     private static void StopAnimation(VisualElement serverEl)
     {
         if (!_animatedRows.TryGetValue(serverEl, out var state)) return;
+        state.Ticker?.Pause();
         state.ShimmerOverlay?.RemoveFromHierarchy();
         state.CornerCutTR?.RemoveFromHierarchy();
         state.CornerCutBL?.RemoveFromHierarchy();
@@ -208,6 +210,7 @@ public static class ServerNameAnimation
     {
         if (!_animatedRows.TryGetValue(serverEl, out var state) || serverEl.panel == null)
         {
+            state?.Ticker?.Pause();
             _animatedRows.Remove(serverEl);
             return;
         }
@@ -258,6 +261,8 @@ public static class ServerNameAnimation
         [HarmonyPostfix]
         public static void Postfix()
         {
+            foreach (var state in _animatedRows.Values)
+                state.Ticker?.Pause();
             _animatedRows.Clear();
         }
     }

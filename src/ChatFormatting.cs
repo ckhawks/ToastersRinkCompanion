@@ -149,11 +149,14 @@ public static class ChatFormatting
 
             // Mirror the text label's resolved opacity onto the star so the fade
             // (driven by the "blurred" class on textLabel) carries to the star.
-            starLabel.schedule.Execute(() =>
+            var opacityTicker = starLabel.schedule.Execute(() =>
             {
                 if (textLabel.panel == null || starLabel.panel == null) return;
                 starLabel.style.opacity = textLabel.resolvedStyle.opacity;
             }).Every(33);
+            // Stop the 30 Hz ticker once the star leaves the panel so it doesn't
+            // keep firing (no-op) for the element's lifetime.
+            starLabel.RegisterCallback<DetachFromPanelEvent>(_ => opacityTicker.Pause());
         }
     }
 
