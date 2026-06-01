@@ -222,10 +222,7 @@ public static class SettingsTab
         bindButton.style.paddingRight = 12;
         bindButton.style.paddingTop = 4;
         bindButton.style.paddingBottom = 4;
-        bindButton.style.borderTopLeftRadius = 4;
-        bindButton.style.borderTopRightRadius = 4;
-        bindButton.style.borderBottomLeftRadius = 4;
-        bindButton.style.borderBottomRightRadius = 4;
+        UIHelpers.SetRadius(bindButton, 4);
 
         bindButton.RegisterCallback<ClickEvent>(evt =>
         {

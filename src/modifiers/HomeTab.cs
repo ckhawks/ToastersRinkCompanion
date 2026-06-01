@@ -86,10 +86,7 @@ public static class HomeTab
         motdButton.style.paddingBottom = 8;
         motdButton.style.marginTop = 8;
         motdButton.style.marginBottom = 4;
-        motdButton.style.borderTopLeftRadius = 0;
-        motdButton.style.borderTopRightRadius = 0;
-        motdButton.style.borderBottomLeftRadius = 0;
-        motdButton.style.borderBottomRightRadius = 0;
+        UIHelpers.SetRadius(motdButton, 0);
         UIHelpers.SetBorder(motdButton, 1, new Color(UIHelpers.AccentBlue.r, UIHelpers.AccentBlue.g, UIHelpers.AccentBlue.b, 0.3f));
 
         motdButton.RegisterCallback<MouseEnterEvent>(evt =>
@@ -196,10 +193,7 @@ public static class HomeTab
         btn.style.paddingBottom = 6;
         btn.style.marginRight = 8;
         btn.style.marginBottom = 6;
-        btn.style.borderTopLeftRadius = 0;
-        btn.style.borderTopRightRadius = 0;
-        btn.style.borderBottomLeftRadius = 0;
-        btn.style.borderBottomRightRadius = 0;
+        UIHelpers.SetRadius(btn, 0);
         btn.style.borderTopWidth = 1;
         btn.style.borderBottomWidth = 1;
         btn.style.borderLeftWidth = 1;

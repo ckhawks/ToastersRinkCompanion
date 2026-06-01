@@ -48,10 +48,7 @@ public static class VotePopupUI
         _container.style.paddingTop = 12;
         _container.style.paddingBottom = 12;
         _container.style.backgroundColor = new StyleColor(new Color(0.1f, 0.1f, 0.1f, 0.85f));
-        _container.style.borderTopLeftRadius = 8;
-        _container.style.borderTopRightRadius = 8;
-        _container.style.borderBottomLeftRadius = 8;
-        _container.style.borderBottomRightRadius = 8;
+        UIHelpers.SetRadius(_container, 8);
         _container.style.flexDirection = FlexDirection.Column;
         _container.style.alignItems = Align.Center;
         _container.style.display = DisplayStyle.None;
@@ -100,10 +97,7 @@ public static class VotePopupUI
         if (progressBg != null)
         {
             progressBg.style.backgroundColor = new StyleColor(new Color(0.2f, 0.2f, 0.2f));
-            progressBg.style.borderTopLeftRadius = 4;
-            progressBg.style.borderTopRightRadius = 4;
-            progressBg.style.borderBottomLeftRadius = 4;
-            progressBg.style.borderBottomRightRadius = 4;
+            UIHelpers.SetRadius(progressBg, 4);
         }
 
         // Style the progress bar fill
@@ -111,10 +105,7 @@ public static class VotePopupUI
         if (progressFill != null)
         {
             progressFill.style.backgroundColor = new StyleColor(new Color(0.4f, 0.7f, 1f));
-            progressFill.style.borderTopLeftRadius = 4;
-            progressFill.style.borderTopRightRadius = 4;
-            progressFill.style.borderBottomLeftRadius = 4;
-            progressFill.style.borderBottomRightRadius = 4;
+            UIHelpers.SetRadius(progressFill, 4);
         }
 
         // Vote bar
@@ -123,10 +114,7 @@ public static class VotePopupUI
         _voteBar.style.height = 20;
         _voteBar.style.marginBottom = 6;
         _voteBar.style.backgroundColor = new StyleColor(new Color(0.15f, 0.15f, 0.15f));
-        _voteBar.style.borderTopLeftRadius = 4;
-        _voteBar.style.borderTopRightRadius = 4;
-        _voteBar.style.borderBottomLeftRadius = 4;
-        _voteBar.style.borderBottomRightRadius = 4;
+        UIHelpers.SetRadius(_voteBar, 4);
         _voteBar.style.overflow = Overflow.Hidden;
         _container.Add(_voteBar);
 
@@ -183,10 +171,7 @@ public static class VotePopupUI
         _yesButton.style.paddingTop = 6;
         _yesButton.style.paddingBottom = 6;
         _yesButton.style.marginRight = 12;
-        _yesButton.style.borderTopLeftRadius = 0;
-        _yesButton.style.borderTopRightRadius = 0;
-        _yesButton.style.borderBottomLeftRadius = 0;
-        _yesButton.style.borderBottomRightRadius = 0;
+        UIHelpers.SetRadius(_yesButton, 0);
         buttonRow.Add(_yesButton);
 
         _noButton = new Button(() => ModifierMessaging.SendCastVote(false));
@@ -199,10 +184,7 @@ public static class VotePopupUI
         _noButton.style.paddingRight = 20;
         _noButton.style.paddingTop = 6;
         _noButton.style.paddingBottom = 6;
-        _noButton.style.borderTopLeftRadius = 0;
-        _noButton.style.borderTopRightRadius = 0;
-        _noButton.style.borderBottomLeftRadius = 0;
-        _noButton.style.borderBottomRightRadius = 0;
+        UIHelpers.SetRadius(_noButton, 0);
         buttonRow.Add(_noButton);
 
         // Result label (hidden until vote ends)

@@ -50,10 +50,7 @@ public static class ModifierListTab
             flavorBadge.style.paddingRight = 6;
             flavorBadge.style.paddingTop = 2;
             flavorBadge.style.paddingBottom = 2;
-            flavorBadge.style.borderTopLeftRadius = 3;
-            flavorBadge.style.borderTopRightRadius = 3;
-            flavorBadge.style.borderBottomLeftRadius = 3;
-            flavorBadge.style.borderBottomRightRadius = 3;
+            UIHelpers.SetRadius(flavorBadge, 3);
 
             Color flavorColor = flavor.ToLower() switch
             {
@@ -229,10 +226,7 @@ public static class ModifierListTab
             serversBtn.style.paddingRight = 8;
             serversBtn.style.paddingTop = 2;
             serversBtn.style.paddingBottom = 2;
-            serversBtn.style.borderTopLeftRadius = 3;
-            serversBtn.style.borderTopRightRadius = 3;
-            serversBtn.style.borderBottomLeftRadius = 3;
-            serversBtn.style.borderBottomRightRadius = 3;
+            UIHelpers.SetRadius(serversBtn, 3);
             noticeRow.Add(serversBtn);
 
             var unavailableShownKeys = new HashSet<string>();
@@ -472,10 +466,7 @@ public static class ModifierListTab
         row.style.paddingBottom = 5;
         row.style.marginBottom = 2;
         row.style.backgroundColor = new StyleColor(new Color(0.15f, 0.15f, 0.15f));
-        row.style.borderTopLeftRadius = 4;
-        row.style.borderTopRightRadius = 4;
-        row.style.borderBottomLeftRadius = 4;
-        row.style.borderBottomRightRadius = 4;
+        UIHelpers.SetRadius(row, 4);
         parent.Add(row);
 
         // Favorite star toggle
@@ -508,17 +499,8 @@ public static class ModifierListTab
         row.Add(starBtn);
 
         // Active indicator dot
-        var dot = new VisualElement();
-        dot.style.width = 8;
-        dot.style.height = 8;
-        dot.style.borderTopLeftRadius = 4;
-        dot.style.borderTopRightRadius = 4;
-        dot.style.borderBottomLeftRadius = 4;
-        dot.style.borderBottomRightRadius = 4;
+        var dot = UIHelpers.MakeDot(isActive ? new Color(0.3f, 0.8f, 0.4f) : new Color(0.3f, 0.3f, 0.3f));
         dot.style.marginRight = 10;
-        dot.style.backgroundColor = isActive
-            ? new StyleColor(new Color(0.3f, 0.8f, 0.4f))
-            : new StyleColor(new Color(0.3f, 0.3f, 0.3f));
         row.Add(dot);
 
         // Info column (name + description)
@@ -623,9 +605,6 @@ public static class ModifierListTab
         btn.style.paddingRight = 10;
         btn.style.paddingTop = 4;
         btn.style.paddingBottom = 4;
-        btn.style.borderTopLeftRadius = 0;
-        btn.style.borderTopRightRadius = 0;
-        btn.style.borderBottomLeftRadius = 0;
-        btn.style.borderBottomRightRadius = 0;
+        UIHelpers.SetRadius(btn, 0);
     }
 }

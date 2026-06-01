@@ -37,6 +37,29 @@ public static class UIHelpers
         return new Color(ri / 255f, gi / 255f, bi / 255f);
     }
 
+    /// <summary>Set all four corner radii of an element to the same value.</summary>
+    public static void SetRadius(VisualElement el, float radius)
+    {
+        el.style.borderTopLeftRadius = radius;
+        el.style.borderTopRightRadius = radius;
+        el.style.borderBottomLeftRadius = radius;
+        el.style.borderBottomRightRadius = radius;
+    }
+
+    /// <summary>
+    /// Create a small circular status dot of the given colour and diameter.
+    /// Caller is responsible for layout (margins, placement).
+    /// </summary>
+    public static VisualElement MakeDot(Color color, float size = 8)
+    {
+        var dot = new VisualElement();
+        dot.style.width = size;
+        dot.style.height = size;
+        SetRadius(dot, size / 2f);
+        dot.style.backgroundColor = new StyleColor(color);
+        return dot;
+    }
+
     public static void SetBorder(VisualElement el, float width, Color color)
     {
         el.style.borderTopWidth = width;

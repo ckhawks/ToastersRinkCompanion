@@ -110,10 +110,7 @@ public static class ModifierControlFactory
         resetBtn.style.paddingRight = 4;
         resetBtn.style.paddingTop = 1;
         resetBtn.style.paddingBottom = 1;
-        resetBtn.style.borderTopLeftRadius = 0;
-        resetBtn.style.borderTopRightRadius = 0;
-        resetBtn.style.borderBottomLeftRadius = 0;
-        resetBtn.style.borderBottomRightRadius = 0;
+        UIHelpers.SetRadius(resetBtn, 0);
         resetBtn.style.marginRight = 4;
 
         var row = new VisualElement();
@@ -222,10 +219,7 @@ public static class ModifierControlFactory
         var teamDot = new VisualElement();
         teamDot.style.width = 8;
         teamDot.style.height = 8;
-        teamDot.style.borderTopLeftRadius = 4;
-        teamDot.style.borderTopRightRadius = 4;
-        teamDot.style.borderBottomLeftRadius = 4;
-        teamDot.style.borderBottomRightRadius = 4;
+        UIHelpers.SetRadius(teamDot, 4);
         teamDot.style.marginLeft = 4;
 
         UpdateTeamDot(teamDot, dropdown.value, players);

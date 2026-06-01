@@ -135,10 +135,7 @@ public static class AdminTab
         sendBtn.style.paddingRight = 12;
         sendBtn.style.paddingTop = 4;
         sendBtn.style.paddingBottom = 4;
-        sendBtn.style.borderTopLeftRadius = 0;
-        sendBtn.style.borderTopRightRadius = 0;
-        sendBtn.style.borderBottomLeftRadius = 0;
-        sendBtn.style.borderBottomRightRadius = 0;
+        UIHelpers.SetRadius(sendBtn, 0);
         row.Add(sendBtn);
     }
 
@@ -153,24 +150,14 @@ public static class AdminTab
         row.style.paddingBottom = 5;
         row.style.marginBottom = 2;
         row.style.backgroundColor = new StyleColor(UIHelpers.BgRow);
-        row.style.borderTopLeftRadius = 4;
-        row.style.borderTopRightRadius = 4;
-        row.style.borderBottomLeftRadius = 4;
-        row.style.borderBottomRightRadius = 4;
+        UIHelpers.SetRadius(row, 4);
         parent.Add(row);
 
         // Team dot
         Color teamColor = player.Team == PlayerTeam.Blue
             ? new Color(0.3f, 0.5f, 1f)
             : new Color(0.9f, 0.2f, 0.2f);
-        var dot = new VisualElement();
-        dot.style.width = 8;
-        dot.style.height = 8;
-        dot.style.borderTopLeftRadius = 4;
-        dot.style.borderTopRightRadius = 4;
-        dot.style.borderBottomLeftRadius = 4;
-        dot.style.borderBottomRightRadius = 4;
-        dot.style.backgroundColor = new StyleColor(teamColor);
+        var dot = UIHelpers.MakeDot(teamColor);
         dot.style.marginRight = 8;
         row.Add(dot);
 
@@ -205,10 +192,7 @@ public static class AdminTab
         btn.style.paddingTop = 3;
         btn.style.paddingBottom = 3;
         btn.style.marginLeft = 4;
-        btn.style.borderTopLeftRadius = 0;
-        btn.style.borderTopRightRadius = 0;
-        btn.style.borderBottomLeftRadius = 0;
-        btn.style.borderBottomRightRadius = 0;
+        UIHelpers.SetRadius(btn, 0);
 
         btn.RegisterCallback<ClickEvent>(evt =>
         {

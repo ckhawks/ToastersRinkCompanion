@@ -62,10 +62,7 @@ public static class DonorsTab
         donateBtn.style.paddingTop = 8;
         donateBtn.style.paddingBottom = 8;
         donateBtn.style.marginBottom = 16;
-        donateBtn.style.borderTopLeftRadius = 0;
-        donateBtn.style.borderTopRightRadius = 0;
-        donateBtn.style.borderBottomLeftRadius = 0;
-        donateBtn.style.borderBottomRightRadius = 0;
+        UIHelpers.SetRadius(donateBtn, 0);
         donateBtn.style.alignSelf = Align.FlexStart;
         content.Add(donateBtn);
 
@@ -145,10 +142,7 @@ public static class DonorsTab
         card.style.paddingTop = 5;
         card.style.paddingBottom = 5;
         card.style.marginBottom = 2;
-        card.style.borderTopLeftRadius = 4;
-        card.style.borderTopRightRadius = 4;
-        card.style.borderBottomLeftRadius = 4;
-        card.style.borderBottomRightRadius = 4;
+        UIHelpers.SetRadius(card, 4);
         parent.Add(card);
 
         // Avatar
@@ -156,10 +150,7 @@ public static class DonorsTab
         avatarEl.style.width = 28;
         avatarEl.style.height = 28;
         avatarEl.style.marginRight = 8;
-        avatarEl.style.borderTopLeftRadius = 14;
-        avatarEl.style.borderTopRightRadius = 14;
-        avatarEl.style.borderBottomLeftRadius = 14;
-        avatarEl.style.borderBottomRightRadius = 14;
+        UIHelpers.SetRadius(avatarEl, 14);
         avatarEl.style.backgroundColor = new StyleColor(new Color(0.2f, 0.2f, 0.2f));
         card.Add(avatarEl);
 

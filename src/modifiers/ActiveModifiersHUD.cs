@@ -103,10 +103,7 @@ public static class ActiveModifiersHUD
             var dot = new VisualElement();
             dot.style.width = 6;
             dot.style.height = 6;
-            dot.style.borderTopLeftRadius = 3;
-            dot.style.borderTopRightRadius = 3;
-            dot.style.borderBottomLeftRadius = 3;
-            dot.style.borderBottomRightRadius = 3;
+            UIHelpers.SetRadius(dot, 3);
             dot.style.backgroundColor = new StyleColor(catColor);
             dot.style.marginRight = 6;
             dot.style.flexShrink = 0;
