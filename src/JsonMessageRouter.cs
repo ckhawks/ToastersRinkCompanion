@@ -202,6 +202,14 @@ public static class JsonMessageRouter
 
         byte[] bytes = Encoding.UTF8.GetBytes(envelopeJson);
 
+        // The length prefix is a ushort, so a payload >= 64 KB would truncate the
+        // declared length and corrupt the frame on the receiving side. Reject it.
+        if (bytes.Length > ushort.MaxValue)
+        {
+            Plugin.LogError($"[{messageType}] payload is {bytes.Length} bytes, exceeds {ushort.MaxValue}; not sending.");
+            return;
+        }
+
         // Use a more generous buffer size to avoid overflow
         int bufferSize = sizeof(ushort) + bytes.Length + 64; // Extra padding
         using var writer = new FastBufferWriter(bufferSize, Allocator.Temp);

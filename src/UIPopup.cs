@@ -40,6 +40,15 @@ public static class UIPopup
         if (Application.isBatchMode)
             return;
 
+        // The URL is server-supplied; only fetch over http/https so we don't hand
+        // arbitrary schemes (file://, etc.) to UnityWebRequest.
+        if (!System.Uri.TryCreate(imageUrl, System.UriKind.Absolute, out var uri) ||
+            (uri.Scheme != System.Uri.UriSchemeHttp && uri.Scheme != System.Uri.UriSchemeHttps))
+        {
+            Plugin.LogError($"Refusing to show popup for non-http(s) image URL: '{imageUrl}'");
+            return;
+        }
+
         // We need a MonoBehaviour instance to start a coroutine.
         // UIGameState.Instance is a perfect candidate.
         var monoBehaviourHook = MonoBehaviourSingleton<UIManager>.Instance?.GameState;
@@ -118,7 +127,8 @@ public static class UIPopup
 
         Label titleLabel = new Label();
         Player sendingPlayer = PlayerManager.Instance.GetPlayerByClientId(fromClientId);
-        titleLabel.text = $"NOTICE from {sendingPlayer.Username.Value}";
+        string senderName = sendingPlayer != null ? sendingPlayer.Username.Value.ToString() : "the server";
+        titleLabel.text = $"NOTICE from {senderName}";
         titleLabel.style.fontSize = 24;
         titleLabel.style.unityTextAlign = TextAnchor.MiddleLeft;
         titleLabel.style.color = Color.white;
