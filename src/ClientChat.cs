@@ -126,22 +126,7 @@ public static class ClientChat
                 Plugin.AddLocalChatMessage($"<size=18><color=green><b>WATCH PUCKS OF</b></color>  Watching pucks for <b>{targetPlayer.Username.Value.ToString()}</b>...");
                 return false;
             }
-            
-            // else if (content.ToLower().StartsWith("/fuckgoals"))
-            // {
-            //     FuckGoals.FuckGoalsNow();
-            // }
-            // else if (content.ToLower().StartsWith("/collectible"))
-            // {
-            //     Player player = PlayerManager.Instance.GetLocalPlayer();
-            //     OldCollectibleRenderer.ShowCollectiblePrototype(player);
-            //     return false;
-            // } 
-            // else if (content.ToLower().StartsWith($"/opencase"))
-            // {
-            //     Player player = PlayerManager.Instance.GetLocalPlayer();
-            //     Opening.PlayOpeningForAt(player.Stick.transform.position, player);
-            // }
+
             else if (content.ToLower().StartsWith("/logcamera"))
             {
                 if (PlayerCamera != null)
@@ -171,16 +156,15 @@ public static class ClientChat
         }
     }
 
-    // DEBUG: Log all chat messages being added to trace missing leave messages
-    // Also replaces server-sent placeholders with client keybind display names
+    // Filters/transforms chat messages as they're added: suppresses juggle
+    // notifications when disabled, and replaces server-sent placeholders with
+    // the client's keybind display names.
     [HarmonyPatch(typeof(ChatManager), nameof(ChatManager.AddChatMessage))]
-    public class AddChatMessageDebugPatch
+    public class AddChatMessagePatch
     {
         [HarmonyPrefix]
         public static bool Prefix(ChatMessage chatMessage)
         {
-            Plugin.Log($"[ChatDebug] AddChatMessage: IsSystem={chatMessage.IsSystem}, Content='{chatMessage.Content}', Username='{chatMessage.Username}'");
-
             // Suppress juggle messages when the setting is off
             if (!Plugin.modSettings.showJuggleNotifications
                 && chatMessage.Content.Length > 0
@@ -223,44 +207,6 @@ public static class ClientChat
             }
             // Handle simple names like "f3"
             return keybind.ToUpper();
-        }
-    }
-
-    // DEBUG: Log when players despawn (which is when leave messages should appear)
-    [HarmonyPatch(typeof(Player), "OnNetworkDespawn")]
-    public class PlayerDespawnDebugPatch
-    {
-        [HarmonyPostfix]
-        public static void Postfix(Player __instance)
-        {
-            try
-            {
-                Plugin.Log($"[ChatDebug] Player.OnNetworkDespawn: Username='{__instance.Username.Value}', SteamId='{__instance.SteamId.Value}', ClientId={__instance.OwnerClientId}");
-            }
-            catch (Exception e)
-            {
-                Plugin.Log($"[ChatDebug] Player.OnNetworkDespawn: (could not read player data: {e.Message})");
-            }
-        }
-    }
-
-    // DEBUG: Log when the ServerManagerController fires the disconnect event on the client
-    [HarmonyPatch(typeof(ServerManagerController), "Event_Everyone_OnClientDisconnected")]
-    public class ClientDisconnectEventDebugPatch
-    {
-        [HarmonyPrefix]
-        public static void Prefix(Dictionary<string, object> message)
-        {
-            if (message == null)
-            {
-                Plugin.Log($"[ChatDebug] Event_Everyone_OnClientDisconnected: message is null");
-                return;
-            }
-
-            string info = "";
-            foreach (var kvp in message)
-                info += $"{kvp.Key}={kvp.Value}, ";
-            Plugin.Log($"[ChatDebug] Event_Everyone_OnClientDisconnected: {info}");
         }
     }
 

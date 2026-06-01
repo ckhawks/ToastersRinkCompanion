@@ -183,10 +183,11 @@ public static class AdminTab
         nameLabel.style.flexGrow = 1;
         row.Add(nameLabel);
 
-        // Action buttons with double-click confirmation
-        string reason() => string.IsNullOrWhiteSpace(reasonField.value) ? "" : $" {reasonField.value}";
-        BuildConfirmButton(row, "Kick", $"/kick {number}{reason()}", new Color(0.8f, 0.3f, 0.1f), $"kick_{number}", reasonField);
-        BuildConfirmButton(row, "Ban", $"/ban {username}{reason()}", new Color(0.7f, 0.1f, 0.1f), $"ban_{username}", reasonField);
+        // Action buttons with double-click confirmation. The reason (if any) is
+        // appended once at execution time from the live field value — not baked
+        // into the base command here, which would double-append after a refresh.
+        BuildConfirmButton(row, "Kick", $"/kick {number}", new Color(0.8f, 0.3f, 0.1f), $"kick_{number}", reasonField);
+        BuildConfirmButton(row, "Ban", $"/ban {username}", new Color(0.7f, 0.1f, 0.1f), $"ban_{username}", reasonField);
         BuildConfirmButton(row, "Jail", $"/jail {number}", new Color(0.5f, 0.3f, 0.7f), $"jail_{number}", null);
         BuildConfirmButton(row, "Jail Up", $"/jailup {number}", new Color(0.4f, 0.25f, 0.6f), $"jailup_{number}", null);
     }
@@ -216,16 +217,12 @@ public static class AdminTab
             if (_pendingConfirms.TryGetValue(confirmKey, out float firstClickTime)
                 && now - firstClickTime < ConfirmTimeout)
             {
-                // Second click — execute
+                // Second click — execute. Append the reason from the live field
+                // (only relevant for commands that take one, i.e. reasonField != null).
                 _pendingConfirms.Remove(confirmKey);
-                // Build command with current reason value
                 string cmd = command;
                 if (reasonField != null && !string.IsNullOrWhiteSpace(reasonField.value))
-                {
-                    // Re-append reason at execution time
-                    string baseCmd = cmd.Contains(" ") ? cmd : cmd;
-                    cmd = $"{baseCmd} {reasonField.value}";
-                }
+                    cmd = $"{command} {reasonField.value.Trim()}";
                 NetworkBehaviourSingleton<ChatManager>.Instance.Client_SendChatMessage(cmd, false, false);
                 btn.text = text;
                 btn.style.backgroundColor = new StyleColor(bgColor);

@@ -27,10 +27,14 @@ public static class UIHelpers
         if (string.IsNullOrEmpty(hex)) return TextSecondary;
         if (hex.StartsWith("#")) hex = hex.Substring(1);
         if (hex.Length != 6) return TextSecondary;
-        float r = int.Parse(hex.Substring(0, 2), System.Globalization.NumberStyles.HexNumber) / 255f;
-        float g = int.Parse(hex.Substring(2, 2), System.Globalization.NumberStyles.HexNumber) / 255f;
-        float b = int.Parse(hex.Substring(4, 2), System.Globalization.NumberStyles.HexNumber) / 255f;
-        return new Color(r, g, b);
+        // TryParse so a malformed server-supplied color (e.g. "#zzzzzz") falls back
+        // gracefully instead of throwing FormatException through the UI build.
+        const System.Globalization.NumberStyles hexStyle = System.Globalization.NumberStyles.HexNumber;
+        if (!int.TryParse(hex.Substring(0, 2), hexStyle, null, out int ri) ||
+            !int.TryParse(hex.Substring(2, 2), hexStyle, null, out int gi) ||
+            !int.TryParse(hex.Substring(4, 2), hexStyle, null, out int bi))
+            return TextSecondary;
+        return new Color(ri / 255f, gi / 255f, bi / 255f);
     }
 
     public static void SetBorder(VisualElement el, float width, Color color)

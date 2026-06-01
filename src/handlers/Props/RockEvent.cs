@@ -37,9 +37,21 @@ public static class RockEvent
     public static void SpawnRockForPayload(RockEventPayload payload)
     {
         LoadPrefabs();
-        spawnedRock = Object.Instantiate(rockPrefabs[payload.RockShape - 1], payload.Position, Quaternion.Euler(payload.Rotation));
+
+        // RockShape/RockType are 1-based indices supplied by the server; clamp to the
+        // loaded ranges so a malformed/out-of-range value can't throw IndexOutOfRange.
+        int shapeIndex = payload.RockShape - 1;
+        int typeIndex = payload.RockType - 1;
+        if (shapeIndex < 0 || shapeIndex >= rockPrefabs.Count ||
+            typeIndex < 0 || typeIndex >= rockTextures.Count)
+        {
+            Plugin.LogError($"rock_event has out-of-range RockShape={payload.RockShape}/RockType={payload.RockType}; ignoring.");
+            return;
+        }
+
+        spawnedRock = Object.Instantiate(rockPrefabs[shapeIndex], payload.Position, Quaternion.Euler(payload.Rotation));
         MeshRenderer[] renderers = spawnedRock.GetComponentsInChildren<MeshRenderer>();
-        Texture2D texture = rockTextures[payload.RockType - 1];
+        Texture2D texture = rockTextures[typeIndex];
         copiedMaterials = new List<Material>(); // To store materials for later cleanup
         
         foreach (MeshRenderer renderer in renderers)

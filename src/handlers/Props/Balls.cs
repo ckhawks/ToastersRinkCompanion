@@ -26,10 +26,6 @@ public static class Balls
             (_, p) => UpdateBallsToPayload(p));
     }
 
-    // Store original mesh and material for restoration
-    // private static Dictionary<Puck, (Mesh mesh, Material material)> originalMeshData =
-    //     new Dictionary<Puck, (Mesh, Material)>();
-
     public static void UpdateBallsToPayload(BallsPayload payload)
     {
         currentBallsEnabled = payload.enabled;
@@ -54,35 +50,12 @@ public static class Balls
 
         GameObject colliderObject = puck.gameObject;
 
-        // Get the mesh renderer from main object or children
-        MeshRenderer puckMeshRenderer =
-            puck.gameObject.transform.Find("puck").Find("Puck").GetComponent<MeshRenderer>();
-        Plugin.Log($"puckMeshRenderer {puckMeshRenderer.name}");
-        Plugin.Log($"puckMeshRenderer GO name {puckMeshRenderer.gameObject.name}");
-        Plugin.Log($"puckMeshRenderer GO parent name {puckMeshRenderer.transform.parent.gameObject.name}");
-        // MeshRenderer[] meshRenderers = colliderObject.GetComponents<MeshRenderer>();
-        // Plugin.Log($"Found {meshRenderers.Length} mesh renderers");
-        // for (int i = 0; i < meshRenderers.Length; i++)
-        // {
-        //     MeshRenderer meshRenderer = meshRenderers[i];
-        //     Plugin.Log($"puck had {meshRenderer.name} {meshRenderer.material.name} {meshRenderer.material.shader.name} {i}");
-        // }
-        // if (puckMeshRenderer == null)
-        // {
-        //     meshRenderer = colliderObject.GetComponentInChildren<MeshRenderer>();
-        // }
-        
+        // Get the mesh renderer (puck/Puck). Resolve the chain step-by-step so a
+        // missing child returns null instead of throwing inside this spawn postfix.
+        MeshRenderer puckMeshRenderer = FindPuckMeshRenderer(puck);
+
         if (puckMeshRenderer != null)
         {
-            // Store original material if we haven't already
-            // if (!originalMeshData.ContainsKey(puck))
-            // {
-            //     MeshFilter mf = puckMeshRenderer.GetComponent<MeshFilter>();
-            //     if (mf == null) mf = puckMeshRenderer.GetComponentInChildren<MeshFilter>();
-            //     Mesh originalMesh = mf != null ? mf.mesh : null;
-            //     originalMeshData[puck] = (originalMesh, puckMeshRenderer.sharedMaterial);
-            // }
-        
             // Hide the original mesh
             puckMeshRenderer.enabled = false;
         
@@ -95,13 +68,14 @@ public static class Balls
             // Create a simple sphere visual without colliders
             GameObject sphereVisual = UnityEngine.GameObject.CreatePrimitive(PrimitiveType.Sphere);
             sphereVisual.name = "sphere";
-        
-            // Remove ALL colliders from the sphere visual to eliminate shadow
-            // foreach (Collider col in sphereVisual.GetComponentsInChildren<Collider>())
-            // {
-            //     UnityEngine.Object.Destroy(col);
-            // }
-        
+
+            // CreatePrimitive ships a SphereCollider; strip it so the cosmetic
+            // sphere doesn't add a second collider to the live puck's physics.
+            foreach (Collider col in sphereVisual.GetComponentsInChildren<Collider>())
+            {
+                UnityEngine.Object.Destroy(col);
+            }
+
             // Parent it to the puck and position it correctly
             sphereVisual.transform.SetParent(colliderObject.transform, false);
             sphereVisual.transform.localPosition = Vector3.zero;
@@ -131,34 +105,24 @@ public static class Balls
         }
     }
 
+    // Resolve the puck/Puck mesh renderer without throwing if a child is missing.
+    private static MeshRenderer FindPuckMeshRenderer(Puck puck)
+    {
+        Transform puckChild = puck.gameObject.transform.Find("puck");
+        Transform inner = puckChild != null ? puckChild.Find("Puck") : null;
+        return inner != null ? inner.GetComponent<MeshRenderer>() : null;
+    }
+
     private static void RestorePuckVisuals(Puck puck)
     {
-        if (puck == null 
-            // || !originalMeshData.ContainsKey(puck)
-            )
+        if (puck == null)
             return;
 
-        MeshRenderer puckMeshRenderer =
-            puck.gameObject.transform.Find("puck").Find("Puck").GetComponent<MeshRenderer>();
-        puckMeshRenderer.enabled = true;
-        
+        MeshRenderer puckMeshRenderer = FindPuckMeshRenderer(puck);
+        if (puckMeshRenderer != null)
+            puckMeshRenderer.enabled = true;
+
         GameObject colliderObject = puck.gameObject;
-        //
-        // // Re-enable the original mesh renderer
-        // MeshRenderer meshRenderer = colliderObject.GetComponent<MeshRenderer>();
-        // if (meshRenderer == null)
-        // {
-        //     meshRenderer = colliderObject.GetComponentInChildren<MeshRenderer>();
-        // }
-        //
-        // if (meshRenderer != null)
-        // {
-        //     // meshRenderer.enabled = true;
-        //     
-        //
-        //     // Restore original scale
-        //     colliderObject.transform.localScale = Vector3.one;
-        // }
 
         // Remove the sphere visual (child GameObject created from primitive)
         foreach (Transform child in colliderObject.transform)
@@ -169,21 +133,8 @@ public static class Balls
             }
         }
 
-        // originalMeshData.Remove(puck);
         Plugin.Log("Restored puck from ball visuals.");
     }
-
-    // this was basically doing the same patch as below, just firing twice which was causing problems
-    // [HarmonyPatch(typeof(PuckManager), nameof(PuckManager.AddPuck))]
-    // public static class BallsAddPuckPatch
-    // {
-    //     [HarmonyPostfix]
-    //     public static void Postfix(PuckManager __instance, Puck puck)
-    //     {
-    //         if (!MessagingHandler.connectedToToastersRink || !currentBallsEnabled) return;
-    //         ApplyBallVisuals(puck);
-    //     }
-    // }
 
     [HarmonyPatch(typeof(Puck), "OnNetworkPostSpawn")]
     public static class BallsNetworkPostSpawnPatch

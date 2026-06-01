@@ -50,9 +50,8 @@ public static class Cubes
 
         GameObject colliderObject = puck.gameObject;
 
-        // Get the mesh renderer from main object or children
-        MeshRenderer puckMeshRenderer =
-            puck.gameObject.transform.Find("puck").Find("Puck").GetComponent<MeshRenderer>();
+        // Resolve the puck/Puck mesh renderer without throwing if a child is missing.
+        MeshRenderer puckMeshRenderer = FindPuckMeshRenderer(puck);
 
         if (puckMeshRenderer != null)
         {
@@ -65,6 +64,13 @@ public static class Cubes
             // Create a cube visual
             GameObject cubeVisual = UnityEngine.GameObject.CreatePrimitive(PrimitiveType.Cube);
             cubeVisual.name = "cube";
+
+            // CreatePrimitive ships a BoxCollider; strip it so the cosmetic cube
+            // doesn't add a second collider to the live puck's physics.
+            foreach (Collider col in cubeVisual.GetComponentsInChildren<Collider>())
+            {
+                UnityEngine.Object.Destroy(col);
+            }
 
             // Parent it to the puck and position it correctly
             cubeVisual.transform.SetParent(colliderObject.transform, false);
@@ -93,14 +99,22 @@ public static class Cubes
         }
     }
 
+    // Resolve the puck/Puck mesh renderer without throwing if a child is missing.
+    private static MeshRenderer FindPuckMeshRenderer(Puck puck)
+    {
+        Transform puckChild = puck.gameObject.transform.Find("puck");
+        Transform inner = puckChild != null ? puckChild.Find("Puck") : null;
+        return inner != null ? inner.GetComponent<MeshRenderer>() : null;
+    }
+
     private static void RestorePuckVisuals(Puck puck)
     {
         if (puck == null)
             return;
 
-        MeshRenderer puckMeshRenderer =
-            puck.gameObject.transform.Find("puck").Find("Puck").GetComponent<MeshRenderer>();
-        puckMeshRenderer.enabled = true;
+        MeshRenderer puckMeshRenderer = FindPuckMeshRenderer(puck);
+        if (puckMeshRenderer != null)
+            puckMeshRenderer.enabled = true;
 
         GameObject colliderObject = puck.gameObject;
 

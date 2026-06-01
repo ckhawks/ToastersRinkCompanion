@@ -149,19 +149,19 @@ public static class Opening
             {
                 GameObject holographicObject = Object.Instantiate(CollectiblePrefabs.holographicPrefab, collectibleDisplay.transform);
                 MeshFilter holographicMeshFilter = holographicObject.GetComponent<MeshFilter>();
-                if (holographicMeshFilter == null)
-                {
-                    Plugin.LogError($"Holographic mesh filter not found!");
-                }
-                holographicMeshFilter.mesh = collectibleDisplay.GetComponent<MeshFilter>().mesh;
                 MeshRenderer holographicMeshRenderer = holographicObject.GetComponent<MeshRenderer>();
-                if (holographicMeshRenderer == null)
+                MeshFilter sourceMeshFilter = collectibleDisplay.GetComponent<MeshFilter>();
+                if (holographicMeshFilter == null || holographicMeshRenderer == null || sourceMeshFilter == null)
                 {
-                    Plugin.LogError($"Holographic mesh renderer not found!");
+                    Plugin.LogError("Holographic setup skipped: missing mesh filter/renderer.");
                 }
-                holographicMeshRenderer.material.SetFloat("_ExtrusionAmount", 0.00001f);
-                holographicMeshRenderer.material.SetFloat("_StartTime", Time.time);
-                holographicObject.transform.localScale = Vector3.one;
+                else
+                {
+                    holographicMeshFilter.mesh = sourceMeshFilter.mesh;
+                    holographicMeshRenderer.material.SetFloat("_ExtrusionAmount", 0.00001f);
+                    holographicMeshRenderer.material.SetFloat("_StartTime", Time.time);
+                    holographicObject.transform.localScale = Vector3.one;
+                }
                 // Plugin.Log($"Added holographic renderer");
             }
 
