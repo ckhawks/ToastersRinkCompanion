@@ -132,10 +132,7 @@ public static class PlayersTab
         row.style.paddingTop = 4;
         row.style.paddingBottom = 4;
         row.style.backgroundColor = new StyleColor(UIHelpers.BgRow);
-        row.style.borderTopLeftRadius = 4;
-        row.style.borderTopRightRadius = 4;
-        row.style.borderBottomLeftRadius = 4;
-        row.style.borderBottomRightRadius = 4;
+        UIHelpers.SetRadius(row, 4);
         container.Add(row);
 
         // Expand arrow (placeholder for future accordion use)
@@ -154,10 +151,7 @@ public static class PlayersTab
         avatarContainer.style.width = 24;
         avatarContainer.style.height = 24;
         avatarContainer.style.marginRight = 8;
-        avatarContainer.style.borderTopLeftRadius = 12;
-        avatarContainer.style.borderTopRightRadius = 12;
-        avatarContainer.style.borderBottomLeftRadius = 12;
-        avatarContainer.style.borderBottomRightRadius = 12;
+        UIHelpers.SetRadius(avatarContainer, 12);
         avatarContainer.style.borderTopWidth = 1;
         avatarContainer.style.borderBottomWidth = 1;
         avatarContainer.style.borderLeftWidth = 1;
@@ -225,10 +219,7 @@ public static class PlayersTab
             sgBadge.style.paddingTop = 1;
             sgBadge.style.paddingBottom = 1;
             sgBadge.style.backgroundColor = new StyleColor(new Color(1f, 0.8f, 0f, 0.15f));
-            sgBadge.style.borderTopLeftRadius = 3;
-            sgBadge.style.borderTopRightRadius = 3;
-            sgBadge.style.borderBottomLeftRadius = 3;
-            sgBadge.style.borderBottomRightRadius = 3;
+            UIHelpers.SetRadius(sgBadge, 3);
             nameRow.Add(sgBadge);
         }
 
@@ -245,10 +236,7 @@ public static class PlayersTab
             donorBadge.style.paddingTop = 1;
             donorBadge.style.paddingBottom = 1;
             donorBadge.style.backgroundColor = new StyleColor(new Color(0.28f, 0.50f, 0.90f, 0.15f));
-            donorBadge.style.borderTopLeftRadius = 3;
-            donorBadge.style.borderTopRightRadius = 3;
-            donorBadge.style.borderBottomLeftRadius = 3;
-            donorBadge.style.borderBottomRightRadius = 3;
+            UIHelpers.SetRadius(donorBadge, 3);
             nameRow.Add(donorBadge);
         }
 
@@ -286,10 +274,7 @@ public static class PlayersTab
             modBadge.style.paddingTop = 1;
             modBadge.style.paddingBottom = 1;
             modBadge.style.backgroundColor = new StyleColor(new Color(0.18f, 0.18f, 0.18f));
-            modBadge.style.borderTopLeftRadius = 3;
-            modBadge.style.borderTopRightRadius = 3;
-            modBadge.style.borderBottomLeftRadius = 3;
-            modBadge.style.borderBottomRightRadius = 3;
+            UIHelpers.SetRadius(modBadge, 3);
             row.Add(modBadge);
 
             modBadge.RegisterCallback<MouseEnterEvent>(evt =>
@@ -497,10 +482,7 @@ public static class PlayersTab
             barRow.style.flexDirection = FlexDirection.Row;
             barRow.style.height = 6;
             barRow.style.maxWidth = 150;
-            barRow.style.borderTopLeftRadius = 3;
-            barRow.style.borderTopRightRadius = 3;
-            barRow.style.borderBottomLeftRadius = 3;
-            barRow.style.borderBottomRightRadius = 3;
+            UIHelpers.SetRadius(barRow, 3);
             barRow.style.overflow = Overflow.Hidden;
             teamBarContainer.Add(barRow);
 
@@ -574,10 +556,7 @@ public static class PlayersTab
         tooltip.style.paddingRight = 10;
         tooltip.style.paddingTop = 8;
         tooltip.style.paddingBottom = 8;
-        tooltip.style.borderTopLeftRadius = 4;
-        tooltip.style.borderTopRightRadius = 4;
-        tooltip.style.borderBottomLeftRadius = 4;
-        tooltip.style.borderBottomRightRadius = 4;
+        UIHelpers.SetRadius(tooltip, 4);
         UIHelpers.SetBorder(tooltip, 1, new Color(0.3f, 0.3f, 0.3f));
         tooltip.style.minWidth = 180;
 
@@ -636,10 +615,7 @@ public static class PlayersTab
         pill.style.paddingRight = 6;
         pill.style.paddingTop = 2;
         pill.style.paddingBottom = 2;
-        pill.style.borderTopLeftRadius = 8;
-        pill.style.borderTopRightRadius = 8;
-        pill.style.borderBottomLeftRadius = 8;
-        pill.style.borderBottomRightRadius = 8;
+        UIHelpers.SetRadius(pill, 8);
         pill.style.borderTopWidth = 1;
         pill.style.borderBottomWidth = 1;
         pill.style.borderLeftWidth = 1;
@@ -654,10 +630,7 @@ public static class PlayersTab
         logoEl.style.width = 14;
         logoEl.style.height = 14;
         logoEl.style.marginRight = 4;
-        logoEl.style.borderTopLeftRadius = 7;
-        logoEl.style.borderTopRightRadius = 7;
-        logoEl.style.borderBottomLeftRadius = 7;
-        logoEl.style.borderBottomRightRadius = 7;
+        UIHelpers.SetRadius(logoEl, 7);
         pill.Add(logoEl);
 
         // Proactively fetch logo and update element when ready
@@ -690,10 +663,7 @@ public static class PlayersTab
         btn.style.paddingTop = 2;
         btn.style.paddingBottom = 2;
         btn.style.marginLeft = 3;
-        btn.style.borderTopLeftRadius = 0;
-        btn.style.borderTopRightRadius = 0;
-        btn.style.borderBottomLeftRadius = 0;
-        btn.style.borderBottomRightRadius = 0;
+        UIHelpers.SetRadius(btn, 0);
         parent.Add(btn);
     }
 }

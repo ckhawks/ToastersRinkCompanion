@@ -60,10 +60,7 @@ public static class ServersTab
         refreshBtn.style.paddingRight = 10;
         refreshBtn.style.paddingTop = 4;
         refreshBtn.style.paddingBottom = 4;
-        refreshBtn.style.borderTopLeftRadius = 0;
-        refreshBtn.style.borderTopRightRadius = 0;
-        refreshBtn.style.borderBottomLeftRadius = 0;
-        refreshBtn.style.borderBottomRightRadius = 0;
+        UIHelpers.SetRadius(refreshBtn, 0);
         headerRow.Add(refreshBtn);
 
         _listContainer = new VisualElement();
@@ -262,23 +259,11 @@ public static class ServersTab
         row.style.paddingBottom = 5;
         row.style.marginBottom = 2;
         row.style.backgroundColor = new StyleColor(UIHelpers.BgRow);
-        row.style.borderTopLeftRadius = 4;
-        row.style.borderTopRightRadius = 4;
-        row.style.borderBottomLeftRadius = 4;
-        row.style.borderBottomRightRadius = 4;
+        UIHelpers.SetRadius(row, 4);
         _listContainer.Add(row);
 
         // Player count dot
-        var dot = new VisualElement();
-        dot.style.width = 8;
-        dot.style.height = 8;
-        dot.style.borderTopLeftRadius = 4;
-        dot.style.borderTopRightRadius = 4;
-        dot.style.borderBottomLeftRadius = 4;
-        dot.style.borderBottomRightRadius = 4;
-        dot.style.backgroundColor = hasPlayers
-            ? new StyleColor(UIHelpers.ActiveGreen)
-            : new StyleColor(new Color(0.3f, 0.3f, 0.3f));
+        var dot = UIHelpers.MakeDot(hasPlayers ? UIHelpers.ActiveGreen : new Color(0.3f, 0.3f, 0.3f));
         dot.style.marginRight = 8;
         row.Add(dot);
 
@@ -378,10 +363,7 @@ public static class ServersTab
         joinBtn.style.paddingRight = 10;
         joinBtn.style.paddingTop = 3;
         joinBtn.style.paddingBottom = 3;
-        joinBtn.style.borderTopLeftRadius = 0;
-        joinBtn.style.borderTopRightRadius = 0;
-        joinBtn.style.borderBottomLeftRadius = 0;
-        joinBtn.style.borderBottomRightRadius = 0;
+        UIHelpers.SetRadius(joinBtn, 0);
         row.Add(joinBtn);
     }
 

@@ -241,10 +241,7 @@ public static class ModifierPanelUI
         _panel.style.width = new StyleLength(new Length(45, LengthUnit.Percent));
         _panel.style.height = new StyleLength(new Length(70, LengthUnit.Percent));
         _panel.style.backgroundColor = new StyleColor(new Color(0.12f, 0.12f, 0.12f, 0.97f));
-        _panel.style.borderTopLeftRadius = 8;
-        _panel.style.borderTopRightRadius = 8;
-        _panel.style.borderBottomLeftRadius = 8;
-        _panel.style.borderBottomRightRadius = 8;
+        UIHelpers.SetRadius(_panel, 8);
         _panel.style.flexDirection = FlexDirection.Column;
         _panel.style.overflow = Overflow.Hidden;
         _overlay.Add(_panel);
@@ -289,10 +286,7 @@ public static class ModifierPanelUI
         closeButton.style.paddingRight = 8;
         closeButton.style.paddingTop = 4;
         closeButton.style.paddingBottom = 4;
-        closeButton.style.borderTopLeftRadius = 0;
-        closeButton.style.borderTopRightRadius = 0;
-        closeButton.style.borderBottomLeftRadius = 0;
-        closeButton.style.borderBottomRightRadius = 0;
+        UIHelpers.SetRadius(closeButton, 0);
         header.Add(closeButton);
 
         // Tab bar
@@ -346,10 +340,7 @@ public static class ModifierPanelUI
         tabButton.style.paddingTop = 8;
         tabButton.style.paddingBottom = 8;
         tabButton.style.marginRight = 2;
-        tabButton.style.borderTopLeftRadius = 0;
-        tabButton.style.borderTopRightRadius = 0;
-        tabButton.style.borderBottomLeftRadius = 0;
-        tabButton.style.borderBottomRightRadius = 0;
+        UIHelpers.SetRadius(tabButton, 0);
         _tabBar?.Add(tabButton);
 
         _tabs.Add(new TabDefinition

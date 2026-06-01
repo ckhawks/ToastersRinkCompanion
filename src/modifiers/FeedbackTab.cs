@@ -161,10 +161,7 @@ public static class FeedbackTab
         _submitButton.style.paddingBottom = 8;
         _submitButton.style.backgroundColor = new StyleColor(UIHelpers.AccentBlue);
         _submitButton.style.color = UIHelpers.TextPrimary;
-        _submitButton.style.borderTopLeftRadius = 4;
-        _submitButton.style.borderTopRightRadius = 4;
-        _submitButton.style.borderBottomLeftRadius = 4;
-        _submitButton.style.borderBottomRightRadius = 4;
+        UIHelpers.SetRadius(_submitButton, 4);
         UIHelpers.SetBorder(_submitButton, 0, Color.clear);
         buttonRow.Add(_submitButton);
 

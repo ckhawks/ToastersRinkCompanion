@@ -147,16 +147,7 @@ public static class TrainingTab
         var row = MakeRow(parent);
 
         // Status dot
-        var dot = new VisualElement();
-        dot.style.width = 8;
-        dot.style.height = 8;
-        dot.style.borderTopLeftRadius = 4;
-        dot.style.borderTopRightRadius = 4;
-        dot.style.borderBottomLeftRadius = 4;
-        dot.style.borderBottomRightRadius = 4;
-        dot.style.backgroundColor = isEnabled
-            ? new StyleColor(UIHelpers.ActiveGreen)
-            : new StyleColor(new Color(0.3f, 0.3f, 0.3f));
+        var dot = UIHelpers.MakeDot(isEnabled ? UIHelpers.ActiveGreen : new Color(0.3f, 0.3f, 0.3f));
         dot.style.marginRight = 8;
         row.Add(dot);
 
@@ -211,16 +202,7 @@ public static class TrainingTab
 
         // Status dot
         var anyEnabled = ServerState.BlueDummyEnabled || ServerState.RedDummyEnabled;
-        var dot = new VisualElement();
-        dot.style.width = 8;
-        dot.style.height = 8;
-        dot.style.borderTopLeftRadius = 4;
-        dot.style.borderTopRightRadius = 4;
-        dot.style.borderBottomLeftRadius = 4;
-        dot.style.borderBottomRightRadius = 4;
-        dot.style.backgroundColor = anyEnabled
-            ? new StyleColor(UIHelpers.ActiveGreen)
-            : new StyleColor(new Color(0.3f, 0.3f, 0.3f));
+        var dot = UIHelpers.MakeDot(anyEnabled ? UIHelpers.ActiveGreen : new Color(0.3f, 0.3f, 0.3f));
         dot.style.marginRight = 8;
         row.Add(dot);
 
@@ -267,10 +249,7 @@ public static class TrainingTab
         blueBtn.style.paddingTop = 3;
         blueBtn.style.paddingBottom = 3;
         blueBtn.style.marginRight = 4;
-        blueBtn.style.borderTopLeftRadius = 0;
-        blueBtn.style.borderTopRightRadius = 0;
-        blueBtn.style.borderBottomLeftRadius = 0;
-        blueBtn.style.borderBottomRightRadius = 0;
+        UIHelpers.SetRadius(blueBtn, 0);
         row.Add(blueBtn);
 
         // Red toggle button
@@ -289,10 +268,7 @@ public static class TrainingTab
         redBtn.style.paddingRight = 8;
         redBtn.style.paddingTop = 3;
         redBtn.style.paddingBottom = 3;
-        redBtn.style.borderTopLeftRadius = 0;
-        redBtn.style.borderTopRightRadius = 0;
-        redBtn.style.borderBottomLeftRadius = 0;
-        redBtn.style.borderBottomRightRadius = 0;
+        UIHelpers.SetRadius(redBtn, 0);
         row.Add(redBtn);
     }
 
@@ -399,10 +375,7 @@ public static class TrainingTab
         blueBtn.style.paddingTop = 3;
         blueBtn.style.paddingBottom = 3;
         blueBtn.style.marginRight = 4;
-        blueBtn.style.borderTopLeftRadius = 0;
-        blueBtn.style.borderTopRightRadius = 0;
-        blueBtn.style.borderBottomLeftRadius = 0;
-        blueBtn.style.borderBottomRightRadius = 0;
+        UIHelpers.SetRadius(blueBtn, 0);
         row.Add(blueBtn);
 
         var redBtn = new Button(() =>
@@ -419,10 +392,7 @@ public static class TrainingTab
         redBtn.style.paddingRight = 8;
         redBtn.style.paddingTop = 3;
         redBtn.style.paddingBottom = 3;
-        redBtn.style.borderTopLeftRadius = 0;
-        redBtn.style.borderTopRightRadius = 0;
-        redBtn.style.borderBottomLeftRadius = 0;
-        redBtn.style.borderBottomRightRadius = 0;
+        UIHelpers.SetRadius(redBtn, 0);
         row.Add(redBtn);
     }
 
@@ -475,16 +445,7 @@ public static class TrainingTab
         var row = MakeRow(parent);
 
         // Status dot
-        var dot = new VisualElement();
-        dot.style.width = 8;
-        dot.style.height = 8;
-        dot.style.borderTopLeftRadius = 4;
-        dot.style.borderTopRightRadius = 4;
-        dot.style.borderBottomLeftRadius = 4;
-        dot.style.borderBottomRightRadius = 4;
-        dot.style.backgroundColor = isActive
-            ? new StyleColor(UIHelpers.ActiveGreen)
-            : new StyleColor(new Color(0.3f, 0.3f, 0.3f));
+        var dot = UIHelpers.MakeDot(isActive ? UIHelpers.ActiveGreen : new Color(0.3f, 0.3f, 0.3f));
         dot.style.marginRight = 8;
         row.Add(dot);
 
@@ -694,10 +655,7 @@ public static class TrainingTab
         row.style.paddingBottom = 4;
         row.style.marginBottom = 2;
         row.style.backgroundColor = new StyleColor(UIHelpers.BgRow);
-        row.style.borderTopLeftRadius = 4;
-        row.style.borderTopRightRadius = 4;
-        row.style.borderBottomLeftRadius = 4;
-        row.style.borderBottomRightRadius = 4;
+        UIHelpers.SetRadius(row, 4);
         parent.Add(row);
         return row;
     }
@@ -723,9 +681,6 @@ public static class TrainingTab
         btn.style.paddingRight = 10;
         btn.style.paddingTop = 3;
         btn.style.paddingBottom = 3;
-        btn.style.borderTopLeftRadius = 0;
-        btn.style.borderTopRightRadius = 0;
-        btn.style.borderBottomLeftRadius = 0;
-        btn.style.borderBottomRightRadius = 0;
+        UIHelpers.SetRadius(btn, 0);
     }
 }
