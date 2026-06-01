@@ -105,6 +105,20 @@ public class Plugin : IPuckPlugin
         {
             Plugin.Log($"Disabling...");
             harmony.UnpatchSelf();
+
+            // Tear down the messaging lifecycle and input so nothing dangles or
+            // double-registers if the plugin is re-enabled in the same session.
+            try { MessagingHandler.Teardown(); } catch (Exception e) { LogError($"MessagingHandler teardown failed: {e.Message}"); }
+            try { JsonMessageRouter.Shutdown(); } catch (Exception e) { LogError($"JsonMessageRouter shutdown failed: {e.Message}"); }
+
+            DisposeAction(ref spawnPuckAction);
+            DisposeAction(ref voteYesAction);
+            DisposeAction(ref voteNoAction);
+            DisposeAction(ref panelAction);
+            DisposeAction(ref drillSaveAction);
+            DisposeAction(ref drillLoadAction);
+            DisposeAction(ref openCaseAction);
+
             Plugin.Log($"Disabled! Goodbye!");
             return true;
         }
@@ -145,6 +159,13 @@ public class Plugin : IPuckPlugin
         action?.Disable();
         action = new InputAction(binding: binding);
         action.Enable();
+    }
+
+    public static void DisposeAction(ref InputAction action)
+    {
+        action?.Disable();
+        action?.Dispose();
+        action = null;
     }
 
     public static void Log(string message)

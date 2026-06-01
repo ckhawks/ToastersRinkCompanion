@@ -102,6 +102,20 @@ public static class JsonMessageRouter
     }
 
     /// <summary>
+    /// Unregister the named-message handler and clear registered type handlers.
+    /// Call on plugin disable so nothing dangles if the mod is re-enabled.
+    /// </summary>
+    public static void Shutdown()
+    {
+        var cmm = NetworkManager.Singleton?.CustomMessagingManager;
+        if (cmm != null)
+            try { cmm.UnregisterNamedMessageHandler("tr-jsonMessage"); } catch { }
+
+        _handlers.Clear();
+        _initialized = false;
+    }
+
+    /// <summary>
     /// Parse the envelope JSON into its <c>type</c> and <c>payload</c> components.
     /// Uses a real JSON parser so whitespace, escaped quotes, and non-object
     /// payloads are handled correctly.

@@ -34,13 +34,28 @@ public static class MessagingHandler
             return;
         }
 
-        // Handle initial connection and disconnect cleanup.
+        // Handle initial connection and disconnect cleanup. Unsubscribe first so a
+        // repeated Setup() (e.g. plugin re-enable) doesn't stack duplicate handlers.
+        nm.OnClientConnectedCallback -= OnClientConnected;
         nm.OnClientConnectedCallback += OnClientConnected;
+        nm.OnClientDisconnectCallback -= OnClientDisconnected;
         nm.OnClientDisconnectCallback += OnClientDisconnected;
 
         // If already connected, set up immediately
         if (nm.IsConnectedClient || nm.IsServer)
             SetupHandlers();
+    }
+
+    // Unsubscribe the NetworkManager lifecycle callbacks. Called on plugin disable.
+    public static void Teardown()
+    {
+        var nm = NetworkManager.Singleton;
+        if (nm != null)
+        {
+            nm.OnClientConnectedCallback -= OnClientConnected;
+            nm.OnClientDisconnectCallback -= OnClientDisconnected;
+        }
+        _handlersRegistered = false;
     }
 
     private static void OnClientConnected(ulong clientId)
