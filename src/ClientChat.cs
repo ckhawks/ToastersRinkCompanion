@@ -126,22 +126,7 @@ public static class ClientChat
                 Plugin.AddLocalChatMessage($"<size=18><color=green><b>WATCH PUCKS OF</b></color>  Watching pucks for <b>{targetPlayer.Username.Value.ToString()}</b>...");
                 return false;
             }
-            
-            // else if (content.ToLower().StartsWith("/fuckgoals"))
-            // {
-            //     FuckGoals.FuckGoalsNow();
-            // }
-            // else if (content.ToLower().StartsWith("/collectible"))
-            // {
-            //     Player player = PlayerManager.Instance.GetLocalPlayer();
-            //     OldCollectibleRenderer.ShowCollectiblePrototype(player);
-            //     return false;
-            // } 
-            // else if (content.ToLower().StartsWith($"/opencase"))
-            // {
-            //     Player player = PlayerManager.Instance.GetLocalPlayer();
-            //     Opening.PlayOpeningForAt(player.Stick.transform.position, player);
-            // }
+
             else if (content.ToLower().StartsWith("/logcamera"))
             {
                 if (PlayerCamera != null)
