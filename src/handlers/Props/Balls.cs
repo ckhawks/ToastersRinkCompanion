@@ -50,12 +50,9 @@ public static class Balls
 
         GameObject colliderObject = puck.gameObject;
 
-        // Get the mesh renderer from main object or children
-        MeshRenderer puckMeshRenderer =
-            puck.gameObject.transform.Find("puck").Find("Puck").GetComponent<MeshRenderer>();
-        Plugin.Log($"puckMeshRenderer {puckMeshRenderer.name}");
-        Plugin.Log($"puckMeshRenderer GO name {puckMeshRenderer.gameObject.name}");
-        Plugin.Log($"puckMeshRenderer GO parent name {puckMeshRenderer.transform.parent.gameObject.name}");
+        // Get the mesh renderer (puck/Puck). Resolve the chain step-by-step so a
+        // missing child returns null instead of throwing inside this spawn postfix.
+        MeshRenderer puckMeshRenderer = FindPuckMeshRenderer(puck);
 
         if (puckMeshRenderer != null)
         {
@@ -71,13 +68,14 @@ public static class Balls
             // Create a simple sphere visual without colliders
             GameObject sphereVisual = UnityEngine.GameObject.CreatePrimitive(PrimitiveType.Sphere);
             sphereVisual.name = "sphere";
-        
-            // Remove ALL colliders from the sphere visual to eliminate shadow
-            // foreach (Collider col in sphereVisual.GetComponentsInChildren<Collider>())
-            // {
-            //     UnityEngine.Object.Destroy(col);
-            // }
-        
+
+            // CreatePrimitive ships a SphereCollider; strip it so the cosmetic
+            // sphere doesn't add a second collider to the live puck's physics.
+            foreach (Collider col in sphereVisual.GetComponentsInChildren<Collider>())
+            {
+                UnityEngine.Object.Destroy(col);
+            }
+
             // Parent it to the puck and position it correctly
             sphereVisual.transform.SetParent(colliderObject.transform, false);
             sphereVisual.transform.localPosition = Vector3.zero;
@@ -107,14 +105,22 @@ public static class Balls
         }
     }
 
+    // Resolve the puck/Puck mesh renderer without throwing if a child is missing.
+    private static MeshRenderer FindPuckMeshRenderer(Puck puck)
+    {
+        Transform puckChild = puck.gameObject.transform.Find("puck");
+        Transform inner = puckChild != null ? puckChild.Find("Puck") : null;
+        return inner != null ? inner.GetComponent<MeshRenderer>() : null;
+    }
+
     private static void RestorePuckVisuals(Puck puck)
     {
         if (puck == null)
             return;
 
-        MeshRenderer puckMeshRenderer =
-            puck.gameObject.transform.Find("puck").Find("Puck").GetComponent<MeshRenderer>();
-        puckMeshRenderer.enabled = true;
+        MeshRenderer puckMeshRenderer = FindPuckMeshRenderer(puck);
+        if (puckMeshRenderer != null)
+            puckMeshRenderer.enabled = true;
 
         GameObject colliderObject = puck.gameObject;
 
