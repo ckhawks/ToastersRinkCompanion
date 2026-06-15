@@ -131,7 +131,7 @@ public static class HomeTab
         linksRow.style.flexWrap = Wrap.Wrap;
         parent.Add(linksRow);
 
-        BuildLinkButton(linksRow, "Discord", "https://discord.gg/4eYYQtcGGz", new Color(0.34f, 0.40f, 0.95f));
+        BuildLinkButton(linksRow, "Discord", "https://discord.gg/mCmX5dwzsj", new Color(0.34f, 0.40f, 0.95f));
         BuildLinkButton(linksRow, "PuckStats", "https://puckstats.io/", new Color(0.27f, 0.54f, 0.96f));
         BuildLinkButton(linksRow, "Rules", "https://puckstats.io/rules", UIHelpers.TextSecondary);
         BuildLinkButton(linksRow, "Donate", "https://ko-fi.com/stellaric", new Color(1f, 0.35f, 0.45f));
