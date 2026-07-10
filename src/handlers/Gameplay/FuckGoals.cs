@@ -41,12 +41,13 @@ public static class FuckGoals
         // Clean up any previously spawned frames for this goal
         CleanupCustomFrame(goal);
 
-        // Disable only the currently-enabled child renderers and track them
+        // Disable the goal's currently-enabled mesh renderers and track them. B1149's goal
+        // remodel nested the visual frame mesh below the goal root (it used to sit on direct
+        // children), so search the whole hierarchy instead of just immediate children. The net
+        // is a SkinnedMeshRenderer, so it is not matched here and stays visible as before.
         List<MeshRenderer> disabledRenderers = new();
-        foreach (Transform childTransform in goal.gameObject.transform)
+        foreach (MeshRenderer renderer in goal.gameObject.GetComponentsInChildren<MeshRenderer>())
         {
-            GameObject go = childTransform.gameObject;
-            MeshRenderer renderer = go.GetComponent<MeshRenderer>();
             if (renderer != null && renderer.enabled)  // Only disable if currently enabled
             {
                 renderer.enabled = false;
@@ -68,9 +69,10 @@ public static class FuckGoals
             }
         }
 
-        // Configure frame transform
+        // Configure frame transform. The Y is swapped (red 0 / blue 180) versus pre-B1149 to
+        // cancel the goal roots' 180deg orientation flip from the B1149 goal remodel.
         newFrame.transform.localPosition = Vector3.zero;
-        newFrame.transform.localRotation = Quaternion.Euler(-90f, isRed ? 180 : 0, 0);
+        newFrame.transform.localRotation = Quaternion.Euler(-90f, isRed ? 0 : 180, 0);
         newFrame.transform.localScale = new Vector3(92, 100, 92);
 
         // Track the spawned frame
