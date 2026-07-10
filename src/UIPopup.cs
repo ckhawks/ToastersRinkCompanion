@@ -29,8 +29,8 @@ public static class UIPopup
     private static CursorLockMode _previousCursorLockState;
     
     static readonly FieldInfo _gameTimeLabelField = typeof(UIGameState)
-        .GetField("gameTimeLabel", 
-            BindingFlags.Instance | BindingFlags.NonPublic);  
+        .GetField("timeLabel",
+            BindingFlags.Instance | BindingFlags.NonPublic);
     
     /// <summary>
     /// Kicks off the process to download an image and show the popup.
