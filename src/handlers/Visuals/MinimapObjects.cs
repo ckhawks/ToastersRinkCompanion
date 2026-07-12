@@ -487,7 +487,10 @@ public static class MinimapObjects
         float goalWidth = 3.5f * scale.x;
         float goalDepth = 2.5f * scale.z;
 
-        Vector3 forward = goal.transform.forward;
+        // B1149's goal remodel flipped the goal roots 180deg about Y (the same flip the custom
+        // frame cancels with its swapped Y rotation in FuckGoals). goal.transform.forward now
+        // points opposite the net opening, so negate it to keep the C's mouth facing correctly.
+        Vector3 forward = -goal.transform.forward;
         Vector3 right = goal.transform.right;
 
         Color color = GetTeamColor(isRed);
