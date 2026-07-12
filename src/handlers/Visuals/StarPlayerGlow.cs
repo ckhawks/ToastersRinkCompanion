@@ -174,13 +174,10 @@ public static class StarPlayerGlow
 
     private static void OnStarsChanged()
     {
-        Plugin.Log($"[StarPlayerGlow] OnStarsChanged: currentMode={_currentMode} hasStars={MatchStarsStore.HasStars}");
-
         // If we haven't seen a phase change yet, infer mode from the current phase.
         if (_currentMode == GlowMode.None)
         {
             var inferred = InferModeFromCurrentPhase();
-            Plugin.Log($"[StarPlayerGlow] OnStarsChanged: inferred mode={inferred}");
             if (inferred != GlowMode.None)
                 _currentMode = inferred;
         }

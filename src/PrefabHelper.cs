@@ -27,11 +27,6 @@ public static class PrefabHelper
             {
                 Plugin.LogError("[MeshReplacer] Failed to load AssetBundle.");
             }
-            else
-            {
-                Plugin.Log("[MeshReplacer] AssetBundle loaded successfully.");
-            }
-
             return loadedAssetBundle;
         }
         catch (System.Exception ex)

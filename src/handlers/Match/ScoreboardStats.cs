@@ -280,7 +280,7 @@ public static class ScoreboardStats
 
             try
             {
-                DumpHierarchy(__instance);
+                // DumpHierarchy(__instance); // disabled — suspected join hang
                 EnsureHeaders(__instance);
 
                 var mapField = AccessTools.Field(typeof(UIScoreboard), "playerVisualElementMap");
