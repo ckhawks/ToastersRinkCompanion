@@ -124,6 +124,9 @@ public static class ModifierPanelUI
             _overlay.style.display = DisplayStyle.None;
         _isVisible = false;
 
+        // Closing the panel dismisses the vote-position preview.
+        VotePopupUI.HidePreview();
+
         // Only block the pause action on this frame if the pause menu
         // wasn't already open — otherwise the user needs Esc to close it.
         try
@@ -376,6 +379,9 @@ public static class ModifierPanelUI
     {
         if (index < 0 || index >= _tabs.Count) return;
         _activeTabIndex = index;
+
+        // Leaving any tab hides the vote-position preview; the Settings tab re-shows it.
+        VotePopupUI.HidePreview();
 
         // Update tab button styling
         for (int i = 0; i < _tabs.Count; i++)

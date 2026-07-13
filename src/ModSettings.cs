@@ -21,6 +21,8 @@ public class ModSettings
     public bool showJuggleNotifications { get; set; } = true;
     public int hudPositionX { get; set; } = 0;   // 0-100%, 0=left edge, 100=right edge
     public int hudPositionY { get; set; } = 95;   // 0-100%, 0=top edge, 100=bottom edge
+    public int votePositionX { get; set; } = 50;   // 0-100%, 0=left edge, 100=right edge
+    public int votePositionY { get; set; } = 85;   // 0-100%, 0=top edge, 100=bottom edge
     public List<string> favoriteModifiers { get; set; } = new();
     // When true, JsonMessageRouter logs every envelope sent and received plus
     // every handler registration. Useful for debugging protocol issues, but

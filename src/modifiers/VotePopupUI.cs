@@ -26,6 +26,7 @@ public static class VotePopupUI
     private static Label _resultLabel;
     private static bool _isSetup;
     private static bool _isVisible;
+    private static bool _isPreview;
     private static Coroutine _hideCoroutine;
 
     private static void Setup()
@@ -38,10 +39,6 @@ public static class VotePopupUI
         _container = new VisualElement();
         _container.name = "VotePopup";
         _container.style.position = Position.Absolute;
-        _container.style.bottom = 120;
-        _container.style.left = new StyleLength(StyleKeyword.Auto);
-        _container.style.right = new StyleLength(StyleKeyword.Auto);
-        _container.style.alignSelf = Align.Center;
         _container.style.width = 420;
         _container.style.paddingLeft = 16;
         _container.style.paddingRight = 16;
@@ -56,6 +53,7 @@ public static class VotePopupUI
         _container.style.alignItems = Align.Center;
         _container.style.display = DisplayStyle.None;
         root.Add(_container);
+        ApplyPosition();
 
         _titleLabel = new Label("Vote: ...");
         _titleLabel.style.fontSize = 18;
@@ -213,7 +211,54 @@ public static class VotePopupUI
         _resultLabel.style.display = DisplayStyle.None;
         _container.Add(_resultLabel);
 
+        // Make the popup pass mouse events through to whatever is behind it (e.g. the
+        // F3 panel's sliders) so it never blocks interaction. Only the vote buttons
+        // opt back in, and only while a real vote is active (see Show/ShowPreview).
+        SetPickingRecursive(_container, PickingMode.Ignore);
+
         _isSetup = true;
+    }
+
+    private static void SetPickingRecursive(VisualElement element, PickingMode mode)
+    {
+        element.pickingMode = mode;
+        foreach (var child in element.Children())
+            SetPickingRecursive(child, mode);
+    }
+
+    private const float ScreenPadding = 16f;
+
+    /// <summary>
+    /// Positions the popup using percentage-based coordinates from settings,
+    /// anchored from the nearest edge so it stays on-screen. Mirrors
+    /// <see cref="ActiveModifiersHUD.ApplyPosition"/>.
+    /// </summary>
+    public static void ApplyPosition()
+    {
+        if (_container == null) return;
+        var settings = Plugin.modSettings;
+        int x = settings?.votePositionX ?? 50;
+        int y = settings?.votePositionY ?? 85;
+
+        var root = _container.parent;
+        float parentW = root?.resolvedStyle.width ?? 1920f;
+        float parentH = root?.resolvedStyle.height ?? 1080f;
+        float safeW = parentW - ScreenPadding * 2f;
+        float safeH = parentH - ScreenPadding * 2f;
+
+        float pixelX = ScreenPadding + (x / 100f) * safeW;
+        float pixelY = ScreenPadding + (y / 100f) * safeH;
+
+        // Anchor the box's top-left, then translate by the same percentage so the box
+        // stays fully on-screen: x=0 left-aligned, x=50 centered, x=100 right-aligned.
+        _container.style.left = pixelX;
+        _container.style.right = StyleKeyword.Auto;
+        _container.style.top = pixelY;
+        _container.style.bottom = StyleKeyword.Auto;
+        _container.style.alignSelf = new StyleEnum<Align>(StyleKeyword.Auto);
+        _container.style.translate = new Translate(
+            new Length(-x, LengthUnit.Percent),
+            new Length(-y, LengthUnit.Percent));
     }
 
     public static void Show()
@@ -228,12 +273,21 @@ public static class VotePopupUI
             _hideCoroutine = null;
         }
 
+        // A real vote overrides any active positioning preview.
+        _isPreview = false;
+
         _container.style.display = DisplayStyle.Flex;
+        _container.BringToFront();
+        ApplyPosition();
         _resultLabel.style.display = DisplayStyle.None;
+        _initiatorLabel.style.display = DisplayStyle.Flex;
         _yesButton.text = $"[{SettingsTab.GetKeyDisplayName(Plugin.modSettings.voteYesKeybind)}] Yes";
         _noButton.text = $"[{SettingsTab.GetKeyDisplayName(Plugin.modSettings.voteNoKeybind)}] No";
         _yesButton.SetEnabled(true);
         _noButton.SetEnabled(true);
+        // Buttons become clickable for a real vote (the rest stays pass-through).
+        _yesButton.pickingMode = PickingMode.Position;
+        _noButton.pickingMode = PickingMode.Position;
         _isVisible = true;
 
         var vote = ModifierRegistry.CurrentVote;
@@ -263,7 +317,7 @@ public static class VotePopupUI
             var paramParts = new System.Collections.Generic.List<string>();
             foreach (var kvp in vote.Parameters)
                 if (!string.IsNullOrEmpty(kvp.Value))
-                    paramParts.Add($"{kvp.Value}");
+                    paramParts.Add(FormatParamValue(vote, kvp.Key, kvp.Value));
             _paramsLabel.text = string.Join(", ", paramParts);
             _paramsLabel.style.display = paramParts.Count > 0 ? DisplayStyle.Flex : DisplayStyle.None;
         }
@@ -291,6 +345,52 @@ public static class VotePopupUI
         _voteBarTick.style.left = new StyleLength(new Length(tickPercent, LengthUnit.Percent));
 
         _voteCounts.text = $"Yes: {vote.YesCount} / No: {vote.NoCount} (need {vote.RequiredVotes})";
+    }
+
+    /// <summary>
+    /// Formats a vote parameter value for display. PlayerPicker parameters arrive
+    /// as a raw client ID (or username); resolve them to "#number Name".
+    /// </summary>
+    private static string FormatParamValue(VoteState vote, string key, string value)
+    {
+        // Look up the arg schema to see if this parameter targets a player
+        if (ModifierRegistry.Modifiers.TryGetValue(vote.ModifierKey, out var modEntry) && modEntry.argSchemas != null)
+        {
+            foreach (var schema in modEntry.argSchemas)
+            {
+                if (schema.name != key || schema.controlType != "PlayerPicker") continue;
+
+                var player = ResolvePlayer(value);
+                if (player != null)
+                    return $"#{player.Number.Value} {player.Username.Value}";
+                break;
+            }
+        }
+
+        return value;
+    }
+
+    /// <summary>
+    /// Resolves a player from a parameter value that may be a client ID or username.
+    /// </summary>
+    private static Player ResolvePlayer(string value)
+    {
+        var pm = PlayerManager.Instance;
+        if (pm == null) return null;
+
+        // Try client ID first (server broadcasts kick target as a client ID)
+        if (ulong.TryParse(value, out var clientId))
+        {
+            var byId = pm.GetPlayerByClientId(clientId);
+            if (byId != null) return byId;
+        }
+
+        // Fall back to username match
+        foreach (var player in pm.GetPlayers())
+            if (player.Username.Value.ToString() == value)
+                return player;
+
+        return null;
     }
 
     public static void ShowResult(string result)
@@ -346,6 +446,54 @@ public static class VotePopupUI
             _container.style.display = DisplayStyle.None;
         }
         _isVisible = false;
+    }
+
+    /// <summary>
+    /// Shows a non-interactive placeholder popup so the position sliders in Settings
+    /// can be previewed when no real vote is active. Skipped if a vote is live.
+    /// </summary>
+    public static void ShowPreview()
+    {
+        if (!_isSetup) Setup();
+        if (_container == null) return;
+        if (_isVisible) return; // don't clobber a live vote
+
+        _isPreview = true;
+
+        _titleLabel.text = "Vote: Example Modifier";
+        _descriptionLabel.text = "Preview — adjust the sliders to reposition";
+        _paramsLabel.style.display = DisplayStyle.None;
+        _initiatorLabel.style.display = DisplayStyle.None;
+
+        _timerBar.highValue = 1f;
+        _timerBar.value = 0.6f;
+        _voteBarYes.style.width = new StyleLength(new Length(60f, LengthUnit.Percent));
+        _voteBarNo.style.width = new StyleLength(new Length(20f, LengthUnit.Percent));
+        _voteBarTick.style.left = new StyleLength(new Length(50f, LengthUnit.Percent));
+        _voteCounts.text = "Yes: 3 / No: 1 (need 4)";
+
+        _yesButton.SetEnabled(false);
+        _noButton.SetEnabled(false);
+        _resultLabel.style.display = DisplayStyle.None;
+
+        // Fully pass-through: the preview must never block the F3 sliders behind it.
+        _yesButton.pickingMode = PickingMode.Ignore;
+        _noButton.pickingMode = PickingMode.Ignore;
+
+        _container.style.display = DisplayStyle.Flex;
+        _container.BringToFront();
+        ApplyPosition();
+    }
+
+    /// <summary>
+    /// Hides the positioning preview. No-op if a real vote is showing.
+    /// </summary>
+    public static void HidePreview()
+    {
+        if (!_isPreview) return;
+        _isPreview = false;
+        if (_container != null)
+            _container.style.display = DisplayStyle.None;
     }
 
     /// <summary>

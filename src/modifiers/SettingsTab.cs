@@ -183,6 +183,33 @@ public static class SettingsTab
             ActiveModifiersHUD.ApplyPosition();
         });
 
+        // Vote Popup Position
+        var votePosHeader = new Label("Vote Popup Position");
+        votePosHeader.style.fontSize = 18;
+        votePosHeader.style.unityFontStyleAndWeight = FontStyle.Bold;
+        votePosHeader.style.color = Color.white;
+        votePosHeader.style.marginTop = 20;
+        votePosHeader.style.marginBottom = 12;
+        scrollView.Add(votePosHeader);
+
+        BuildSliderRow(scrollView, "Horizontal", settings.votePositionX, 0, 100, val =>
+        {
+            settings.votePositionX = val;
+            settings.Save();
+            VotePopupUI.ApplyPosition();
+        });
+
+        BuildSliderRow(scrollView, "Vertical", settings.votePositionY, 0, 100, val =>
+        {
+            settings.votePositionY = val;
+            settings.Save();
+            VotePopupUI.ApplyPosition();
+        });
+
+        // Show a live preview of the vote popup so these sliders can be positioned
+        // even when no vote is active. Hidden again when leaving the tab/panel.
+        VotePopupUI.ShowPreview();
+
         // Note
         var note = new Label("Changes take effect immediately. Keybinds are saved to config.");
         note.style.color = new StyleColor(new Color(0.5f, 0.5f, 0.5f));
