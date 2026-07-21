@@ -232,24 +232,10 @@ public static class PlayersTab
             nameRow.Add(sgBadge);
         }
 
-        // Donor badge
-        if (ChatFormatting.IsDonor(steamId))
+        // Role badges (dynamic, DB-driven; priority-ordered)
+        foreach (var role in ChatFormatting.GetChatTags(steamId))
         {
-            var donorBadge = new Label("DONOR");
-            donorBadge.style.fontSize = 9;
-            donorBadge.style.color = new StyleColor(new Color(0.28f, 0.50f, 0.90f)); // #487fe6
-            donorBadge.style.unityFontStyleAndWeight = FontStyle.Bold;
-            donorBadge.style.marginRight = 6;
-            donorBadge.style.paddingLeft = 4;
-            donorBadge.style.paddingRight = 4;
-            donorBadge.style.paddingTop = 1;
-            donorBadge.style.paddingBottom = 1;
-            donorBadge.style.backgroundColor = new StyleColor(new Color(0.28f, 0.50f, 0.90f, 0.15f));
-            donorBadge.style.borderTopLeftRadius = 3;
-            donorBadge.style.borderTopRightRadius = 3;
-            donorBadge.style.borderBottomLeftRadius = 3;
-            donorBadge.style.borderBottomRightRadius = 3;
-            nameRow.Add(donorBadge);
+            nameRow.Add(BuildRoleBadge(role));
         }
 
         var nameLabel = new Label(username);
@@ -620,6 +606,36 @@ public static class PlayersTab
             _activeTooltip.RemoveFromHierarchy();
             _activeTooltip = null;
         }
+    }
+
+    // Small colored badge for a chat role. Label = uppercased slug; color derived from the first
+    // <color=#hex> in the role's chat markup (falls back to a neutral gray).
+    private static VisualElement BuildRoleBadge(ChatFormatting.RoleDefinition role)
+    {
+        Color color = new Color(0.5f, 0.5f, 0.5f);
+        if (!string.IsNullOrEmpty(role.chatMarkup))
+        {
+            var match = System.Text.RegularExpressions.Regex.Match(
+                role.chatMarkup, @"<color=#([0-9a-fA-F]{6})>");
+            if (match.Success)
+                color = UIHelpers.ParseHexColor(match.Groups[1].Value);
+        }
+
+        var badge = new Label((role.slug ?? "").ToUpperInvariant());
+        badge.style.fontSize = 9;
+        badge.style.color = new StyleColor(color);
+        badge.style.unityFontStyleAndWeight = FontStyle.Bold;
+        badge.style.marginRight = 6;
+        badge.style.paddingLeft = 4;
+        badge.style.paddingRight = 4;
+        badge.style.paddingTop = 1;
+        badge.style.paddingBottom = 1;
+        badge.style.backgroundColor = new StyleColor(new Color(color.r, color.g, color.b, 0.15f));
+        badge.style.borderTopLeftRadius = 3;
+        badge.style.borderTopRightRadius = 3;
+        badge.style.borderBottomLeftRadius = 3;
+        badge.style.borderBottomRightRadius = 3;
+        return badge;
     }
 
     private static VisualElement BuildTeamPill(ChatFormatting.TeamEntry teamEntry)

@@ -1,5 +1,8 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using System.Text.RegularExpressions;
 using HarmonyLib;
 using Newtonsoft.Json;
 using UnityEngine.UIElements;
@@ -8,17 +11,102 @@ namespace ToastersRinkCompanion;
 
 public static class ChatFormatting
 {
-    private static readonly HashSet<string> _donorSteamIds = new HashSet<string>();
+    // Role definitions keyed by slug, and per-player role assignments keyed by steamId.
+    // Both are rebuilt on every chat_metadata broadcast.
+    private static readonly Dictionary<string, RoleDefinition> _roleDefinitions = new Dictionary<string, RoleDefinition>();
+    private static readonly Dictionary<string, List<PlayerRoleAssignment>> _playerRoleSlugs = new Dictionary<string, List<PlayerRoleAssignment>>();
     private static readonly Dictionary<string, TeamEntry[]> _teamRosters = new Dictionary<string, TeamEntry[]>();
 
-    public static bool IsDonor(string steamId) => _donorSteamIds.Contains(steamId);
+    // Whitelisted rich-text tags the sanitizer allows through verbatim.
+    private static readonly HashSet<string> _allowedTags = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
+    {
+        "b", "i", "color", "size", "noparse"
+    };
+
+    private static readonly Regex _tagRegex = new Regex(@"<\s*(/?)\s*([a-zA-Z]+)[^>]*?>", RegexOptions.Compiled);
+
+    /// <summary>
+    /// Returns the player's active (non-expired) role definitions, ordered by chat priority (highest first).
+    /// Hidden assignments are already filtered out server-side. Expiry is checked at call time so an
+    /// expired badge disappears immediately without waiting for a rebroadcast.
+    /// </summary>
+    public static List<RoleDefinition> GetChatTags(string steamId)
+    {
+        var result = new List<RoleDefinition>();
+        if (!_playerRoleSlugs.TryGetValue(steamId, out var assignments) || assignments == null)
+            return result;
+
+        DateTime now = DateTime.UtcNow;
+        foreach (var assignment in assignments)
+        {
+            if (assignment == null || string.IsNullOrEmpty(assignment.slug)) continue;
+            if (assignment.expiresAt.HasValue && assignment.expiresAt.Value <= now) continue;
+            if (!_roleDefinitions.TryGetValue(assignment.slug, out var def) || def == null) continue;
+            result.Add(def);
+        }
+
+        // "member" is the base community tier — only show it when it's the player's ONLY tag.
+        // If they also hold donor/staff/etc., the higher tag stands in for it (so donor + member
+        // never render together).
+        if (result.Count > 1)
+            result.RemoveAll(def => string.Equals(def.slug, "member", StringComparison.OrdinalIgnoreCase));
+
+        result.Sort((a, b) => b.chatPriority.CompareTo(a.chatPriority));
+        return result;
+    }
+
+    public static bool HasRole(string steamId, string slug)
+    {
+        return GetChatTags(steamId).Any(def => string.Equals(def.slug, slug, StringComparison.OrdinalIgnoreCase));
+    }
+
+    // Backwards-compat shim: a player is a "donor" if they hold an active 'donor' role.
+    public static bool IsDonor(string steamId) => HasRole(steamId, "donor");
 
     public static TeamEntry[] GetPlayerTeams(string steamId)
     {
         return _teamRosters.TryGetValue(steamId, out var teams) ? teams : null;
     }
 
-    private static readonly string DONOR_PREFIX = "<size=16><b><color=#487fe6>DONOR</color></b></size> ";
+    /// <summary>
+    /// Last line of defense against a bad chat_markup row. Strips any tag not in the whitelist
+    /// (b, i, color, size, noparse) and, if the remaining tags are not balanced, falls back to the
+    /// role's plain-text slug so an unclosed &lt;color&gt; can't bleed into the rest of the chat line.
+    /// </summary>
+    public static string SanitizeMarkup(string chatMarkup, string fallbackLabel)
+    {
+        string safeFallback = System.Security.SecurityElement.Escape(fallbackLabel ?? "") ?? (fallbackLabel ?? "");
+        if (string.IsNullOrEmpty(chatMarkup))
+            return safeFallback;
+
+        // Strip tags whose name is not whitelisted; keep whitelisted tags verbatim.
+        string stripped = _tagRegex.Replace(chatMarkup, m =>
+            _allowedTags.Contains(m.Groups[2].Value) ? m.Value : "");
+
+        // Verify the surviving tags are balanced (properly nested).
+        var stack = new Stack<string>();
+        foreach (Match m in _tagRegex.Matches(stripped))
+        {
+            bool isClosing = m.Groups[1].Value == "/";
+            string name = m.Groups[2].Value.ToLowerInvariant();
+            if (!_allowedTags.Contains(name)) continue; // defensive; already stripped
+
+            if (isClosing)
+            {
+                if (stack.Count == 0 || stack.Pop() != name)
+                    return safeFallback;
+            }
+            else
+            {
+                stack.Push(name);
+            }
+        }
+
+        if (stack.Count != 0)
+            return safeFallback;
+
+        return stripped;
+    }
 
     // Colored star prefix for the 3 stars of the last match (gold/silver/bronze).
     // starRank: 1 = first star, 2 = second, 3 = third. Returns "" for anything else.
@@ -46,12 +134,25 @@ public static class ChatFormatting
                 var payload = JsonConvert.DeserializeObject<ChatMetadataPayload>(payloadJson);
                 if (payload == null) return;
 
-                _donorSteamIds.Clear();
-                if (payload.donors != null)
+                _roleDefinitions.Clear();
+                if (payload.roleDefinitions != null)
                 {
-                    foreach (string steamId in payload.donors)
+                    foreach (var def in payload.roleDefinitions)
                     {
-                        _donorSteamIds.Add(steamId);
+                        if (def == null || string.IsNullOrEmpty(def.slug)) continue;
+                        _roleDefinitions[def.slug] = def;
+                    }
+                }
+
+                _playerRoleSlugs.Clear();
+                if (payload.playerRoles != null)
+                {
+                    foreach (var entry in payload.playerRoles)
+                    {
+                        if (entry == null || string.IsNullOrEmpty(entry.steamId)) continue;
+                        _playerRoleSlugs[entry.steamId] = entry.assignments != null
+                            ? new List<PlayerRoleAssignment>(entry.assignments)
+                            : new List<PlayerRoleAssignment>();
                     }
                 }
 
@@ -64,7 +165,7 @@ public static class ChatFormatting
                     }
                 }
 
-                Plugin.Log($"ChatFormatting: Updated metadata ({_donorSteamIds.Count} donors, {_teamRosters.Count} rosters)");
+                Plugin.Log($"ChatFormatting: Updated metadata ({_roleDefinitions.Count} role defs, {_playerRoleSlugs.Count} players with roles, {_teamRosters.Count} rosters)");
             }
             catch (Exception e)
             {
@@ -77,7 +178,8 @@ public static class ChatFormatting
 
     public static void Clear()
     {
-        _donorSteamIds.Clear();
+        _roleDefinitions.Clear();
+        _playerRoleSlugs.Clear();
         _teamRosters.Clear();
     }
 
@@ -157,7 +259,7 @@ public static class ChatFormatting
         }
     }
 
-    // Patch GetChatMessagePrefix to inject donor prefix and team suffix
+    // Patch GetChatMessagePrefix to inject dynamic role prefixes and team suffix
     [HarmonyPatch(typeof(UIChat), "GetChatMessagePrefix")]
     public class GetChatMessagePrefixPatch
     {
@@ -170,20 +272,53 @@ public static class ChatFormatting
             string steamId = chatMessage.SteamID.Value.ToString();
 
             string teamChatPrefix = chatMessage.IsTeamChat ? "[TEAM] " : "";
-            string donorPrefix = _donorSteamIds.Contains(steamId) ? DONOR_PREFIX : "";
+
+            // Build the role prefix from the player's active tags (priority-ordered), each role's
+            // chat markup rendered verbatim through the sanitizer + a trailing space.
+            var rolePrefix = new StringBuilder();
+            foreach (var role in GetChatTags(steamId))
+            {
+                rolePrefix.Append(SanitizeMarkup(role.chatMarkup, role.slug));
+                rolePrefix.Append(' ');
+            }
+
             string teamColoredName = StringUtils.WrapInTeamColor(
                 chatMessage.Username.ToString(), chatMessage.Team.Value);
             string teamSuffix = FormatTeamSuffix(steamId);
 
-            __result = teamChatPrefix + donorPrefix + teamColoredName + teamSuffix + ": ";
+            __result = teamChatPrefix + rolePrefix + teamColoredName + teamSuffix + ": ";
         }
     }
 
     [Serializable]
     public class ChatMetadataPayload
     {
-        public string[] donors;
+        public string[] donors;                        // compat — no longer used for rendering
+        public PlayerRoleEntry[] playerRoles;
+        public RoleDefinition[] roleDefinitions;
         public PlayerTeamRosterEntry[] teamRosters;
+    }
+
+    [Serializable]
+    public class PlayerRoleEntry
+    {
+        public string steamId;
+        public PlayerRoleAssignment[] assignments;
+    }
+
+    [Serializable]
+    public class PlayerRoleAssignment
+    {
+        public string slug;
+        public DateTime? expiresAt;   // null = permanent; filtered at render time
+    }
+
+    [Serializable]
+    public class RoleDefinition
+    {
+        public string slug;
+        public string chatMarkup;     // full rich-text prefix, rendered verbatim (through sanitizer)
+        public int chatPriority;      // higher = shown first
     }
 
     [Serializable]
