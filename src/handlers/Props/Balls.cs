@@ -50,24 +50,19 @@ public static class Balls
 
         GameObject colliderObject = puck.gameObject;
 
-        // Get the mesh renderer (puck/Puck). Resolve the chain step-by-step so a
-        // missing child returns null instead of throwing inside this spawn postfix.
-        MeshRenderer puckMeshRenderer = FindPuckMeshRenderer(puck);
+        MeshRenderer puckMeshRenderer = PuckVisuals.FindPuckMeshRenderer(puck);
 
         if (puckMeshRenderer != null)
         {
             // Hide the original mesh
             puckMeshRenderer.enabled = false;
-        
+
             // Get the original material to keep the texture
             Material originalMaterial = puckMeshRenderer.sharedMaterial;
-            Plugin.Log($"originalMaterial: {originalMaterial}");
-            Plugin.Log($"originalMaterial shader: {originalMaterial.shader.name}");
-            
-        
+
             // Create a simple sphere visual without colliders
             GameObject sphereVisual = UnityEngine.GameObject.CreatePrimitive(PrimitiveType.Sphere);
-            sphereVisual.name = "sphere";
+            sphereVisual.name = PuckVisuals.BallVisualName;
 
             // CreatePrimitive ships a SphereCollider; strip it so the cosmetic
             // sphere doesn't add a second collider to the live puck's physics.
@@ -76,28 +71,24 @@ public static class Balls
                 UnityEngine.Object.Destroy(col);
             }
 
-            // Parent it to the puck and position it correctly
+            // Parent it to the puck and centre it on the body mesh
             sphereVisual.transform.SetParent(colliderObject.transform, false);
-            sphereVisual.transform.localPosition = Vector3.zero;
-        
+            sphereVisual.transform.localPosition = PuckVisuals.GetBodyCenterInRootSpace(puck, puckMeshRenderer);
+
             // Apply the original material to the sphere
             Renderer sphereRenderer = sphereVisual.GetComponent<Renderer>();
             if (sphereRenderer && originalMaterial)
             {
                 sphereRenderer.material = originalMaterial;
             }
-        
-            // Use local bounds so sizing is independent of puckScale.
-            // The sphere is a child of the puck, so it inherits transform.localScale automatically.
-            MeshFilter mf = puckMeshRenderer.GetComponent<MeshFilter>();
-            Bounds localBounds = mf != null ? mf.sharedMesh.bounds : puckMeshRenderer.localBounds;
-            float baseSize = localBounds.extents.magnitude * 0.8f;
-            float diameter = baseSize * 2f;
+
+            // Size from the body mesh in root space, so this is independent of
+            // puckScale — the sphere inherits the root's localScale as a child.
+            Vector3 bodySize = PuckVisuals.GetBodySizeInRootSpace(puck, puckMeshRenderer);
+            float diameter = (bodySize.magnitude * 0.5f) * 0.8f * 2f;
             sphereVisual.transform.localScale = new Vector3(diameter, diameter, diameter);
-        
-            Plugin.Log($"Created ball visual with scale {diameter} and material {(originalMaterial != null ? originalMaterial.name : "null")}");
-        
-            Plugin.Log("Applied ball visuals to puck.");
+
+            Plugin.Log($"Applied ball visuals to puck (mesh '{puckMeshRenderer.gameObject.name}', diameter {diameter}).");
         }
         else
         {
@@ -105,20 +96,12 @@ public static class Balls
         }
     }
 
-    // Resolve the puck/Puck mesh renderer without throwing if a child is missing.
-    private static MeshRenderer FindPuckMeshRenderer(Puck puck)
-    {
-        Transform puckChild = puck.gameObject.transform.Find("puck");
-        Transform inner = puckChild != null ? puckChild.Find("Puck") : null;
-        return inner != null ? inner.GetComponent<MeshRenderer>() : null;
-    }
-
     private static void RestorePuckVisuals(Puck puck)
     {
         if (puck == null)
             return;
 
-        MeshRenderer puckMeshRenderer = FindPuckMeshRenderer(puck);
+        MeshRenderer puckMeshRenderer = PuckVisuals.FindPuckMeshRenderer(puck);
         if (puckMeshRenderer != null)
             puckMeshRenderer.enabled = true;
 
@@ -127,7 +110,7 @@ public static class Balls
         // Remove the sphere visual (child GameObject created from primitive)
         foreach (Transform child in colliderObject.transform)
         {
-            if (child.gameObject.name == "sphere")
+            if (child.gameObject.name == PuckVisuals.BallVisualName)
             {
                 UnityEngine.Object.Destroy(child.gameObject);
             }

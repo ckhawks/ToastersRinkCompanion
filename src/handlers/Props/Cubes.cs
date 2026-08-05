@@ -50,8 +50,7 @@ public static class Cubes
 
         GameObject colliderObject = puck.gameObject;
 
-        // Resolve the puck/Puck mesh renderer without throwing if a child is missing.
-        MeshRenderer puckMeshRenderer = FindPuckMeshRenderer(puck);
+        MeshRenderer puckMeshRenderer = PuckVisuals.FindPuckMeshRenderer(puck);
 
         if (puckMeshRenderer != null)
         {
@@ -63,7 +62,7 @@ public static class Cubes
 
             // Create a cube visual
             GameObject cubeVisual = UnityEngine.GameObject.CreatePrimitive(PrimitiveType.Cube);
-            cubeVisual.name = "cube";
+            cubeVisual.name = PuckVisuals.CubeVisualName;
 
             // CreatePrimitive ships a BoxCollider; strip it so the cosmetic cube
             // doesn't add a second collider to the live puck's physics.
@@ -72,9 +71,9 @@ public static class Cubes
                 UnityEngine.Object.Destroy(col);
             }
 
-            // Parent it to the puck and position it correctly
+            // Parent it to the puck and centre it on the body mesh
             cubeVisual.transform.SetParent(colliderObject.transform, false);
-            cubeVisual.transform.localPosition = Vector3.zero;
+            cubeVisual.transform.localPosition = PuckVisuals.GetBodyCenterInRootSpace(puck, puckMeshRenderer);
 
             // Apply the original material to the cube
             Renderer cubeRenderer = cubeVisual.GetComponent<Renderer>();
@@ -83,15 +82,13 @@ public static class Cubes
                 cubeRenderer.material = originalMaterial;
             }
 
-            // Use local bounds so sizing is independent of puckScale.
-            // The cube is a child of the puck, so it inherits transform.localScale automatically.
-            MeshFilter mf = puckMeshRenderer.GetComponent<MeshFilter>();
-            Bounds localBounds = mf != null ? mf.sharedMesh.bounds : puckMeshRenderer.localBounds;
-            Vector3 size = localBounds.size * 1.3f;
+            // Size from the body mesh in root space, so this is independent of
+            // puckScale — the cube inherits the root's localScale as a child.
+            Vector3 size = PuckVisuals.GetBodySizeInRootSpace(puck, puckMeshRenderer) * 1.3f;
             float maxDim = Mathf.Max(size.x, Mathf.Max(size.y, size.z));
             cubeVisual.transform.localScale = new Vector3(maxDim, maxDim, maxDim);
 
-            Plugin.Log($"Created cube visual with scale {maxDim} and material {(originalMaterial != null ? originalMaterial.name : "null")}");
+            Plugin.Log($"Applied cube visuals to puck (mesh '{puckMeshRenderer.gameObject.name}', scale {maxDim}).");
         }
         else
         {
@@ -99,20 +96,12 @@ public static class Cubes
         }
     }
 
-    // Resolve the puck/Puck mesh renderer without throwing if a child is missing.
-    private static MeshRenderer FindPuckMeshRenderer(Puck puck)
-    {
-        Transform puckChild = puck.gameObject.transform.Find("puck");
-        Transform inner = puckChild != null ? puckChild.Find("Puck") : null;
-        return inner != null ? inner.GetComponent<MeshRenderer>() : null;
-    }
-
     private static void RestorePuckVisuals(Puck puck)
     {
         if (puck == null)
             return;
 
-        MeshRenderer puckMeshRenderer = FindPuckMeshRenderer(puck);
+        MeshRenderer puckMeshRenderer = PuckVisuals.FindPuckMeshRenderer(puck);
         if (puckMeshRenderer != null)
             puckMeshRenderer.enabled = true;
 
@@ -121,7 +110,7 @@ public static class Cubes
         // Remove the cube visual
         foreach (Transform child in colliderObject.transform)
         {
-            if (child.gameObject.name == "cube")
+            if (child.gameObject.name == PuckVisuals.CubeVisualName)
             {
                 UnityEngine.Object.Destroy(child.gameObject);
             }
