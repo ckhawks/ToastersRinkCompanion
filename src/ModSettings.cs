@@ -13,6 +13,12 @@ public class ModSettings
     public string drillSaveKeybind { get; set; } = "<keyboard>/j";
     public string drillLoadKeybind { get; set; } = "<keyboard>/k";
     public string openCaseKeybind { get; set; } = "<keyboard>/o";
+    // Not Left Alt: that is the game's stop/brake bind.
+    public string puckBlockKeybind { get; set; } = "<keyboard>/b";
+
+    // Drives both the outline on blocking players and your own shield, so the two
+    // always read as the same ability. Yellow by default.
+    public string puckBlockColor { get; set; } = "FFDB33";
     // Series shorthand of the last case the player opened; the open-case keybind
     // re-opens this one. Persisted so "previous case" survives a relog.
     public string lastOpenedCaseShorthand { get; set; } = null;
@@ -100,6 +106,7 @@ public class ModSettings
         drillSaveKeybind = MigrateKeyValue(drillSaveKeybind);
         drillLoadKeybind = MigrateKeyValue(drillLoadKeybind);
         openCaseKeybind = MigrateKeyValue(openCaseKeybind);
+        puckBlockKeybind = MigrateKeyValue(puckBlockKeybind);
     }
 
     private static string MigrateKeyValue(string value)

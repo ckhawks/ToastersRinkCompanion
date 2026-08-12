@@ -25,6 +25,7 @@ public class Plugin : IPuckPlugin
     public static InputAction drillSaveAction;
     public static InputAction drillLoadAction;
     public static InputAction openCaseAction;
+    public static InputAction puckBlockAction;
     public static ModSettings modSettings;
 
     public bool OnEnable()
@@ -85,6 +86,7 @@ public class Plugin : IPuckPlugin
                 RecreateAction(ref drillSaveAction, modSettings.drillSaveKeybind);
                 RecreateAction(ref drillLoadAction, modSettings.drillLoadKeybind);
                 RecreateAction(ref openCaseAction,  modSettings.openCaseKeybind);
+                RecreateAction(ref puckBlockAction, modSettings.puckBlockKeybind);
 
                 Plugin.Log($"Fully setup!");
             }
@@ -118,6 +120,7 @@ public class Plugin : IPuckPlugin
             DisposeAction(ref drillSaveAction);
             DisposeAction(ref drillLoadAction);
             DisposeAction(ref openCaseAction);
+            DisposeAction(ref puckBlockAction);
 
             Plugin.Log($"Disabled! Goodbye!");
             return true;

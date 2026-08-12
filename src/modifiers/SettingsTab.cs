@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UIElements;
 
@@ -128,6 +129,22 @@ public static class SettingsTab
             settings.openCaseKeybind = val;
             settings.Save();
             Plugin.RecreateAction(ref Plugin.openCaseAction, val);
+        });
+
+        BuildKeybindRow(scrollView, "Puck Body Block", settings.puckBlockKeybind, val =>
+        {
+            settings.puckBlockKeybind = val;
+            settings.Save();
+            Plugin.RecreateAction(ref Plugin.puckBlockAction, val);
+            // Rebinding mid-hold would strand the held state on both ends.
+            handlers.PuckBlockInput.ForceRelease();
+        });
+
+        BuildColorRow(scrollView, "Puck Block Color", settings.puckBlockColor, val =>
+        {
+            settings.puckBlockColor = val;
+            settings.Save();
+            handlers.PuckBlockOutline.RefreshColor();
         });
 
         // Display section
@@ -297,6 +314,98 @@ public static class SettingsTab
                 input.style.backgroundColor = new StyleColor(new Color(0.1f, 0.1f, 0.1f));
         });
         row.Add(toggle);
+    }
+
+    /// <summary>
+    /// Swatch picker. Deliberately a fixed set rather than a hex field: these are read
+    /// at a distance against white ice, and a free-entry field invites picking
+    /// something that vanishes against it.
+    /// </summary>
+    private static readonly string[] SwatchColors =
+    {
+        "FFDB33",
+        "FF8C1A",
+        "FF3B30",
+        "FF4FA3",
+        "B45CFF",
+        "33D6FF",
+        "3BE06B",
+        "FFFFFF",
+    };
+
+    private static void BuildColorRow(VisualElement parent, string label, string currentValue,
+        System.Action<string> onChanged)
+    {
+        var row = new VisualElement();
+        row.style.flexDirection = FlexDirection.Row;
+        row.style.alignItems = Align.Center;
+        row.style.marginBottom = 8;
+        row.style.paddingLeft = 8;
+        row.style.paddingRight = 8;
+        row.style.paddingTop = 6;
+        row.style.paddingBottom = 6;
+        row.style.backgroundColor = new StyleColor(new Color(0.15f, 0.15f, 0.15f));
+        parent.Add(row);
+
+        var labelEl = new Label(label);
+        labelEl.style.color = Color.white;
+        labelEl.style.fontSize = 14;
+        labelEl.style.flexGrow = 1;
+        row.Add(labelEl);
+
+        var swatches = new List<Button>();
+        string selected = string.IsNullOrEmpty(currentValue) ? SwatchColors[0] : currentValue;
+
+        void Highlight()
+        {
+            for (int i = 0; i < swatches.Count; i++)
+            {
+                bool isSelected = string.Equals(SwatchColors[i], selected,
+                    System.StringComparison.OrdinalIgnoreCase);
+
+                var border = isSelected ? Color.white : new Color(0f, 0f, 0f, 0.5f);
+                swatches[i].style.borderTopColor = border;
+                swatches[i].style.borderBottomColor = border;
+                swatches[i].style.borderLeftColor = border;
+                swatches[i].style.borderRightColor = border;
+            }
+        }
+
+        foreach (string hex in SwatchColors)
+        {
+            string value = hex;
+
+            var swatch = new Button(() =>
+            {
+                selected = value;
+                Highlight();
+                onChanged(value);
+            });
+
+            swatch.text = string.Empty;
+            swatch.style.width = 24;
+            swatch.style.height = 24;
+            swatch.style.marginLeft = 4;
+            swatch.style.marginRight = 0;
+            swatch.style.marginTop = 0;
+            swatch.style.marginBottom = 0;
+            swatch.style.paddingLeft = 0;
+            swatch.style.paddingRight = 0;
+            swatch.style.backgroundColor = UIHelpers.ParseHexColor(value);
+            swatch.style.borderTopWidth = 2;
+            swatch.style.borderBottomWidth = 2;
+            swatch.style.borderLeftWidth = 2;
+            swatch.style.borderRightWidth = 2;
+            swatch.style.borderTopLeftRadius = 4;
+            swatch.style.borderTopRightRadius = 4;
+            swatch.style.borderBottomLeftRadius = 4;
+            swatch.style.borderBottomRightRadius = 4;
+
+            swatches.Add(swatch);
+            row.Add(swatch);
+        }
+
+        Highlight();
     }
 
     private static void BuildSliderRow(VisualElement parent, string label, int currentValue,

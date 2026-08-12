@@ -145,6 +145,9 @@ public static class MessagingHandler
             StarPlayerGlow.RegisterEvents();
             SuppressCameraOverlay.RegisterHandlers();
             RockEvent.RegisterHandlers();
+            PuckBlockOutline.RegisterHandlers();
+            PuckBlockInput.RegisterHandlers();
+            PuckBlockIndicator.RegisterHandlers();
 
             // Prop toggles
             Cones.RegisterHandlers();
