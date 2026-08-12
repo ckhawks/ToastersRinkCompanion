@@ -20,6 +20,10 @@
 
   <ItemGroup>
     <PackageReference Include="SharpConfig" Version="3.2.9.1" />
+    <!-- net4.8 targeting pack as a NuGet package so the project also builds on
+         macOS/Linux, where the SDK has no .NET Framework reference assemblies
+         installed. No effect on Windows builds. -->
+    <PackageReference Include="Microsoft.NETFramework.ReferenceAssemblies" Version="1.0.3" PrivateAssets="all" />
   </ItemGroup>
 
   <Target Name="PreBuildMessage" BeforeTargets="Build">
@@ -30,16 +34,24 @@
     <Message Importance="high" Text="$(AssemblyName) built successfully!" />
   </Target>
 
-  <!-- Streamline development and move the built .dll to the plugins folder after building -->
+  <!-- Streamline development and move the built .dll to the plugins folder after building.
+       On macOS Steam installs under ~/Library/Application Support and the Plugins folder sits
+       next to Puck.app. Puck's ModManager resolves Plugins relative to the process working
+       directory, so a sideloaded build is only picked up when the game is launched from the
+       game folder (Terminal), not from Steam/Finder. -->
   <Target Name="PostBuildMoveDll" AfterTargets="Build">
-    <PropertyGroup>
-      <TargetDir>C:\Program Files (x86)\Steam\steamapps\common\Puck\Plugins\ToastersRinkCompanion</TargetDir>
+    <PropertyGroup Condition="'$(OS)' == 'Windows_NT'">
+      <PluginTargetDir>C:\Program Files (x86)\Steam\steamapps\common\Puck\Plugins\ToastersRinkCompanion</PluginTargetDir>
     </PropertyGroup>
 
-    <MakeDir Directories="$(TargetDir)" />
-    <Copy SourceFiles="$(OutputPath)$(AssemblyName).dll" DestinationFolder="$(TargetDir)" OverwriteReadOnlyFiles="true" />
-    
-    <Message Importance="high" Text="Copied $(AssemblyName).dll to $(TargetDir)" />
+    <PropertyGroup Condition="'$(OS)' != 'Windows_NT' AND '$(HOME)' != ''">
+      <PluginTargetDir>$(HOME)/Library/Application Support/Steam/steamapps/common/Puck/Plugins/ToastersRinkCompanion</PluginTargetDir>
+    </PropertyGroup>
+
+    <MakeDir Directories="$(PluginTargetDir)" Condition="'$(PluginTargetDir)' != ''" />
+    <Copy SourceFiles="$(OutputPath)$(AssemblyName).dll" DestinationFolder="$(PluginTargetDir)" OverwriteReadOnlyFiles="true" Condition="'$(PluginTargetDir)' != ''" />
+
+    <Message Importance="high" Text="Copied $(AssemblyName).dll to $(PluginTargetDir)" Condition="'$(PluginTargetDir)' != ''" />
   </Target>
 
 </Project>
