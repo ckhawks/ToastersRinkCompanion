@@ -136,6 +136,8 @@ public static class HomeTab
         BuildLinkButton(linksRow, "Rules", "https://puckstats.io/rules", UIHelpers.TextSecondary);
         BuildLinkButton(linksRow, "Donate", "https://ko-fi.com/stellaric", new Color(1f, 0.35f, 0.45f));
         BuildLinkButton(linksRow, "EIS Discord", "https://discord.gg/swDnyXFChu", new Color(0.2f, 0.7f, 0.8f));
+        BuildLinkButton(linksRow, "Toaster's Puck", "https://www.youtube.com/playlist?list=PLlw6SjqfXk7jMkPF5xXGLge6M_n1HZ2T2", new Color(1f, 0.2f, 0.2f));
+        BuildLinkButton(linksRow, "Board Bounce Tutorial", "https://www.youtube.com/watch?v=Q_eiyjvVAIQ", new Color(1f, 0.2f, 0.2f));
 
         // Credits section
         var creditsSep = new VisualElement();
