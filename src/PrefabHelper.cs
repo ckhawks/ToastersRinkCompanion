@@ -7,6 +7,22 @@ namespace ToastersRinkCompanion;
 
 public static class PrefabHelper
 {
+    /// <summary>
+    /// True once any asset bundle file turned out not to exist on disk. That is an
+    /// install problem specifically — the DLL was placed by hand without the
+    /// assetbundles folder beside it — and is worth telling the player about, because
+    /// every bundle-backed feature silently does nothing and the game looks broken
+    /// rather than misinstalled.
+    ///
+    /// Deliberately separate from a bundle that exists but fails to load: that is a
+    /// different fault (usually a second copy of Companion already holding the file
+    /// open) with different advice.
+    /// </summary>
+    public static bool AnyBundleMissing { get; private set; }
+
+    /// <summary>Directory the first missing bundle was expected in, for the message.</summary>
+    public static string ExpectedBundleDirectory { get; private set; }
+
     public static AssetBundle LoadAssetBundle(string assetBundlePath)
     {
         try
@@ -19,6 +35,8 @@ public static class PrefabHelper
             if (!File.Exists(fullPath))
             {
                 Plugin.LogError($"[MeshReplacer] AssetBundle not found at: {fullPath}");
+                AnyBundleMissing = true;
+                ExpectedBundleDirectory ??= Path.GetDirectoryName(fullPath);
                 return null;
             }
 

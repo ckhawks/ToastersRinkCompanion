@@ -198,6 +198,30 @@ public static class MessagingHandler
         }
     }
 
+    private static bool _bundleWarningShown;
+
+    /// <summary>
+    /// Tells the player once when Companion's asset bundles are absent from disk.
+    ///
+    /// Without this the failure is silent from in-game: the sign, meme board,
+    /// collectibles and props all quietly do nothing, which reads as the server being
+    /// broken rather than the install being incomplete. Shown locally rather than
+    /// reported to the server, because it is entirely a client-side install problem and
+    /// the fix is on this machine.
+    /// </summary>
+    private static void WarnIfAssetBundlesMissing()
+    {
+        if (_bundleWarningShown || !PrefabHelper.AnyBundleMissing) return;
+        _bundleWarningShown = true;
+
+        string where = PrefabHelper.ExpectedBundleDirectory ?? "the assetbundles folder next to the .dll";
+        Plugin.LogError($"asset bundles missing — expected them in {where}");
+        Plugin.AddLocalChatMessage(
+            "<size=14><color=orange><b>Companion is missing its asset bundles.</b></color> " +
+            "The sign, meme board, collectibles and map props will not appear. " +
+            $"Copy the <b>assetbundles</b> folder to <i>{where}</i> and restart Puck.</size>");
+    }
+
     private static void RegisterCoreHandlers()
     {
         // `greetings` — initial handshake from the server. Without
@@ -237,6 +261,8 @@ public static class MessagingHandler
                 TrySetup("Sign.SpawnSign", Sign.SpawnSign);
                 TrySetup("CollectiblePrefabs.Setup", CollectiblePrefabs.Setup);
                 TrySetup("MOTDUI.Show", MOTDUI.Show);
+
+                WarnIfAssetBundlesMissing();
             },
             requireConnected: false);
 
