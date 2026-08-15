@@ -180,6 +180,24 @@ public static class MessagingHandler
         }
     }
 
+    /// <summary>
+    /// Runs one piece of post-greeting decoration, logging and swallowing anything it
+    /// throws. Missing asset bundles are the common case — a hand-placed install with the
+    /// DLL but no assetbundles folder — and that should cost the player the sign or the
+    /// meme board, not the whole handshake.
+    /// </summary>
+    private static void TrySetup(string what, Action action)
+    {
+        try
+        {
+            action();
+        }
+        catch (Exception e)
+        {
+            Plugin.LogError($"greeting setup step '{what}' failed (continuing): {e.Message}");
+        }
+    }
+
     private static void RegisterCoreHandlers()
     {
         // `greetings` — initial handshake from the server. Without
@@ -203,12 +221,22 @@ public static class MessagingHandler
                     $"<size=14><i>Toaster's Rink Companion version {Plugin.MOD_VERSION} connected.</i>{outdatedNote}</size>");
 
                 Plugin.Log($"Received `Greetings` message from Toaster's Rink {greetingsPayload.companionTargetVersion}, we're connected!");
-                Sign.SpawnSign();
-                CollectiblePrefabs.Setup();
-                MOTDUI.Show();
 
-                // Tell the server we have the companion installed.
+                // Answer the handshake FIRST, before any of the cosmetic setup below.
+                // This used to be the last statement in the handler, which meant a missing
+                // asset bundle took the handshake down with it: Sign.SpawnSign() on an
+                // install with no assetbundles folder throws "The Object you want to
+                // instantiate is null", the handler aborts, and the server never learns the
+                // client has Companion at all — so it reports Companion as not detected on a
+                // machine where it is plainly installed and running. Whether the sign mesh
+                // loaded has nothing to do with whether we are here to answer.
                 JsonMessageRouter.SendMessage("companion_hello", 0, new { version = Plugin.MOD_VERSION });
+
+                // Each of these is independent decoration. One failing must not skip the
+                // others, and none of them may take down the handler.
+                TrySetup("Sign.SpawnSign", Sign.SpawnSign);
+                TrySetup("CollectiblePrefabs.Setup", CollectiblePrefabs.Setup);
+                TrySetup("MOTDUI.Show", MOTDUI.Show);
             },
             requireConnected: false);
 
