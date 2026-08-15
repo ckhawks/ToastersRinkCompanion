@@ -13,7 +13,12 @@ namespace ToastersRinkCompanion;
 public class Plugin : IPuckPlugin
 {
     public static string MOD_NAME = "ToastersRinkCompanion";
-    public static string MOD_VERSION = "2.0.3";
+    // 2.0.4: built against the B1235 assemblies. The version is the compatibility
+    // contract with Suite, not a feature marker — B1235 moved the object-synchronization
+    // and replay surfaces enough that a client built against one game build should not be
+    // treated as interchangeable with one built against the other, even though this
+    // release carries no source changes of its own.
+    public static string MOD_VERSION = "2.0.4";
     public static string MOD_GUID = "pw.stellaric.toaster.rinkcompanion";
 
     static readonly Harmony harmony = new Harmony(MOD_GUID);
