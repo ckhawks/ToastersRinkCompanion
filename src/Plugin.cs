@@ -46,6 +46,7 @@ public class Plugin : IPuckPlugin
             else
             {
                 Plugin.Log("Environment: client.");
+                WarnIfLoadedTwice();
                 Plugin.Log("Patching methods...");
                 int patchedCount = 0;
                 int failedCount = 0;
@@ -162,6 +163,43 @@ public class Plugin : IPuckPlugin
             Plugin.Log($" - {m.DeclaringType.FullName}.{m.Name}");
     }
     
+    /// <summary>
+    /// Detects a second copy of Companion loaded into the same process — the usual cause
+    /// being a Workshop subscription and a hand-placed copy in Plugins/ at the same time,
+    /// especially when a server lists Companion with isClientRequired and force-loads the
+    /// Workshop copy on top of a sideloaded one.
+    ///
+    /// This has to be found here rather than server-side. Netcode's
+    /// CustomMessagingManager.RegisterNamedMessageHandler assigns into a dictionary, so the
+    /// second copy's handler silently overwrites the first and only one copy ever answers
+    /// the server's greeting — the server sees exactly one companion_hello and cannot tell.
+    /// Harmony patches do stack though, so both copies patch PlayerInput.Update and every
+    /// keybind fires twice: one F3 press opens the panel and closes it again in the same
+    /// frame, which reads as "the menu doesn't work".
+    /// </summary>
+    private static void WarnIfLoadedTwice()
+    {
+        try
+        {
+            string self = typeof(Plugin).Assembly.GetName().Name;
+            int copies = 0;
+            foreach (var assembly in System.AppDomain.CurrentDomain.GetAssemblies())
+            {
+                if (assembly.GetName().Name == self) copies++;
+            }
+            if (copies <= 1) return;
+
+            LogError($"Companion is loaded {copies} times in this process. Keybinds and patches " +
+                     "will fire once per copy, so the F3 menu will open and immediately close. " +
+                     "Keep either the Steam Workshop subscription or a copy in Puck/Plugins, not both.");
+        }
+        catch (Exception e)
+        {
+            // Never let a diagnostic stop the mod from loading.
+            LogError($"duplicate-load check failed: {e.Message}");
+        }
+    }
+
     public static void RecreateAction(ref InputAction action, string binding)
     {
         action?.Disable();
